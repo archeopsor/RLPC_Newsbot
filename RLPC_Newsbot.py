@@ -1,7 +1,6 @@
 import discord
 import os
-from discord.ext import commands
-import passwords
+from discord.ext import command
 
 client = commands.Bot(command_prefix = '.')
 client.remove_command('help')
@@ -80,4 +79,4 @@ for filename in os.listdir('C:/Users/Owner/RLPC News/cogs'):
     if filename.endswith('.py'):
         client.load_extension(f'cogs.{filename[:-3]}')
 
-client.run(passwords.BOT_TOKEN)
+client.run('NjM1MTg4NTc2NDQ2ODQwODU4.XhtcHw.n1k7IKXxDbrt1sbQE4wzCaqb7xc')
