@@ -1,0 +1,1 @@
+worker: python RLPC_Newsbot.py
