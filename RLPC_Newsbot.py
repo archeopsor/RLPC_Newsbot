@@ -75,7 +75,7 @@ If you have any questions, notice any issues or bugs, or have any suggestions, p
     await message_author.send(help_message1)
     await message_author.send(help_message2)
 
-for filename in os.listdir('C:/Users/Owner/RLPC News/cogs'):
+for filename in os.listdir('./cogs'):
     if filename.endswith('.py'):
         client.load_extension(f'cogs.{filename[:-3]}')
 
