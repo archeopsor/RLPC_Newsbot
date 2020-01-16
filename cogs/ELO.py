@@ -13,7 +13,7 @@ class ELO(commands.Cog):
     def __init__(self,client):
         self.client = client
         
-    @commands.command(aliases=("predict",))
+    @commands.command(aliases=("predict","scorepredict","predictscore","score_predict","predict_score",))
     async def scorepredict(self,ctx,league,team1,team2,bestof=100):
         answer = exp_score(league,team1,team2,bestof)
         await ctx.send(answer)

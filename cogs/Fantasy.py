@@ -8,7 +8,7 @@ class Fantasy(commands.Cog):
     def __init__(self,client):
         self.client = client
         
-    @commands.command(aliases=("createaccount","create_account","newplayer", "new_player","newaccount","new_account","add_fantasy_player"))
+    @commands.command(aliases=("createaccount","create_account","newplayer", "new_player","newaccount","new_account","add_fantasy_player",))
     async def new_fantasy_player(self,ctx,league):
         if league.casefold() not in ["major","aaa","aa","a","none"]:
             await ctx.send(f"{league} could not be understood")
@@ -24,7 +24,7 @@ class Fantasy(commands.Cog):
         if isinstance(error,commands.MissingRequiredArgument):
             await ctx.send('Please include the league you play in. If you are not a player, use ".new_fantasy_player none"')
         
-    @commands.command(aliases=("pick","add_player",))
+    @commands.command(aliases=("pick", "pick_player", "pickplayer", "addplayer", "add_player",))
     async def pick_player(self,ctx,player,slot=1):
         author = ctx.message.author.name
         person = author
@@ -36,7 +36,7 @@ class Fantasy(commands.Cog):
         if isinstance(error,commands.MissingRequiredArgument):
             await ctx.send('Please include a player')
             
-    @commands.command(aliases=("drop",))
+    @commands.command(aliases=("drop","dropplayer","drop_player","removeplayer","remove_player",))
     async def drop_player(self,ctx,slot):
         author = ctx.message.author.name
         person = author
@@ -65,7 +65,7 @@ class Fantasy(commands.Cog):
         answer = fantasy.info(player)
         await ctx.send(answer)
         
-    @commands.command()
+    @commands.command(aliases=("fantasy","fhelp","f_help"))
     async def fantasy_help(self,ctx):
         answer = """
 Welcome to RLPC Fantasy! This is a just-for-fun fantasy league in which people can build a team of RLPC players and compete against other fantasy teams.
@@ -74,6 +74,7 @@ Welcome to RLPC Fantasy! This is a just-for-fun fantasy league in which people c
 **__RULES/STRUCTURE__**
  - Each fantasy team has 5 players
  - You can pick up players at any time EXCEPT for Tuesdays and Thursdays (Gamedays)
+ - You can't pick up players that play in the same league as you
  - Points are calculated after every gameday (Wednesday/Friday)
  - Each team can do 2 transfers (replacing one player with another player) every week. Filling an empty slot doesn't add to this counter
  - Each player is given a specific "salary" based on their mmr and team. The total salary value of a fantasy team must be below 700 at all times.
