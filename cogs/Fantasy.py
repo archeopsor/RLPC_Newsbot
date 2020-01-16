@@ -24,7 +24,7 @@ class Fantasy(commands.Cog):
         if isinstance(error,commands.MissingRequiredArgument):
             await ctx.send('Please include the league you play in. If you are not a player, use ".new_fantasy_player none"')
         
-    @commands.command(aliases=("pick", "pick_player", "pickplayer", "addplayer", "add_player",))
+    @commands.command(aliases=("pick", "pickplayer", "addplayer", "add_player",))
     async def pick_player(self,ctx,player,slot=1):
         author = ctx.message.author.name
         person = author
@@ -36,7 +36,7 @@ class Fantasy(commands.Cog):
         if isinstance(error,commands.MissingRequiredArgument):
             await ctx.send('Please include a player')
             
-    @commands.command(aliases=("drop","dropplayer","drop_player","removeplayer","remove_player",))
+    @commands.command(aliases=("drop","dropplayer","removeplayer","remove_player",))
     async def drop_player(self,ctx,slot):
         author = ctx.message.author.name
         person = author
