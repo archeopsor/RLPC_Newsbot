@@ -11,30 +11,6 @@ client.remove_command('help')
 async def on_ready():
     print('Bot is ready.')
     await client.change_presence(activity=discord.Game('~help for commands'))
-    
-@client.event
-async def on_message(message):
-    reset_executed = False
-    today_day = datetime.datetime.today().weekday()
-    today_hour = int(str(datetime.datetime.now().time())[:2])
-    
-    # Reset every Monday at 12:00 am (Midnight)
-    if reset_executed == False and today_day == 3 and today_hour == 11:
-        
-        # This will be turned back to false at 1:00 am
-        
-        reset_executed = True
-        
-        gsheet = sheet.get_google_sheet(sheet.SPREADSHEET_ID,"Fantasy Players!H2:H")
-        rows = gsheet['values']
-        
-        for i in range(len(rows)):
-            
-            cell = f'Fantasy Players!H{i+2}'
-            sheet.update_cell(sheet.SPREADSHEET_ID, cell, 2)
-    
-    if reset_executed == True and today_day == 0 and today_hour == 12:
-        reset_executed = False
 
 @client.command()
 async def ping(ctx):
@@ -210,5 +186,30 @@ If you have any questions, notice any issues or bugs, or have any suggestions, p
 for filename in os.listdir('./cogs'):
     if filename.endswith('.py'):
         client.load_extension(f'cogs.{filename[:-3]}')
+        
+@client.event
+async def on_message(message):
+    reset_executed = False
+    today_day = datetime.datetime.today().weekday()
+    today_hour = int(str(datetime.datetime.now().time())[:2])
+    
+    # Reset every Monday when the first person says something
+    if reset_executed == False and today_day == 0:
+        
+        # This will be turned back to false at 11:00 pm        
+        reset_executed = True
+        
+        gsheet = sheet.get_google_sheet(sheet.SPREADSHEET_ID,"Fantasy Players!H2:H")
+        rows = gsheet['values']
+        
+        for i in range(len(rows)):
+            
+            cell = f'Fantasy Players!H{i+2}'
+            sheet.update_cell(sheet.SPREADSHEET_ID, cell, 2)
+    
+    if reset_executed == True and today_day == 0 and today_hour == 22:
+        reset_executed = False
+        
+    await client.process_commands(message)
 
 client.run('NjM1MTg4NTc2NDQ2ODQwODU4.XhtcHw.n1k7IKXxDbrt1sbQE4wzCaqb7xc')
