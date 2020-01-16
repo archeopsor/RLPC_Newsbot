@@ -1,6 +1,8 @@
 import discord
 import os
 from discord.ext import commands
+import Google_Sheets as sheet
+import datetime
 
 client = commands.Bot(command_prefix = '~')
 client.remove_command('help')
@@ -10,6 +12,30 @@ async def on_ready():
     print('Bot is ready.')
     await client.change_presence(activity=discord.Game('~help for commands'))
     
+@client.event
+async def on_message(self, message):
+    reset_executed = False
+    today_day = datetime.today().weekday()
+    today_hour = int(str(datetime.now().time())[:2])
+    
+    # Reset every Monday at 12:00 am (Midnight)
+    if reset_executed == False and today_day == 3 and today_hour == 11:
+        
+        # This will be turned back to false at 1:00 am
+        
+        reset_executed = True
+        
+        gsheet = sheet.get_google_sheet(sheet.SPREADSHEET_ID,"Fantasy Players!H2:H")
+        rows = gsheet['values']
+        
+        for i in range(len(rows)):
+            
+            cell = f'Fantasy Players!H{i+2}'
+            sheet.update_cell(sheet.SPREADSHEET_ID, cell, 2)
+    
+    if reset_executed == True and today_day == 0 and today_hour == 12:
+        reset_executed = False
+
 @client.command()
 async def ping(ctx):
     await ctx.send(f'Pong! {round(client.latency * 1000)}ms')
