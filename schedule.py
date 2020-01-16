@@ -9,7 +9,7 @@ while True:
     today_hour = int(str(datetime.now().time())[:2])
     
     # Reset every Monday at 12:00 am (Midnight)
-    if reset_executed == False and today_day == 3 and today_hour == 9:
+    if reset_executed == False and today_day == 3 and today_hour == 11:
         
         # This will be turned back to false at 1:00 am
         
