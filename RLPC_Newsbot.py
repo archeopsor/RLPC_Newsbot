@@ -13,7 +13,7 @@ async def on_ready():
     await client.change_presence(activity=discord.Game('~help for commands'))
     
 @client.event
-async def on_message(self, message):
+async def on_message(message):
     reset_executed = False
     today_day = datetime.today().weekday()
     today_hour = int(str(datetime.now().time())[:2])
