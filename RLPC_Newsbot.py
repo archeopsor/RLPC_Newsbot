@@ -15,8 +15,8 @@ async def on_ready():
 @client.event
 async def on_message(message):
     reset_executed = False
-    today_day = datetime.today().weekday()
-    today_hour = int(str(datetime.now().time())[:2])
+    today_day = datetime.datetime.today().weekday()
+    today_hour = int(str(datetime.datetime.now().time())[:2])
     
     # Reset every Monday at 12:00 am (Midnight)
     if reset_executed == False and today_day == 3 and today_hour == 11:
