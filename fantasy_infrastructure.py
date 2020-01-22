@@ -3,6 +3,7 @@ import pandas as pd
 import RLPC_ELO as elo
 from datetime import datetime
 import time
+import editdistance
 
 prefix = '$'
 
@@ -420,3 +421,42 @@ def info(player):
     players = sheet.gsheet2df(gsheet)
     players = players.set_index("Username")
     return(players.loc[player])
+
+def search(minsalary=0, maxsalary=700, league="all", team="all", name="none"):
+    sheet_id = sheet.SPREADSHEET_ID
+    sheet_range = 'Player Info!A1:F'
+    gsheet = sheet.get_google_sheet(sheet_id, sheet_range)
+    players = sheet.gsheet2df(gsheet)
+    players = players.sort_values(by='Username')
+    players = players.reset_index(drop=True)
+    
+    for row in players.index:
+        salary = int(players.loc[row,'Fantasy Value'])
+        players.loc[row,'Fantasy Value'] = salary
+        mmr = int(players.loc[row, 'MMR'])
+        players.loc[row,'MMR'] = mmr
+    
+    players = players.loc[players['Fantasy Value'] >= minsalary]
+    players = players.loc[players['Fantasy Value'] <= maxsalary]
+    if league != "all":
+        players = players.loc[players['League'] == league]
+    if team != "all":
+        players = players.loc[players['Team'] == team]
+    
+    if name == "none":
+        players = players.set_index('Username')
+        return(players.head(5))
+    
+    # Search names by assigning an editdistance value 
+    players['editdistance'] = 0
+    for row in players.index:
+        username = players.loc[row,'Username']
+        username = username.casefold()
+        name = name.casefold()
+        distance = editdistance.eval(name, username)
+        players.loc[row,'editdistance'] = distance
+    
+    players = players.sort_values(by='editdistance')
+    players = players.drop('editdistance',axis=1)
+    players = players.set_index('Username')
+    return(players.head(5))

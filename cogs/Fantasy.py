@@ -96,5 +96,31 @@ Welcome to RLPC Fantasy! This is a just-for-fun fantasy league in which people c
         """
         await ctx.send(answer)
         
+    @commands.command(aliases=("searchplayers",))
+    async def search(self,ctx,arg1="",arg2="",arg3="",arg4="",arg5="",arg6="",arg7="",arg8="",arg9="",arg10=""):
+        name = "none"
+        minsalary = 0
+        maxsalary = 700
+        league = "all"
+        team = "all"
+        argument_labels = [arg1, arg3, arg5, arg7, arg9]
+        arguments = [arg2, arg4, arg6, arg8, arg10]
+        for arg in argument_labels:
+            index = argument_labels.index(arg)
+            if arg.casefold() in ["name","username","player","name:","username:","player:"]:
+                name = arguments[index]
+            elif arg.casefold() in ["min","min:","minimum","minimum:","minsalary","minsalary:","min_salary","min_salary:","minimumsalary","minimumsalary:","minimum_salary:","minimum_salary"]:
+                minsalary = int(arguments[index])
+            elif arg.casefold() in ["max","max:","maximum","maximum:","maxsalary","maxsalary:","max_salary","max_salary:","maximumsalary","maximumsalary:","maximum_salary:","maximum_salary"]:
+                maxsalary = int(arguments[index])
+            elif arg.casefold() in ["team","team:"]:
+                team = arguments[index]
+            elif arg.casefold() in ["league","league:"]:
+                league = arguments[index]
+        
+        answer = fantasy.search(minsalary, maxsalary, league, team, name)
+        await ctx.send(answer)
+                
+        
 def setup(client):
     client.add_cog(Fantasy(client))
