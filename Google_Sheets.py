@@ -92,8 +92,12 @@ def get_google_sheet(spreadsheet_id, range_name):
         .execute()
     )
     
-def append_data(spreadsheet_id, range_name, values):
+def append_data(spreadsheet_id, range_name, values, insertDataOption = "INSERT_ROWS"):
     creds = None
+    
+    if insertDataOption != "INSERT_ROWS":
+        insertDataOption = "OVERWRITE"
+    
     if os.path.exists("token.pickle"):
         with open("token.pickle", "rb") as token:
             creds = pickle.load(token)
@@ -110,7 +114,7 @@ def append_data(spreadsheet_id, range_name, values):
     request = (
         service.spreadsheets()
         .values()
-        .append(spreadsheetId=spreadsheet_id, range=range_name, valueInputOption="USER_ENTERED", insertDataOption="INSERT_ROWS", body=values)
+        .append(spreadsheetId=spreadsheet_id, range=range_name, valueInputOption="USER_ENTERED", insertDataOption=insertDataOption, body=values)
     )
     
     response = request.execute()

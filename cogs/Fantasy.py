@@ -8,7 +8,7 @@ class Fantasy(commands.Cog):
     def __init__(self,client):
         self.client = client
         
-    @commands.command(aliases=("createaccount","create_account","newplayer", "new_player","newaccount","new_account","add_fantasy_player",))
+    @commands.command(aliases=("createaccount","create_account","newplayer", "new_player","newaccount","new_account","add_fantasy_player","new"))
     async def new_fantasy_player(self,ctx,league):
         if league.casefold() not in ["major","aaa","aa","a","none"]:
             await ctx.send(f"{league} could not be understood")

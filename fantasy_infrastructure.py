@@ -224,7 +224,7 @@ def add_fantasy_player(person, league):
     if league.casefold() not in ["major","aaa","aa","a","none"]:
         return(f"{league} could not be understood")
     
-    if league.casefold() == "major":
+    if league.casefold() == "major" or league.casefold() == "none":
         league = league.title()
     else:
         league = league.upper()
@@ -243,7 +243,7 @@ def add_fantasy_player(person, league):
     values = [[person],[league],["Not Picked"],["Not Picked"],["Not Picked"],["Not Picked"],["Not Picked"],[2],[0],[0],[0],[0],[0],[0]]
     body = {"majorDimension": "COLUMNS", 'values': values}
     
-    sheet.append_data(sheet_id, sheet_range, body)
+    sheet.append_data(sheet_id, sheet_range, body, "OVERWRITE")
     
     return f"Success! Your account has been created, with an ID of {person}. To add players, use .pick_player" 
     
@@ -255,7 +255,7 @@ def add_rlpc_player(username, mmr, team, league):
     values = [[username], [mmr], [team], [league]]
     body = {"majorDimension": "COLUMNS", 'values': values}
     
-    sheet.append_data(sheet_id, sheet_range, body)
+    sheet.append_data(sheet_id, sheet_range, body, "OVERWRITE")
  
 # Picks a player to be added to an account
 def pick_player(person,player,slot=1):
