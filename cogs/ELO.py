@@ -6,7 +6,8 @@ recall_data()
 exp_score = RLPC_ELO.exp_score
 rank_teams = RLPC_ELO.rank_teams
 
-client = commands.Bot(command_prefix = '.')
+prefix = '$'
+client = commands.Bot(command_prefix = prefix)
 
 class ELO(commands.Cog):
     

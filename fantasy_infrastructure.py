@@ -4,6 +4,8 @@ import RLPC_ELO as elo
 from datetime import datetime
 import time
 
+prefix = '$'
+
 major_champ = ""
 aaa_champ = ""
 aa_champ = ""
@@ -245,7 +247,7 @@ def add_fantasy_player(person, league):
     
     sheet.append_data(sheet_id, sheet_range, body, "OVERWRITE")
     
-    return f"Success! Your account has been created, with an ID of {person}. To add players, use .pick_player" 
+    return f"Success! Your account has been created, with an ID of {person}. To add players, use {prefix}pick" 
     
 # Adding an RLPC player to the player database
 def add_rlpc_player(username, mmr, team, league):
@@ -304,7 +306,7 @@ def pick_player(person,player,slot=1):
     
     # Check to make sure the account exists, the specified player exists, and they are allowed to be picked
     if len(account_check) == 0:
-        return("You don't currently have an account! Use .add_fantasy_player to create an account")
+        return("You don't currently have an account! Use {prefix}newaccount to create an account")
     else:
         pass
     

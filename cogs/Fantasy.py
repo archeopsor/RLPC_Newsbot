@@ -1,7 +1,8 @@
 from discord.ext import commands
 import fantasy_infrastructure as fantasy
 
-client = commands.Bot(command_prefix = '.')
+prefix = '$'
+client = commands.Bot(command_prefix = prefix)
 
 class Fantasy(commands.Cog):
     
@@ -22,7 +23,7 @@ class Fantasy(commands.Cog):
     @new_fantasy_player.error
     async def new_fantasy_player_error(self,ctx,error):
         if isinstance(error,commands.MissingRequiredArgument):
-            await ctx.send('Please include the league you play in. If you are not a player, use ".new_fantasy_player none"')
+            await ctx.send(f'Please include the league you play in. If you are not a player, use "{prefix}new_fantasy_player none"')
         
     @commands.command(aliases=("pick", "pickplayer", "addplayer", "add_player",))
     async def pick_player(self,ctx,player,slot=1):
@@ -67,9 +68,9 @@ class Fantasy(commands.Cog):
         
     @commands.command(aliases=("fantasy","fhelp","f_help"))
     async def fantasy_help(self,ctx):
-        answer = """
+        answer = f"""
 Welcome to RLPC Fantasy! This is a just-for-fun fantasy league in which people can build a team of RLPC players and compete against other fantasy teams.
-**To get started, type .new_fantasy_player to create a new fantasy account.**
+**To get started, type {prefix}new_fantasy_player to create a new fantasy account.**
 
 **__RULES/STRUCTURE__**
  - Each fantasy team has 5 players
@@ -81,17 +82,17 @@ Welcome to RLPC Fantasy! This is a just-for-fun fantasy league in which people c
 
 **__FANTASY COMMANDS__**
 
-**.fantasy_help** - Shows this message
-**.new_fantasy_player** - Creates a fantasy team linked to your discord account. Please include the league you play in, or 'none'.
-    *Example: .new_fantasy_player major*
-**.team** - Shows the current fantasy team of any fantasy player. ".team" will display your own team, although you can include any discord account name (Don't use nicknames')
-    *Example: .team arco*
-**.info** - Gives important information about a player, such as their salary and a variety of stats.
-    *Example: .info arco*
-**.pick_player** - Adds a player to your fantasy team, in one of 5 player slots. Please specify which player you want, as well as which slot.
-    *Example: .pick_player arco 4*
-**.drop_player** - Can also be done with '.pick_player drop [slot]', drops the player in the specified slot, replacing them with 'Not Picked'.
-**.leaderboard** - Displays the current leaderboard of points
+**{prefix}fantasy_help** - Shows this message
+**{prefix}new_fantasy_player** - Creates a fantasy team linked to your discord account. Please include the league you play in, or 'none'.
+    *Example: {prefix}new_fantasy_player major*
+**{prefix}team** - Shows the current fantasy team of any fantasy player. "{prefix}team" will display your own team, although you can include any discord account name (Don't use nicknames')
+    *Example: {prefix}team arco*
+**{prefix}info** - Gives important information about a player, such as their salary and a variety of stats.
+    *Example: {prefix}info arco*
+**{prefix}pick_player** - Adds a player to your fantasy team, in one of 5 player slots. Please specify which player you want, as well as which slot.
+    *Example: {prefix}pick_player arco 4*
+**{prefix}drop_player** - Can also be done with '{prefix}pick_player drop [slot]', drops the player in the specified slot, replacing them with 'Not Picked'.
+**{prefix}leaderboard** - Displays the current leaderboard of points
         """
         await ctx.send(answer)
         

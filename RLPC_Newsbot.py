@@ -4,13 +4,14 @@ from discord.ext import commands
 import Google_Sheets as sheet
 import datetime
 
-client = commands.Bot(command_prefix = '~')
+prefix = '$'
+client = commands.Bot(command_prefix = prefix)
 client.remove_command('help')
 
 @client.event
 async def on_ready():
     print('Bot is ready.')
-    await client.change_presence(activity=discord.Game('~help for commands'))
+    await client.change_presence(activity=discord.Game(f'{prefix}help for commands'))
 
 @client.command()
 async def ping(ctx):
@@ -40,7 +41,7 @@ async def help(ctx,specified="none"):
     
     specified = specified.casefold()
     
-    fantasy_help_message = """
+    fantasy_help_message = f"""
 **Command: fantasy_help**
 *Aliases: fantasy_help, fantasy, fhelp, f_help*
 
@@ -53,41 +54,41 @@ Displays a help message with rules and commands for the RLPC Fantasy League
 Creates a fantasy account linked to your discord username. If you change your username, message arco to regain access to your account.
 In addition to the command, you must also include the league you play in (major, aaa, aa, a, or none) to help prevent match fixing.
 
-Usage: ~createaccount [league]
+Usage: {prefix}createaccount [league]
     """
-    team_message = """
+    team_message = f"""
 **Command: team**
 *Aliases: show, showteam*
 
 Displays a player's current fantasy team. You must also include the discord username (case sensitive, without discriminator) of the player.
 Leave [username] blank if you want to display your own team.
 
-Usage: ~team [username]
+Usage: {prefix}team [username]
     """
-    info_message = """
+    info_message = f"""
 **Command: playerinfo**
 *Aliases: info, player, player_info*
 
 Display's a player's mmr, team, league, and salary/fantasy value. Make sure the player's name is spelled the same as on the spreadsheet (case sensitive)
 
-Usage: ~info [player]
+Usage: {prefix}info [player]
     """
-    pick_message = """
+    pick_message = f"""
 **Command: pick_player**
 *Aliases: pick, pick_player, pickplayer, addplayer, add_player*
 
 Adds a player to your fantasy team. Include the player's name (as spelled on the sheet, case sensitive) and which of the five slots you'd like to use.
 Use ~team to see which players are already in each slot
 
-Usage: ~pick [player] [slot]
+Usage: {prefix}pick [player] [slot]
     """
-    drop_message = """
+    drop_message = f"""
 **Command: drop_player**
 *Aliases: drop, dropplayer, drop_player, removeplayer, remove_player*
 
 Drops a player from your team, replacing them with "Not Picked". You must specify which slot you'd like to empty.
 
-Usage ~drop [slot]
+Usage {prefix}drop [slot]
     """
     lb_message = """
 **Command: leaderboard**
@@ -95,65 +96,65 @@ Usage ~drop [slot]
 
 Displays the current fantasy leaderboard.
     """
-    predict_message = """
+    predict_message = f"""
 **Command: predict**
 *Aliases: predict, scorepredict, predictscore, score_predict, predict_score*
 
 Uses an ELO system to give every team a rating, and predicts the score of a hypothetical matchup between two teams.
 Include the league and two teams. You may also include how many games would be played, or leave [# of games] blank for the probability out of 100 that each team wins.
 
-Usage: ~predict [league] [team 1] [team 2] [# of games]
+Usage: {prefix}predict [league] [team 1] [team 2] [# of games]
     """
-    rank_message = """
+    rank_message = f"""
 **Command: rank**
 *Aliases: rankteams*
 
 Uses an ELO system to give every team a rating, and displays a list ranking each team in a league. Include the league you want to rank.
 
-Usage: ~rank [league]
+Usage: {prefix}rank [league]
     """
-    links_message = """
+    links_message = f"""
 Different links can be found using this bot.
 
-**~rlpc** shows a link to the RLPC discord server
-**~rlpcnews** shows a link to the RLPC News discord server, with all sorts of news/power rankings and other things
-**~reddit** shows a link to the RLPC Subreddit, where news articles are posted
-**~apply** shows a link to apply to become a part of RLPC News!
+**{prefix}rlpc** shows a link to the RLPC discord server
+**{prefix}rlpcnews** shows a link to the RLPC News discord server, with all sorts of news/power rankings and other things
+**{prefix}reddit** shows a link to the RLPC Subreddit, where news articles are posted
+**{prefix}apply** shows a link to apply to become a part of RLPC News!
     """
-    help_message1 = """
+    help_message1 = f"""
 Hello! This is a bot primarily meant to run a fantasy league for RLPC, but it has some other functions as well!
 If you have any questions, notice any issues or bugs, or have any suggestions, please feel free to contact <@160901864072806401>
 
 **__FANTASY COMMANDS__**
 
-**.fantasy_help** - Repeats much of this information, also includes important information about the fantasy league such as rules
-**.new_fantasy_player** - Creates a fantasy team linked to your discord account. Please include the league you play in, or 'none'.
-    *Example: .new_fantasy_player major*
-**.team** - Shows the current fantasy team of any fantasy player. ".team" will display your own team, although you can include any discord account name (Don't use nicknames')
-    *Example: .team arco
-**.info** - Gives important information about a player, such as their salary and a variety of stats.
-    *Example: .info arco*
-**.pick_player** - Adds a player to your fantasy team, in one of 5 player slots. Please specify which player you want, as well as which slot.
-    *Example: .pick_player arco 4*
-**.drop_player** - Can also be done with '.pick_player drop [slot]', drops the player in the specified slot, replacing them with 'Not Picked'.
-**.leaderboard** - Displays the current leaderboard of points
+**{prefix}fantasy_help** - Repeats much of this information, also includes important information about the fantasy league such as rules
+**{prefix}new_fantasy_player** - Creates a fantasy team linked to your discord account. Please include the league you play in, or 'none'.
+    *Example: {prefix}new_fantasy_player major*
+**{prefix}team** - Shows the current fantasy team of any fantasy player. "{prefix}team" will display your own team, although you can include any discord account name (Don't use nicknames')
+    *Example: {prefix}team arco
+**{prefix}info** - Gives important information about a player, such as their salary and a variety of stats.
+    *Example: {prefix}info arco*
+**{prefix}pick_player** - Adds a player to your fantasy team, in one of 5 player slots. Please specify which player you want, as well as which slot.
+    *Example: {prefix}pick_player arco 4*
+**{prefix}drop_player** - Can also be done with '{prefix}pick_player drop [slot]', drops the player in the specified slot, replacing them with 'Not Picked'.
+**{prefix}leaderboard** - Displays the current leaderboard of points
     """
-    help_message2 = """
+    help_message2 = f"""
 **__NEWS/STATS COMMANDS__**
 
 *Note: RLPC News tracks an ELO ranking of each team based on each team's wins and losses and the strength of the opposing team. This is used for predicting scores and generating rankings*
 
-**.predict** - Predicts the score of a hypothetical match between two teams, based on the teams' current ELO. Include the league (major, AAA, etc), two teams, and number of games.
-    *Example: .predict major allusion evolution 5*
-**.rankteams** - Ranks all the teams in a league based on their current ELO.
-    *Example: .rankteams major*
+**{prefix}predict** - Predicts the score of a hypothetical match between two teams, based on the teams' current ELO. Include the league (major, AAA, etc), two teams, and number of games.
+    *Example: {prefix}predict major allusion evolution 5*
+**{prefix}rankteams** - Ranks all the teams in a league based on their current ELO.
+    *Example: {prefix}rankteams major*
     
 **__LINKS__**
 
-**rlpclink** - Shows an invite link for the RLPC Server
-**rlpcnewslink** - Shows an invite link for the RLPC News Server
-**reddit** - Links to the RLPC Reddit Page, where RLPC News articles are posted
-**apply** - Shows a link to apply to become a part of RLPC News
+**{prefix}rlpclink** - Shows an invite link for the RLPC Server
+**{prefix}rlpcnewslink** - Shows an invite link for the RLPC News Server
+**{prefix}reddit** - Links to the RLPC Reddit Page, where RLPC News articles are posted
+**{prefix}apply** - Shows a link to apply to become a part of RLPC News
     """
     if specified == "none":
         await message_author.send(help_message1)
