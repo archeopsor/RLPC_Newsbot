@@ -422,7 +422,7 @@ def info(player):
     players = players.set_index("Username")
     return(players.loc[player])
 
-def search(minsalary=0, maxsalary=700, league="all", team="all", name="none"):
+def search(minsalary=0, maxsalary=700, league="all", team="all", name="none", maxdistance=5):
     sheet_id = sheet.SPREADSHEET_ID
     sheet_range = 'Player Info!A1:F'
     gsheet = sheet.get_google_sheet(sheet_id, sheet_range)
@@ -456,5 +456,6 @@ def search(minsalary=0, maxsalary=700, league="all", team="all", name="none"):
         players.loc[row,'editdistance'] = distance
     
     players = players.sort_values(by='editdistance')
+    players = players.loc[players['editdistance'] <= maxdistance]
     players = players.drop('editdistance',axis=1)
     return(players.head(5))

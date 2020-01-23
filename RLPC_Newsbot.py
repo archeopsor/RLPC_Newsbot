@@ -106,9 +106,9 @@ You don't need to use every argument, just doing {prefix}search will display the
 
 Usage: {prefix}search [type] [argument]
 
-*[type] can be min, max, team, league, or name*
+*[type] can be min, max, team, league, name, or strictness*
 *[argument] is where you put the search parameter*
-*You can use anywhere from 0 to 5 of the type/argument pairs*
+*You can use anywhere from 0 to 6 of the type/argument pairs*
     """
     predict_message = f"""
 **Command: predict**

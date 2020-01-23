@@ -105,19 +105,22 @@ Welcome to RLPC Fantasy! This is a just-for-fun fantasy league in which people c
     *Example: {prefix}pick_player arco 4*
 **{prefix}drop_player** - Can also be done with '{prefix}pick_player drop [slot]', drops the player in the specified slot, replacing them with 'Not Picked'.
 **{prefix}leaderboard** - Displays the current leaderboard of points
+**{prefix}search**- Searches for the top 5 players fiting specified parameters
+    *Example: {prefix}search name: arco min: 100 max: 160 league: AA team: all strictness: 3
         """
         await ctx.send(answer)
         
     @commands.command(aliases=("searchplayers",))
-    async def search(self,ctx,arg1="",arg2="",arg3="",arg4="",arg5="",arg6="",arg7="",arg8="",arg9="",arg10=""):
+    async def search(self,ctx,arg1="",arg2="",arg3="",arg4="",arg5="",arg6="",arg7="",arg8="",arg9="",arg10="",arg11="",arg12=""):
         async with ctx.typing():    
             name = "none"
             minsalary = 0
             maxsalary = 700
             league = "all"
             team = "all"
-            argument_labels = [arg1, arg3, arg5, arg7, arg9]
-            arguments = [arg2, arg4, arg6, arg8, arg10]
+            maxdistance = 5
+            argument_labels = [arg1, arg3, arg5, arg7, arg9, arg11]
+            arguments = [arg2, arg4, arg6, arg8, arg10, arg12]
             for arg in argument_labels:
                 index = argument_labels.index(arg)
                 if arg.casefold() in ["name","username","player","name:","username:","player:"]:
@@ -130,8 +133,10 @@ Welcome to RLPC Fantasy! This is a just-for-fun fantasy league in which people c
                     team = arguments[index]
                 elif arg.casefold() in ["league","league:"]:
                     league = arguments[index]
-            
-            answer = fantasy.search(minsalary=minsalary,maxsalary=maxsalary,league=league,team=team,name=name)
+                elif arg.casefold() in ["maxdistance","difference","difference:","maxdistance:","strictness","strictness:"]:
+                    maxdistance = arguments[index]
+                
+            answer = fantasy.search(minsalary=minsalary,maxsalary=maxsalary,league=league,team=team,name=name,maxdistance=maxdistance)
             print(answer)
             
             embed1 = discord.Embed(title=answer.iloc[0,0], color=0x000080)
