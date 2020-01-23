@@ -88,13 +88,27 @@ Usage: {prefix}pick [player] [slot]
 
 Drops a player from your team, replacing them with "Not Picked". You must specify which slot you'd like to empty.
 
-Usage {prefix}drop [slot]
+Usage: {prefix}drop [slot]
     """
-    lb_message = """
+    lb_message = f"""
 **Command: leaderboard**
 *Aliases: lb, standings*
 
 Displays the current fantasy leaderboard.
+    """
+    search_message = f"""
+**Command: search**
+*Aliases: searchplayers*
+
+Finds the five players that best meet the specified requirements. Can specify a minimum salary, maximum salary, team, league, and name. 
+Input the arguments as two words, with one word to specify which argument you're using (ex: min: or team:) and then the desired argument (ex: 100 or Bulls)
+You don't need to use every argument, just doing {prefix}search will display the first five players by alphabetical order.
+
+Usage: {prefix}search [type] [argument]
+
+*[type] can be min, max, team, league, or name*
+*[argument] is where you put the search parameter*
+*You can use anywhere from 0 to 5 of the type/argument pairs*
     """
     predict_message = f"""
 **Command: predict**
@@ -173,6 +187,8 @@ If you have any questions, notice any issues or bugs, or have any suggestions, p
         await message_author.send(drop_message)
     elif specified in ["leaderboard","lb","standings","generate_leaderboard"]:
         await message_author.send(lb_message)
+    elif specified in ["search","searchplayers","searchplayer"]:
+        await message_author.send(search_message)
     elif specified in ["predict","scorepredict","predictscore","score_predict","predict_score"]:
         await message_author.send(predict_message)
     elif specified in ["rankteams","rank"]:
