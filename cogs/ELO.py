@@ -1,5 +1,6 @@
 from discord.ext import commands
 import RLPC_ELO
+import discord
 
 recall_data = RLPC_ELO.recall_data
 recall_data()
@@ -16,18 +17,36 @@ class ELO(commands.Cog):
         
     @commands.command(aliases=("predict","predictscore","score_predict","predict_score",))
     async def scorepredict(self,ctx,league,team1,team2,bestof=100):
-        answer = exp_score(league,team1,team2,bestof)
+        async with ctx.typing():
+            answer = RLPC_ELO.exp_score(league,team1,team2,bestof)
         await ctx.send(answer)
         
     @scorepredict.error
     async def scorepredict_error(self,ctx,error):
-        if isinstance(error,commands.BadArgument):
-            await ctx.send('There was an error with your request')
+        if isinstance(error,commands.MissingRequiredArgument):
+            await ctx.send('Something went wrong')
         
     @commands.command(aliases=("rank",))
     async def rankteams(self,ctx,league):
-        answer = rank_teams(league)
-        await ctx.send(answer)
+        async with ctx.typing():
+            answer = RLPC_ELO.rank_teams(league)
+            answer = answer.reset_index()
+            if league.casefold() == "major":
+                league = "Major"
+            else:
+                league = league.upper()
+            standings = discord.Embed(title=f"{league} Rankings",color=0x000080,description=f"Computer-generated rankings for the {league} league, based on an internal ELO system")
+            teams_elos = []
+            for row in answer.index:
+                teams_elos.append(f'{answer.loc[row][0]}: {answer.loc[row][1]}')
+            value_response = ""
+            for i in teams_elos:
+                value_response += f' \n {i}'
+            value_response = value_response[3:]
+            standings.add_field(name="Rankings", value=value_response)
+            # for row in answer.index:
+            #     standings.add_field(name=f'{row+1}. {answer.loc[row][0]}:',value=answer.loc[row][1],inline=False)
+        await ctx.send(embed=standings)
         
     @rankteams.error
     async def rankteams_error(self,ctx,error):

@@ -1,5 +1,6 @@
 from discord.ext import commands
 import fantasy_infrastructure as fantasy
+import discord
 
 prefix = '$'
 client = commands.Bot(command_prefix = prefix)
@@ -11,13 +12,14 @@ class Fantasy(commands.Cog):
         
     @commands.command(aliases=("createaccount","create_account","newplayer", "new_player","newaccount","new_account","add_fantasy_player","new"))
     async def new_fantasy_player(self,ctx,league):
-        if league.casefold() not in ["major","aaa","aa","a","none"]:
-            await ctx.send(f"{league} could not be understood")
-            return
-        else:
-            pass
-        author = ctx.message.author.name
-        answer = fantasy.add_fantasy_player(author,league)
+        async with ctx.typing():
+            if league.casefold() not in ["major","aaa","aa","a","none"]:
+                await ctx.send(f"{league} could not be understood")
+                return
+            else:
+                pass
+            author = ctx.message.author.name
+            answer = fantasy.add_fantasy_player(author,league)
         await ctx.send(answer)
         
     @new_fantasy_player.error
@@ -27,9 +29,10 @@ class Fantasy(commands.Cog):
         
     @commands.command(aliases=("pick", "pickplayer", "addplayer", "add_player",))
     async def pick_player(self,ctx,player,slot=1):
-        author = ctx.message.author.name
-        person = author
-        answer = fantasy.pick_player(person,player,slot)
+        async with ctx.typing():    
+            author = ctx.message.author.name
+            person = author
+            answer = fantasy.pick_player(person,player,slot)
         await ctx.send(answer)
         
     @pick_player.error
@@ -39,9 +42,10 @@ class Fantasy(commands.Cog):
             
     @commands.command(aliases=("drop","dropplayer","removeplayer","remove_player",))
     async def drop_player(self,ctx,slot):
-        author = ctx.message.author.name
-        person = author
-        answer = fantasy.pick_player(person,"drop",slot)
+        async with ctx.typing():
+            author = ctx.message.author.name
+            person = author
+            answer = fantasy.pick_player(person,"drop",slot)
         await ctx.send(answer)
         
     @drop_player.error
@@ -51,20 +55,28 @@ class Fantasy(commands.Cog):
             
     @commands.command(aliases=("leaderboard","lb","standings",))
     async def generate_leaderboard(self,ctx):
-        answer = fantasy.generate_leaderboard()
+        async with ctx.typing():
+            answer = fantasy.generate_leaderboard()
         await ctx.send(answer)
         
     @commands.command(aliases=("show","team","showteam",))
     async def show_team(self,ctx,author="none"):
-        if author == "none":
-            author = ctx.message.author.name
-        answer = fantasy.show_team(author)
+        async with ctx.typing():
+            if author == "none":
+                author = ctx.message.author.name
+            answer = fantasy.show_team(author)
         await ctx.send(answer)
     
     @commands.command(aliases=("player","playerinfo","info",))
     async def player_info(self,ctx,player):
-        answer = fantasy.info(player)
+        async with ctx.typing():
+            answer = fantasy.info(player)
         await ctx.send(answer)
+    
+    @player_info.error
+    async def player_info_error(self,ctx,error):
+        if isinstance(error,commands.MissingRequiredArgument):
+            await ctx.send("Please include a player")
         
     @commands.command(aliases=("fantasy","fhelp","f_help"))
     async def fantasy_help(self,ctx):
@@ -98,29 +110,73 @@ Welcome to RLPC Fantasy! This is a just-for-fun fantasy league in which people c
         
     @commands.command(aliases=("searchplayers",))
     async def search(self,ctx,arg1="",arg2="",arg3="",arg4="",arg5="",arg6="",arg7="",arg8="",arg9="",arg10=""):
-        name = "none"
-        minsalary = 0
-        maxsalary = 700
-        league = "all"
-        team = "all"
-        argument_labels = [arg1, arg3, arg5, arg7, arg9]
-        arguments = [arg2, arg4, arg6, arg8, arg10]
-        for arg in argument_labels:
-            index = argument_labels.index(arg)
-            if arg.casefold() in ["name","username","player","name:","username:","player:"]:
-                name = arguments[index]
-            elif arg.casefold() in ["min","min:","minimum","minimum:","minsalary","minsalary:","min_salary","min_salary:","minimumsalary","minimumsalary:","minimum_salary:","minimum_salary"]:
-                minsalary = int(arguments[index])
-            elif arg.casefold() in ["max","max:","maximum","maximum:","maxsalary","maxsalary:","max_salary","max_salary:","maximumsalary","maximumsalary:","maximum_salary:","maximum_salary"]:
-                maxsalary = int(arguments[index])
-            elif arg.casefold() in ["team","team:"]:
-                team = arguments[index]
-            elif arg.casefold() in ["league","league:"]:
-                league = arguments[index]
+        async with ctx.typing():    
+            name = "none"
+            minsalary = 0
+            maxsalary = 700
+            league = "all"
+            team = "all"
+            argument_labels = [arg1, arg3, arg5, arg7, arg9]
+            arguments = [arg2, arg4, arg6, arg8, arg10]
+            for arg in argument_labels:
+                index = argument_labels.index(arg)
+                if arg.casefold() in ["name","username","player","name:","username:","player:"]:
+                    name = arguments[index]
+                elif arg.casefold() in ["min","min:","minimum","minimum:","minsalary","minsalary:","min_salary","min_salary:","minimumsalary","minimumsalary:","minimum_salary:","minimum_salary"]:
+                    minsalary = int(arguments[index])
+                elif arg.casefold() in ["max","max:","maximum","maximum:","maxsalary","maxsalary:","max_salary","max_salary:","maximumsalary","maximumsalary:","maximum_salary:","maximum_salary"]:
+                    maxsalary = int(arguments[index])
+                elif arg.casefold() in ["team","team:"]:
+                    team = arguments[index]
+                elif arg.casefold() in ["league","league:"]:
+                    league = arguments[index]
+            
+            answer = fantasy.search(minsalary, maxsalary, league, team, name)
+            
+            embed1 = discord.Embed(title=answer.loc[0][0], color=0x000080)
+            embed1.add_field(name="Username:", value=answer.loc[0][0], inline=True)
+            embed1.add_field(name="MMR:", value=answer.loc[0][1], inline=True)
+            embed1.add_field(name="Team:", value=answer.loc[0][2], inline=True)
+            embed1.add_field(name="League:", value=answer.loc[0][3], inline=True)
+            embed1.add_field(name="Fantasy Value:", value=answer.loc[0][4], inline=True)
+            embed1.add_field(name="Allowed?", value=answer.loc[0][5], inline=True)
+            
+            embed2 = discord.Embed(title=answer.loc[1][0], color=0x000080)
+            embed2.add_field(name="Username:", value=answer.loc[1][0], inline=True)
+            embed2.add_field(name="MMR:", value=answer.loc[1][1], inline=True)
+            embed2.add_field(name="Team:", value=answer.loc[1][2], inline=True)
+            embed2.add_field(name="League:", value=answer.loc[1][3], inline=True)
+            embed2.add_field(name="Fantasy Value:", value=answer.loc[1][4], inline=True)
+            embed2.add_field(name="Allowed?", value=answer.loc[1][5], inline=True)
+            
+            embed3 = discord.Embed(title=answer.loc[2][0], color=0x000080)
+            embed3.add_field(name="Username:", value=answer.loc[2][0], inline=True)
+            embed3.add_field(name="MMR:", value=answer.loc[2][1], inline=True)
+            embed3.add_field(name="Team:", value=answer.loc[2][2], inline=True)
+            embed3.add_field(name="League:", value=answer.loc[2][3], inline=True)
+            embed3.add_field(name="Fantasy Value:", value=answer.loc[2][4], inline=True)
+            embed3.add_field(name="Allowed?", value=answer.loc[2][5], inline=True)
         
-        answer = fantasy.search(minsalary, maxsalary, league, team, name)
-        await ctx.send(answer)
-                
+            embed4 = discord.Embed(title=answer.loc[3][0], color=0x000080)
+            embed4.add_field(name="Username:", value=answer.loc[3][0], inline=True)
+            embed4.add_field(name="MMR:", value=answer.loc[3][1], inline=True)
+            embed4.add_field(name="Team:", value=answer.loc[3][2], inline=True)
+            embed4.add_field(name="League:", value=answer.loc[3][3], inline=True)
+            embed4.add_field(name="Fantasy Value:", value=answer.loc[3][4], inline=True)
+            embed4.add_field(name="Allowed?", value=answer.loc[3][5], inline=True)
+        
+            embed5 = discord.Embed(title=answer.loc[4][0], color=0x000080)
+            embed5.add_field(name="Username:", value=answer.loc[4][0], inline=True)
+            embed5.add_field(name="MMR:", value=answer.loc[4][1], inline=True)
+            embed5.add_field(name="Team:", value=answer.loc[4][2], inline=True)
+            embed5.add_field(name="League:", value=answer.loc[4][3], inline=True)
+            embed5.add_field(name="Fantasy Value:", value=answer.loc[4][4], inline=True)
+            embed5.add_field(name="Allowed?", value=answer.loc[4][5], inline=True)
+        
+        await ctx.send("Here are 5 players matching those parameters (sorted alphabetically):")
+        embeds = [embed1, embed2, embed3, embed4, embed5]
+        for i in embeds:
+            await ctx.send(embed=i)
         
 def setup(client):
     client.add_cog(Fantasy(client))

@@ -444,7 +444,6 @@ def search(minsalary=0, maxsalary=700, league="all", team="all", name="none"):
         players = players.loc[players['Team'] == team]
     
     if name == "none":
-        players = players.set_index('Username')
         return(players.head(5))
     
     # Search names by assigning an editdistance value 
@@ -458,5 +457,4 @@ def search(minsalary=0, maxsalary=700, league="all", team="all", name="none"):
     
     players = players.sort_values(by='editdistance')
     players = players.drop('editdistance',axis=1)
-    players = players.set_index('Username')
     return(players.head(5))
