@@ -112,7 +112,7 @@ Welcome to RLPC Fantasy! This is a just-for-fun fantasy league in which people c
         
     @commands.command(aliases=("searchplayers",))
     async def search(self,ctx,arg1="",arg2="",arg3="",arg4="",arg5="",arg6="",arg7="",arg8="",arg9="",arg10="",arg11="",arg12=""):
-        async with ctx.typing():    
+        async with ctx.typing():
             name = "none"
             minsalary = 0
             maxsalary = 700
@@ -134,53 +134,69 @@ Welcome to RLPC Fantasy! This is a just-for-fun fantasy league in which people c
                 elif arg.casefold() in ["league","league:"]:
                     league = arguments[index]
                 elif arg.casefold() in ["maxdistance","difference","difference:","maxdistance:","strictness","strictness:"]:
-                    maxdistance = arguments[index]
-                
+                    maxdistance = int(arguments[index])
+            
             answer = fantasy.search(minsalary=minsalary,maxsalary=maxsalary,league=league,team=team,name=name,maxdistance=maxdistance)
-            print(answer)
             
-            embed1 = discord.Embed(title=answer.iloc[0,0], color=0x000080)
-            embed1.add_field(name="Username:", value=answer.iloc[0,0], inline=True)
-            embed1.add_field(name="MMR:", value=answer.iloc[0,1], inline=True)
-            embed1.add_field(name="Team:", value=answer.iloc[0,2], inline=True)
-            embed1.add_field(name="League:", value=answer.iloc[0,3], inline=True)
-            embed1.add_field(name="Fantasy Value:", value=answer.iloc[0,4], inline=True)
-            embed1.add_field(name="Allowed?", value=answer.iloc[0,5], inline=True)
+            embeds = []
             
-            embed2 = discord.Embed(title=answer.iloc[1,0], color=0x000080)
-            embed2.add_field(name="Username:", value=answer.iloc[1,0], inline=True)
-            embed2.add_field(name="MMR:", value=answer.iloc[1,1], inline=True)
-            embed2.add_field(name="Team:", value=answer.iloc[1,2], inline=True)
-            embed2.add_field(name="League:", value=answer.iloc[1,3], inline=True)
-            embed2.add_field(name="Fantasy Value:", value=answer.iloc[1,4], inline=True)
-            embed2.add_field(name="Allowed?", value=answer.iloc[1,5], inline=True)
+            if len(answer.index) > 0:
+                embed1 = discord.Embed(title=answer.iloc[0,0], color=0x000080)
+                embed1.add_field(name="Username:", value=answer.iloc[0,0], inline=True)
+                embed1.add_field(name="MMR:", value=answer.iloc[0,1], inline=True)
+                embed1.add_field(name="Team:", value=answer.iloc[0,2], inline=True)
+                embed1.add_field(name="League:", value=answer.iloc[0,3], inline=True)
+                embed1.add_field(name="Fantasy Value:", value=answer.iloc[0,4], inline=True)
+                embed1.add_field(name="Allowed?", value=answer.iloc[0,5], inline=True)
+                embeds.append(embed1)
             
-            embed3 = discord.Embed(title=answer.iloc[2,0], color=0x000080)
-            embed3.add_field(name="Username:", value=answer.iloc[2,0], inline=True)
-            embed3.add_field(name="MMR:", value=answer.iloc[2,1], inline=True)
-            embed3.add_field(name="Team:", value=answer.iloc[2,2], inline=True)
-            embed3.add_field(name="League:", value=answer.iloc[2,3], inline=True)
-            embed3.add_field(name="Fantasy Value:", value=answer.iloc[2,4], inline=True)
-            embed3.add_field(name="Allowed?", value=answer.iloc[2,5], inline=True)
+            if len(answer.index) > 1:
+                embed2 = discord.Embed(title=answer.iloc[1,0], color=0x000080)
+                embed2.add_field(name="Username:", value=answer.iloc[1,0], inline=True)
+                embed2.add_field(name="MMR:", value=answer.iloc[1,1], inline=True)
+                embed2.add_field(name="Team:", value=answer.iloc[1,2], inline=True)
+                embed2.add_field(name="League:", value=answer.iloc[1,3], inline=True)
+                embed2.add_field(name="Fantasy Value:", value=answer.iloc[1,4], inline=True)
+                embed2.add_field(name="Allowed?", value=answer.iloc[1,5], inline=True)
+                embeds.append(embed2)
+            
+            if len(answer.index) > 2:
+                embed3 = discord.Embed(title=answer.iloc[2,0], color=0x000080)
+                embed3.add_field(name="Username:", value=answer.iloc[2,0], inline=True)
+                embed3.add_field(name="MMR:", value=answer.iloc[2,1], inline=True)
+                embed3.add_field(name="Team:", value=answer.iloc[2,2], inline=True)
+                embed3.add_field(name="League:", value=answer.iloc[2,3], inline=True)
+                embed3.add_field(name="Fantasy Value:", value=answer.iloc[2,4], inline=True)
+                embed3.add_field(name="Allowed?", value=answer.iloc[2,5], inline=True)
+                embeds.append(embed3)
+            
+            if len(answer.index) > 3:
+                embed4 = discord.Embed(title=answer.iloc[3,0], color=0x000080)
+                embed4.add_field(name="Username:", value=answer.iloc[3,0], inline=True)
+                embed4.add_field(name="MMR:", value=answer.iloc[3,1], inline=True)
+                embed4.add_field(name="Team:", value=answer.iloc[3,2], inline=True)
+                embed4.add_field(name="League:", value=answer.iloc[3,3], inline=True)
+                embed4.add_field(name="Fantasy Value:", value=answer.iloc[3,4], inline=True)
+                embed4.add_field(name="Allowed?", value=answer.iloc[3,5], inline=True)
+                embeds.append(embed4)
+            
+            if len(answer.index) > 4:
+                embed5 = discord.Embed(title=answer.iloc[4,0], color=0x000080)
+                embed5.add_field(name="Username:", value=answer.iloc[4,0], inline=True)
+                embed5.add_field(name="MMR:", value=answer.iloc[4,1], inline=True)
+                embed5.add_field(name="Team:", value=answer.iloc[4,2], inline=True)
+                embed5.add_field(name="League:", value=answer.iloc[4,3], inline=True)
+                embed5.add_field(name="Fantasy Value:", value=answer.iloc[4,4], inline=True)
+                embed5.add_field(name="Allowed?", value=answer.iloc[4,5], inline=True)
+                embeds.append(embed5)
         
-            embed4 = discord.Embed(title=answer.iloc[3,0], color=0x000080)
-            embed4.add_field(name="Username:", value=answer.iloc[3,0], inline=True)
-            embed4.add_field(name="MMR:", value=answer.iloc[3,1], inline=True)
-            embed4.add_field(name="Team:", value=answer.iloc[3,2], inline=True)
-            embed4.add_field(name="League:", value=answer.iloc[3,3], inline=True)
-            embed4.add_field(name="Fantasy Value:", value=answer.iloc[3,4], inline=True)
-            embed4.add_field(name="Allowed?", value=answer.iloc[3,5], inline=True)
-        
-            embed5 = discord.Embed(title=answer.iloc[4,0], color=0x000080)
-            embed5.add_field(name="Username:", value=answer.iloc[4,0], inline=True)
-            embed5.add_field(name="MMR:", value=answer.iloc[4,1], inline=True)
-            embed5.add_field(name="Team:", value=answer.iloc[4,2], inline=True)
-            embed5.add_field(name="League:", value=answer.iloc[4,3], inline=True)
-            embed5.add_field(name="Fantasy Value:", value=answer.iloc[4,4], inline=True)
-            embed5.add_field(name="Allowed?", value=answer.iloc[4,5], inline=True)
-        
-        await ctx.send("Here are 5 players matching those parameters (sorted alphabetically):")
-        embeds = [embed1, embed2, embed3, embed4, embed5]
+        if len(embeds) == 0:
+            await ctx.send("There were no players matching those parameters")
+            return
+        elif len(embeds) == 1:
+            await ctx.send(f"Here's the only player matching those parameters")
+        else: 
+            await ctx.send(f"Here are {len(answer.index)} players matching those parameters (sorted alphabetically):")
         for i in embeds:
             await ctx.send(embed=i)
         

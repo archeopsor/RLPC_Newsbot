@@ -430,6 +430,11 @@ def search(minsalary=0, maxsalary=700, league="all", team="all", name="none", ma
     players = players.sort_values(by='Username')
     players = players.reset_index(drop=True)
     
+    if team.casefold() in ["all","none","no","idc"]:
+        team = "all"
+    if league.casefold() in ["all","none","no","idc"]:
+        league = "all"
+    
     for row in players.index:
         salary = int(players.loc[row,'Fantasy Value'])
         players.loc[row,'Fantasy Value'] = salary
