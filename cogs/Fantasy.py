@@ -57,7 +57,10 @@ class Fantasy(commands.Cog):
     async def generate_leaderboard(self,ctx):
         async with ctx.typing():
             answer = fantasy.generate_leaderboard()
-        await ctx.send(answer)
+            leaderboard=discord.Embed(title="Fantasy Leaderboard", color=0xffff00)
+            for row in answer.index:
+                leaderboard.add_field(name=f'{row+1}: {answer.loc[row,"Username"]}', value=answer.loc[row,"Total Points"], inline=False)
+        await ctx.send(embed=leaderboard)
         
     @commands.command(aliases=("show","team","showteam",))
     async def show_team(self,ctx,author="none"):
@@ -65,13 +68,35 @@ class Fantasy(commands.Cog):
             if author == "none":
                 author = ctx.message.author.name
             answer = fantasy.show_team(author)
-        await ctx.send(answer)
+            team=discord.Embed(title=f"{author}'s team", color=0x008080)
+            team.add_field(name="Account League", value=answer[0], inline=True)
+            team.add_field(name="Player 1", value=answer[1], inline=True)
+            team.add_field(name="Player 2", value=answer[2], inline=True)
+            team.add_field(name="Player 3", value=answer[3], inline=True)
+            team.add_field(name="Player 4", value=answer[4], inline=True)
+            team.add_field(name="Player 5", value=answer[5], inline=True)
+            team.add_field(name="Transfers Left", value=answer[6], inline=True)
+            team.add_field(name="Salary", value=answer[7], inline=True)
+            team.add_field(name="Player 1 Points", value=answer[8], inline=True)
+            team.add_field(name="Player 2 Points", value=answer[9], inline=True)
+            team.add_field(name="Player 3 Points", value=answer[10], inline=True)
+            team.add_field(name="Player 4 Points", value=answer[11], inline=True)
+            team.add_field(name="Player 5 Points", value=answer[12], inline=True)
+            team.add_field(name="Total Points", value=answer[13], inline=False)
+        await ctx.send(embed=team)
     
     @commands.command(aliases=("player","playerinfo","info",))
     async def player_info(self,ctx,player):
         async with ctx.typing():
             answer = fantasy.info(player)
-        await ctx.send(answer)
+            print(answer)
+            player_card=discord.Embed(title=f"{player}'s player info", color=0xff0000)
+            player_card.add_field(name="MMR", value=answer[0], inline=True)
+            player_card.add_field(name="Team", value=answer[1], inline=True)
+            player_card.add_field(name="League", value=answer[2], inline=True)
+            player_card.add_field(name="Fantasy Value", value=answer[3], inline=True)
+            player_card.add_field(name="Allowed?", value=answer[4], inline=True)
+        await ctx.send(embed=player_card)
     
     @player_info.error
     async def player_info_error(self,ctx,error):

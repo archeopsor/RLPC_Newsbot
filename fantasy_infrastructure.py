@@ -219,7 +219,7 @@ def parse_game_data(league):
 def generate_leaderboard():
     gsheet = sheet.get_google_sheet(sheet.SPREADSHEET_ID,'Fantasy Players!A1:O')
     fantasy_players = sheet.gsheet2df(gsheet)
-    fantasy_players = fantasy_players[['Username','Total Points']].set_index('Username')
+    fantasy_players = fantasy_players[['Username','Total Points']]
     return(fantasy_players.sort_values(by='Total Points',ascending=False))
 
 # Creates an account for someone who wants to play, and sets their team of 5 all to "Not Picked"
@@ -411,6 +411,9 @@ def show_team(person):
     sheet_range = 'Fantasy Players!A1:O'
     gsheet = sheet.get_google_sheet(sheet_id, sheet_range)
     fantasy_teams = sheet.gsheet2df(gsheet)
+    for row in fantasy_teams.index:
+        fantasy_teams.loc[row,'Username'] = fantasy_teams.loc[row,'Username'].upper()
+    person = person.upper()
     fantasy_teams = fantasy_teams.set_index("Username")
     return(fantasy_teams.loc[person])
 
@@ -419,6 +422,9 @@ def info(player):
     sheet_range = 'Player Info!A1:F'
     gsheet = sheet.get_google_sheet(sheet_id, sheet_range)
     players = sheet.gsheet2df(gsheet)
+    for row in players.index:
+        players.loc[row,'Username'] = players.loc[row,'Username'].upper()
+    player = player.upper()
     players = players.set_index("Username")
     return(players.loc[player])
 
