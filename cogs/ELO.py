@@ -24,7 +24,11 @@ class ELO(commands.Cog):
     @scorepredict.error
     async def scorepredict_error(self,ctx,error):
         if isinstance(error,commands.MissingRequiredArgument):
-            await ctx.send('Something went wrong')
+            if error.param.name == 'league':
+                await ctx.send('Please include a league and two teams')
+            if error.param.name in ['team1','team2']:
+                await ctx.send('Please include two teams')
+            await ctx.send(f'The format for this command is {prefix}predict [league] [team 1] [team 2] [# of games *(optional)*]')
         
     @commands.command(aliases=("rank",))
     async def rankteams(self,ctx,league):
