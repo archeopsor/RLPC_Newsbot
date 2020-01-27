@@ -2,6 +2,7 @@ import discord
 import os
 from discord.ext import commands
 import Google_Sheets as sheet
+import fantasy_infrastructure as fantasy
 import datetime
 
 prefix = '$'
@@ -204,14 +205,18 @@ for filename in os.listdir('./cogs'):
     if filename.endswith('.py'):
         client.load_extension(f'cogs.{filename[:-3]}')
         
+reset_executed = False
+parse_executed = False
+        
 @client.event
 async def on_message(message):
-    reset_executed = False
+    
+    # RESET WEEKLY TRANSFERS
     today_day = datetime.datetime.today().weekday()
     today_hour = int(str(datetime.datetime.now().time())[:2])
     
     # Reset every Monday when the first person says something
-    if reset_executed == False and today_day == 0:
+    if reset_executed != True and today_day == 0:
         
         # This will be turned back to false at 11:00 pm        
         reset_executed = True
@@ -224,8 +229,22 @@ async def on_message(message):
             cell = f'Fantasy Players!H{i+2}'
             sheet.update_cell(sheet.SPREADSHEET_ID, cell, 2)
     
-    if reset_executed == True and today_day == 0 and today_hour == 22:
+    elif reset_executed == True and today_day == 0 and today_hour in [22,23,24]:
         reset_executed = False
+        
+    # UPLOAD GAME DATA
+    
+    # Parse every morning as long as it's before 4 a.m.
+    if parse_executed != True and today_hour < 4:
+        parse_executed = True
+        
+        fantasy.parse_game_data("major")
+        fantasy.parse_game_data("AAA")
+        fantasy.parse_game_data("AA")
+        fantasy.parse_game_data("A")
+    
+    elif parse_executed == True and today_hour >= 4:
+        parse_executed == False    
         
     await client.process_commands(message)
 
