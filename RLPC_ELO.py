@@ -1,88 +1,77 @@
 import pandas as pd
+import Google_Sheets as sheet
+
+spreadsheet_id = sheet.SPREADSHEET_ID
 
 # Initial ELO for each team = 1000
 def reset_elo(league=""):
-    # Create a list of each team, to be added to a dictionary for each league
-    major_league_teams = ["Synergy", "The Monstars", "Iced Out", "Solar Flare", "Pantheon", "Origin", "Galaxy", "Eden", "Fatal Strikers", "Comet", "Empire", "Dragon Acid Gaming", "H2O", "Distortion", "Wasted Potential", "Frosty", "Valiant", "Bread", "Helix", "Storm", "Evolution", "Ferocity", "Anarchy", "Allusion"]
-    global majelo
-    majelo = {}
-    aaa_league_teams = ["X-Factor", "Alliance", "Hydra", "Reges", "Quantum Theory", "Titans", "Animosity", "CO2", "The Tune Squad", "Cosmos", "Clouded", "Orbit", "AfterShock", "Sun Spot", "Pure Talent", "The Snowmen", "Dauntless", "Dough Boys", "Azimuth", "Thunder", "Primal", "Lethal", "Royal", "Elusive"]
-    global minelo
-    minelo = {}
-    indy_league_teams = ["The Godfathers", "Ace of Spades", "Insanity", "The Fruitcakes", "Genin", "Venganza", "Century", "Semi Intentional", "Mighty Wombats", "Lemonade", "Alphas", "High Volume", "Shell Shocked", "Barnstormers", "Motion", "K2", "Octane Airlines", "Eyes On Fire", "Tempest", "Flawless"]
-    global indelo
-    indelo = {}
-    mav_league_teams = ["Mafia Esports", "Jack of Clubs", "Blizzard", "The Fruitcups", "The Academy", "Vortex", "Infinity", "Super Hopeful", "Crazy Hornets", "Apple Juice", "Kingsmen", "Rush", "Aerial Turtles", "The Aviators", "Velocity", "Broad Peak", "Scarab Speedway", "Nameless", "Spartans", "Legacy"]
-    global mavelo
-    mavelo = {}
+    gsheet = sheet.get_google_sheet(spreadsheet_id, 'ELO!A1:H')
+    global total_elo_data
+    total_elo_data = sheet.gsheet2df(gsheet)
     
-    if league.casefold() == "major":
-        for team in major_league_teams:
-            majelo[team] = 1000
-    elif league.casefold() == "aaa":
-        for team in aaa_league_teams:
-            minelo[team] = 1000
-    elif league.casefold() == "aa" or league == "indy":
-        for team in indy_league_teams:
-            indelo[team] = 1000
-    elif league.casefold() == "a" or league == "mav":
-        for team in mav_league_teams:
-            mavelo[team] = 1000
-    else:
-        for team in major_league_teams:
-            majelo[team]=1000
-        for team in aaa_league_teams:
-            minelo[team]=1000
-        for team in indy_league_teams:
-            indelo[team]=1000
-        for team in mav_league_teams:
-            mavelo[team]=1000
-            
+    global major_elo
+    major_elo = total_elo_data[['Major Teams','Major ELO']]
+    major_elo = major_elo.rename(columns={'Major Teams': 'teams','Major ELO': 'ELO'})
+    global aaa_elo
+    aaa_elo = total_elo_data[['AAA Teams','AAA ELO']]
+    aaa_elo = aaa_elo.rename(columns={'AAA Teams': 'teams','AAA ELO': 'ELO'})
+    global aa_elo
+    aa_elo = total_elo_data[['AA Teams','AA ELO']]
+    aa_elo = aa_elo.rename(columns={'AA Teams': 'teams','AA ELO': 'ELO'})
+    global a_elo
+    a_elo = total_elo_data[['A Teams','A ELO']]
+    a_elo = a_elo.rename(columns={'A Teams': 'teams','A ElO': 'ELO'})
+    
 reset_elo()
 
-majelo = pd.DataFrame.from_dict(majelo,orient="index",columns = ['ELO'])
-minelo = pd.DataFrame.from_dict(minelo,orient="index",columns = ['ELO'])
-indelo = pd.DataFrame.from_dict(indelo,orient="index",columns = ['ELO'])
-mavelo = pd.DataFrame.from_dict(mavelo,orient="index",columns = ['ELO'])
-
-#Save data
+#Save data to the spreadsheet
 def save_data(league=""):
     if league.casefold() == "major":
-        majelo.to_pickle("./majelo.pkl")
+        for row in major_elo.index:
+            if major_elo.iloc[row,1] != total_elo_data.iloc[row,1]:
+                sheet.update_cell(spreadsheet_id,f'ELO!B{row+2}',major_elo.iloc[row,1])
+            else:
+                pass
     elif league.casefold() == "aaa":
-        minelo.to_pickle("./minelo.pkl")
-    elif league.casefold() == "aa" or league.casefold() == "indy":
-        indelo.to_pickle("./indelo.pkl")
-    elif league.casefold() == "a" or league.casefold() == "mav":
-        mavelo.to_pickle("./mavelo.pkl")
+        for row in aaa_elo.index:
+            if aaa_elo.iloc[row,1] != total_elo_data.iloc[row,3]:
+                sheet.update_cell(spreadsheet_id,f'ELO!D{row+2}',aaa_elo.iloc[row,1])
+            else:
+                pass
+    elif league.casefold() == "aa":
+        for row in major_elo.index:
+            if aa_elo.iloc[row,1] != total_elo_data.iloc[row,5]:
+                sheet.update_cell(spreadsheet_id,f'ELO!F{row+2}',aa_elo.iloc[row,1])
+            else:
+                pass
+    elif league.casefold() == "a":
+        for row in major_elo.index:
+            if a_elo.iloc[row,1] != total_elo_data.iloc[row,7]:
+                sheet.update_cell(spreadsheet_id,f'ELO!H{row+2}',a_elo.iloc[row,1])
+            else:
+                pass
     else:
-        majelo.to_pickle("./majelo.pkl")
-        minelo.to_pickle("./minelo.pkl")
-        indelo.to_pickle("./indelo.pkl")
-        mavelo.to_pickle("./mavelo.pkl")
+        save_data("major")
+        save_data("aaa")
+        save_data("aa")
+        save_data("a")
     
 def recall_data(league=""):
-    global majelo
-    global minelo
-    global indelo
-    global mavelo
     if league.casefold() == "major":
-        majelo = pd.read_pickle("./majelo.pkl")
-        print(majelo)
+        reset_elo("major")
+        return(major_elo)
     elif league.casefold() == "aaa":
-        minelo = pd.read_pickle("./minelo.pkl")
-        print(minelo)
-    elif league.casefold() == "aa" or league.casefold() == "indy":
-        indelo = pd.read_pickle("./indelo.pkl")
-        print(indelo)
-    elif league.casefold() == "a" or league.casefold() == "mav":
-        mavelo = pd.read_pickle("./mavelo.pkl")
-        print(mavelo)
+        reset_elo("aaa")
+        return(aaa_elo)
+    elif league.casefold() == "aa":
+        reset_elo("aa")
+        return(aa_elo)
+    elif league.casefold() == "a":
+        reset_elo("a")
+        return(a_elo)
     else:
-        majelo = pd.read_pickle("./majelo.pkl")
-        minelo = pd.read_pickle("./minelo.pkl")
-        indelo = pd.read_pickle("./indelo.pkl")
-        mavelo = pd.read_pickle("./mavelo.pkl")
+        reset_elo()
+        return(total_elo_data)
         
 recall_data()
         
@@ -107,17 +96,17 @@ def add_games_auto(league):
         Qa = 0
         Qb = 0
         if league.casefold() == "major":
-            Qa = 10**(majelo['ELO'][team1]/400)
-            Qb = 10**(majelo['ELO'][team2]/400)
+            Qa = 10**(major_elo.loc[major_elo['teams']==team1,'ELO'][0]/400)
+            Qb = 10**(major_elo.loc[major_elo['teams']==team2,'ELO'][0]/400)
         elif league.casefold() == "aaa":
-            Qa = 10**(minelo['ELO'][team1]/400)
-            Qb = 10**(minelo['ELO'][team2]/400)
-        elif league.casefold() == "aa" or league.casefold() == "indy":
-            Qa = 10**(indelo['ELO'][team1]/400)
-            Qb = 10**(indelo['ELO'][team2]/400)
-        elif league.casefold() == "a" or league.casefold() == "mav":
-            Qa = 10**(mavelo['ELO'][team1]/400)
-            Qb = 10**(mavelo['ELO'][team2]/400)
+            Qa = 10**(aaa_elo.loc[aaa_elo['teams']==team1,'ELO'][0]/400)
+            Qb = 10**(aaa_elo.loc[aaa_elo['teams']==team2,'ELO'][0]/400)
+        elif league.casefold() == "aa":
+            Qa = 10**(aa_elo.loc[aa_elo['teams']==team1,'ELO'][0]/400)
+            Qb = 10**(aa_elo.loc[aa_elo['teams']==team2,'ELO'][0]/400)
+        elif league.casefold() == "a":
+            Qa = 10**(a_elo.loc[a_elo['teams']==team1,'ELO'][0]/400)
+            Qb = 10**(a_elo.loc[a_elo['teams']==team2,'ELO'][0]/400)
         Ea = Qa/(Qa+Qb)
         Eb = Qb/(Qa+Qb)
         Sa = 0
@@ -144,26 +133,17 @@ def add_games_auto(league):
             Sa = Ea
             Sb = Eb
         if league == "major":
-            majelo['ELO'][team1] = majelo['ELO'][team1] + 100*(Sa - Ea)
-            majelo['ELO'][team2] = majelo['ELO'][team2] + 100*(Sb - Eb)
-            majelo['ELO'][team1] = round(majelo['ELO'][team1])
-            majelo['ELO'][team2] = round(majelo['ELO'][team2])
+            major_elo.loc[major_elo['teams']==team1,'ELO'] = round(major_elo.loc[major_elo['teams']==team1,'ELO'][0] + 100*(Sa - Ea))
+            major_elo.loc[major_elo['teams']==team2,'ELO'] = round(major_elo.loc[major_elo['teams']==team2,'ELO'][0] + 100*(Sb - Eb))
         if league == "aaa":
-            minelo['ELO'][team1] = minelo['ELO'][team1] + 100*(Sa - Ea)
-            minelo['ELO'][team2] = minelo['ELO'][team2] + 100*(Sb - Eb)
-            minelo['ELO'][team1] = round(minelo['ELO'][team1])
-            minelo['ELO'][team2] = round(minelo['ELO'][team2])
-        if league == "aa" or league == "indy":
-            indelo['ELO'][team1] = indelo['ELO'][team1] + 100*(Sa - Ea)
-            indelo['ELO'][team2] = indelo['ELO'][team2] + 100*(Sb - Eb)
-            indelo['ELO'][team1] = round(indelo['ELO'][team1])
-            indelo['ELO'][team2] = round(indelo['ELO'][team2])
-        if league == "a" or league == "mav":
-            mavelo['ELO'][team1] = mavelo['ELO'][team1] + 100*(Sa - Ea)
-            mavelo['ELO'][team2] = mavelo['ELO'][team2] + 100*(Sb - Eb)
-            mavelo['ELO'][team1] = round(mavelo['ELO'][team1])
-            mavelo['ELO'][team2] = round(mavelo['ELO'][team2])
-    
+            aaa_elo.loc[aaa_elo['teams']==team1,'ELO'] = round(aaa_elo.loc[aaa_elo['teams']==team1,'ELO'][0] + 100*(Sa - Ea))
+            aaa_elo.loc[aaa_elo['teams']==team2,'ELO'] = round(aaa_elo.loc[aaa_elo['teams']==team2,'ELO'][0] + 100*(Sb - Eb))
+        if league == "aa":
+            aa_elo.loc[aa_elo['teams']==team1,'ELO'] = round(aa_elo.loc[aa_elo['teams']==team1,'ELO'][0] + 100*(Sa - Ea))
+            aa_elo.loc[aa_elo['teams']==team2,'ELO'] = round(aa_elo.loc[aa_elo['teams']==team2,'ELO'][0] + 100*(Sb - Eb))
+        if league == "a":
+            a_elo.loc[a_elo['teams']==team1,'ELO'] = round(a_elo.loc[a_elo['teams']==team1,'ELO'][0] + 100*(Sa - Ea))
+            a_elo.loc[a_elo['teams']==team2,'ELO'] = round(a_elo.loc[a_elo['teams']==team2,'ELO'][0] + 100*(Sb - Eb))
     save_data()
         
 def add_games_manual(league,team1,team2,winner,score):
@@ -174,17 +154,17 @@ def add_games_manual(league,team1,team2,winner,score):
     Qa = 0
     Qb = 0
     if league.casefold() == "major":
-        Qa = 10**(majelo['ELO'][team1]/400)
-        Qb = 10**(majelo['ELO'][team2]/400)
+        Qa = 10**(major_elo.loc[major_elo['teams']==team1,'ELO'][0]/400)
+        Qb = 10**(major_elo.loc[major_elo['teams']==team2,'ELO'][0]/400)
     elif league.casefold() == "aaa":
-        Qa = 10**(minelo['ELO'][team1]/400)
-        Qb = 10**(minelo['ELO'][team2]/400)
-    elif league.casefold() == "aa" or league.casefold() == "indy":
-        Qa = 10**(indelo['ELO'][team1]/400)
-        Qb = 10**(indelo['ELO'][team2]/400)
-    elif league.casefold() == "a" or league.casefold() == "mav":
-        Qa = 10**(mavelo['ELO'][team1]/400)
-        Qb = 10**(mavelo['ELO'][team2]/400)
+        Qa = 10**(aaa_elo.loc[aaa_elo['teams']==team1,'ELO'][0]/400)
+        Qb = 10**(aaa_elo.loc[aaa_elo['teams']==team2,'ELO'][0]/400)
+    elif league.casefold() == "aa":
+        Qa = 10**(aa_elo.loc[aa_elo['teams']==team1,'ELO'][0]/400)
+        Qb = 10**(aa_elo.loc[aa_elo['teams']==team2,'ELO'][0]/400)
+    elif league.casefold() == "a":
+        Qa = 10**(a_elo.loc[a_elo['teams']==team1,'ELO'][0]/400)
+        Qb = 10**(a_elo.loc[a_elo['teams']==team2,'ELO'][0]/400)
     Ea = Qa/(Qa+Qb)
     Eb = Qb/(Qa+Qb)
     Sa = 0
@@ -217,26 +197,18 @@ def add_games_manual(league,team1,team2,winner,score):
     else:
         Sa = Ea
         Sb = Eb
-    if league.casefold() == "major":
-        majelo['ELO'][team1] = majelo['ELO'][team1] + 100*(Sa - Ea)
-        majelo['ELO'][team2] = majelo['ELO'][team2] + 100*(Sb - Eb)
-        majelo['ELO'][team1] = round(majelo['ELO'][team1])
-        majelo['ELO'][team2] = round(majelo['ELO'][team2])
-    if league.casefold() == "aaa":
-        minelo['ELO'][team1] = minelo['ELO'][team1] + 100*(Sa - Ea)
-        minelo['ELO'][team2] = minelo['ELO'][team2] + 100*(Sb - Eb)
-        minelo['ELO'][team1] = round(minelo['ELO'][team1])
-        minelo['ELO'][team2] = round(minelo['ELO'][team2])
-    if league.casefold() == "aa" or league.casefold() == "indy":
-        indelo['ELO'][team1] = indelo['ELO'][team1] + 100*(Sa - Ea)
-        indelo['ELO'][team2] = indelo['ELO'][team2] + 100*(Sb - Eb)
-        indelo['ELO'][team1] = round(indelo['ELO'][team1])
-        indelo['ELO'][team2] = round(indelo['ELO'][team2])
-    if league.casefold() == "a" or league.casefold() == "mav":
-        mavelo['ELO'][team1] = mavelo['ELO'][team1] + 100*(Sa - Ea)
-        mavelo['ELO'][team2] = mavelo['ELO'][team2] + 100*(Sb - Eb)
-        mavelo['ELO'][team1] = round(mavelo['ELO'][team1])
-        mavelo['ELO'][team2] = round(mavelo['ELO'][team2])
+    if league == "major":
+        major_elo.loc[major_elo['teams']==team1,'ELO'] = round(major_elo.loc[major_elo['teams']==team1,'ELO'][0] + 100*(Sa - Ea))
+        major_elo.loc[major_elo['teams']==team2,'ELO'] = round(major_elo.loc[major_elo['teams']==team2,'ELO'][0] + 100*(Sb - Eb))
+    if league == "aaa":
+        aaa_elo.loc[aaa_elo['teams']==team1,'ELO'] = round(aaa_elo.loc[aaa_elo['teams']==team1,'ELO'][0] + 100*(Sa - Ea))
+        aaa_elo.loc[aaa_elo['teams']==team2,'ELO'] = round(aaa_elo.loc[aaa_elo['teams']==team2,'ELO'][0] + 100*(Sb - Eb))
+    if league == "aa":
+        aa_elo.loc[aa_elo['teams']==team1,'ELO'] = round(aa_elo.loc[aa_elo['teams']==team1,'ELO'][0] + 100*(Sa - Ea))
+        aa_elo.loc[aa_elo['teams']==team2,'ELO'] = round(aa_elo.loc[aa_elo['teams']==team2,'ELO'][0] + 100*(Sb - Eb))
+    if league == "a":
+        a_elo.loc[a_elo['teams']==team1,'ELO'] = round(a_elo.loc[a_elo['teams']==team1,'ELO'][0] + 100*(Sa - Ea))
+        a_elo.loc[a_elo['teams']==team2,'ELO'] = round(a_elo.loc[a_elo['teams']==team2,'ELO'][0] + 100*(Sb - Eb))
         
     save_data()
 
@@ -245,21 +217,17 @@ def exp_score(league,team1,team2,bestof=100):
     team1 = team1.title()
     team2 = team2.title()
     if league.casefold() == "major":
-        team1elo = majelo['ELO'][team1]
-        team2elo = majelo['ELO'][team2]
+        team1elo = major_elo.loc[major_elo['teams']==team1,'ELO'][0]
+        team2elo = major_elo.loc[major_elo['teams']==team2,'ELO'][0]
     elif league.casefold() == "aaa":
-        if team1 == "Co2":
-            team1 = "CO2"
-        elif team2 == "Co2":
-            team2 = "CO2"
-        team1elo = minelo['ELO'][team1]
-        team2elo = minelo['ELO'][team2]
+        team1elo = aaa_elo.loc[aaa_elo['teams']==team1,'ELO'][0]
+        team2elo = aaa_elo.loc[aaa_elo['teams']==team2,'ELO'][0]
     elif league.casefold() == "aa" or league.casefold() == "indy":
-        team1elo = indelo['ELO'][team1]
-        team2elo = indelo['ELO'][team2]
+        team1elo = aa_elo.loc[aa_elo['teams']==team1,'ELO'][0]
+        team2elo = aa_elo.loc[aa_elo['teams']==team2,'ELO'][0]
     elif league.casefold() == "a" or league.casefold() == "mav":
-        team1elo = mavelo['ELO'][team1]
-        team2elo = mavelo['ELO'][team2]
+        team1elo = a_elo.loc[a_elo['teams']==team1,'ELO'][0]
+        team2elo = a_elo.loc[a_elo['teams']==team2,'ELO'][0]
     Q1 = 10**(team1elo/400)
     Q2 = 10**(team2elo/400)
     exp_score_1 = Q1/(Q1+Q2)
@@ -276,10 +244,10 @@ Score: Pure toss up''')
         
 def rank_teams(league):
     if league.casefold() == "major":
-        return majelo.sort_values(by=['ELO'], ascending=False)
+        return major_elo.sort_values(by=['ELO'], ascending=False)
     if league.casefold() == "aaa":
-        return minelo.sort_values(by=['ELO'], ascending=False)
+        return aaa_elo.sort_values(by=['ELO'], ascending=False)
     if league.casefold() == "aa" or league.casefold() == "indy":
-        return indelo.sort_values(by=['ELO'], ascending=False)
+        return aa_elo.sort_values(by=['ELO'], ascending=False)
     if league.casefold() == "a" or league.casefold() == "mav":
-        return mavelo.sort_values(by=['ELO'], ascending=False)
+        return a_elo.sort_values(by=['ELO'], ascending=False)

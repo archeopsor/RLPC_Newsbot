@@ -7,42 +7,24 @@ import editdistance
 
 prefix = '$'
 
-major_champ = ""
-aaa_champ = ""
-aa_champ = ""
-a_champ = ""
-
 # Pulls stats from a series from the spreadsheet, and analyzes it.
 def import_games(league):
     if league.casefold() == "aaa" or league.casefold() == "aa" or league.casefold() == "a":
         league = league.upper()
-    sheet_range = f'{league.title()} Gamelogs!A1:J'
+    sheet_range = f'{league} Gamelogs!A1:J'
     gsheet = sheet.get_google_sheet(sheet.SPREADSHEET_ID, sheet_range)
     game_data = sheet.gsheet2df(gsheet)
-    
-    global major_champ
-    major_champ = sheet.get_google_sheet(sheet.SPREADSHEET_ID, 'Player Info!H2')
-    major_champ = major_champ['values'][0][0]
-    global aaa_champ
-    aaa_champ = sheet.get_google_sheet(sheet.SPREADSHEET_ID, 'Player Info!I2')
-    aaa_champ = aaa_champ['values'][0][0]
-    global aa_champ
-    aa_champ = sheet.get_google_sheet(sheet.SPREADSHEET_ID, 'Player Info!J2')
-    aa_champ = aa_champ['values'][0][0]
-    global a_champ
-    a_champ = sheet.get_google_sheet(sheet.SPREADSHEET_ID, 'Player Info!K2')
-    a_champ = a_champ['values'][0][0]
     
     return game_data
 
 # Takes in the stats from parse_game_data and distributes them to both players and fantasy teams    
 def update_player_stats(league, player, series_won, series_played, games_won, games_played, goals, assists, saves, shots):
-    points = goals + assists
+    game_points = goals + assists
     
     # Import current stats data
-    gsheet = sheet.get_google_sheet(sheet.SPREADSHEET_ID, f'{league.title()} Player Stats!B1:T')
+    gsheet = sheet.get_google_sheet(sheet.SPREADSHEET_ID, 'Player Info!A1:X')
     current_stats = sheet.gsheet2df(gsheet)
-    current_stats = current_stats.set_index('Player')
+    current_stats = current_stats.set_index('Username')
     
     # FANTASY POINTS FORMULA BELOW
     points = 0
@@ -82,8 +64,6 @@ def update_player_stats(league, player, series_won, series_played, games_won, ga
             sheet.update_cell(sheet_id, f'Fantasy Players!N{row+2}', new_slot_points)
         else:
             pass
-                
-    current_stats = current_stats.set_index('Player')
     
     # Updating total stats in spreadsheet
     series_played = float(current_stats.loc[player, 'Series Played']) + float(series_played)
@@ -91,7 +71,7 @@ def update_player_stats(league, player, series_won, series_played, games_won, ga
     goals = float(current_stats.loc[player, 'Goals']) + float(goals)
     assists = float(current_stats.loc[player, 'Assists']) + float(assists)
     saves = float(current_stats.loc[player, 'Saves']) + float(saves)
-    points = float(current_stats.loc[player, 'Points']) + float(points)
+    game_points = float(current_stats.loc[player, 'Points']) + float(game_points)
     game_wins = float(current_stats.loc[player, 'Game Wins']) + float(games_won)
     series_wins = float(current_stats.loc[player, 'Series Wins']) + float(series_won)
     shots = float(current_stats.loc[player, 'Shots']) + float(shots)
@@ -99,17 +79,17 @@ def update_player_stats(league, player, series_won, series_played, games_won, ga
     
     # Pushing total stats to spreadsheet
     current_stats = current_stats.reset_index()
-    player_row = current_stats.loc[current_stats['Player']==player].index[0] + 2
-    sheet.update_cell(sheet_id, f'{league.title()} Player Stats!C{player_row}',series_played)
-    sheet.update_cell(sheet_id, f'{league.title()} Player Stats!D{player_row}',games_played)
-    sheet.update_cell(sheet_id, f'{league.title()} Player Stats!E{player_row}',goals)
-    sheet.update_cell(sheet_id, f'{league.title()} Player Stats!G{player_row}',assists)
-    sheet.update_cell(sheet_id, f'{league.title()} Player Stats!I{player_row}',saves)
-    sheet.update_cell(sheet_id, f'{league.title()} Player Stats!K{player_row}',points)
-    sheet.update_cell(sheet_id, f'{league.title()} Player Stats!M{player_row}',game_wins)
-    sheet.update_cell(sheet_id, f'{league.title()} Player Stats!N{player_row}',series_wins)
-    sheet.update_cell(sheet_id, f'{league.title()} Player Stats!Q{player_row}',shots)
-    sheet.update_cell(sheet_id, f'{league.title()} Player Stats!T{player_row}',points)
+    player_row = current_stats.loc[current_stats['Username']==player].index[0] + 2
+    sheet.update_cell(sheet_id, f'Player Info!G{player_row}',series_played)
+    sheet.update_cell(sheet_id, f'Player Info!H{player_row}',games_played)
+    sheet.update_cell(sheet_id, f'Player Info!I{player_row}',goals)
+    sheet.update_cell(sheet_id, f'Player Info!K{player_row}',assists)
+    sheet.update_cell(sheet_id, f'Player Info!M{player_row}',saves)
+    sheet.update_cell(sheet_id, f'Player Info!O{player_row}',game_points)
+    sheet.update_cell(sheet_id, f'Player Info!Q{player_row}',game_wins)
+    sheet.update_cell(sheet_id, f'Player Info!R{player_row}',series_wins)
+    sheet.update_cell(sheet_id, f'Player Info!U{player_row}',shots)
+    sheet.update_cell(sheet_id, f'Player Info!X{player_row}',points)
     
 def parse_game_data(league):
     league = league.title()
@@ -145,30 +125,6 @@ def parse_game_data(league):
         else:
             return "Error: Winner couldn't be found"
         
-        # Check if game_winner needs to update the champion
-        
-        global major_champ
-        global aaa_champ
-        global aa_champ
-        global a_champ
-        
-        if league == "Major" and game_loser == major_champ:
-            major_champ = game_winner
-            sheet.update_cell(sheet.SPREADSHEET_ID,'Player Info!G2',major_champ)
-            print(f"{game_loser} has been defeated! {major_champ} is the new unofficial Major Champion!")
-        elif league == "AAA" and game_loser == aaa_champ:
-            aaa_champ = game_winner
-            sheet.update_cell(sheet.SPREADSHEET_ID,'Player Info!H2',aaa_champ)
-            print(f"{game_loser} has been defeated! {aaa_champ} is the new unofficial AAA Champion!")
-        elif league == "AA" and game_loser == aa_champ:
-            aa_champ = game_winner
-            sheet.update_cell(sheet.SPREADSHEET_ID,'Player Info!H2',aa_champ)
-            print(f"{game_loser} has been defeated! {aa_champ} is the new unofficial AA Champion!")
-        elif league == "A" and game_loser == a_champ:
-            a_champ = game_winner
-            sheet.update_cell(sheet.SPREADSHEET_ID,'Player Info!H2',a_champ)
-            print(f"{game_loser} has been defeated! {a_champ} is the new unofficial A Champion!")
-        
         # Game Data/Stats
         
         # Adding stats to gameday dataframe, called "game_stats"
@@ -199,7 +155,7 @@ def parse_game_data(league):
                 shots = int(game_data.loc[row, 'Shots'])
                 
                 # Trying not to overload Sheets API
-                time.sleep(20)
+                time.sleep(50)
                 
                 update_player_stats(league,player,series_won,series_played,games_won,games_played,goals,assists,saves,shots)
             
