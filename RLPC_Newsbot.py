@@ -216,6 +216,7 @@ async def on_message(message):
     today_hour = int(str(datetime.datetime.now().time())[:2])
     
     # Reset every Monday when the first person says something
+    global reset_executed
     if reset_executed != True and today_day == 0:
         
         # This will be turned back to false at 11:00 pm        
@@ -235,6 +236,7 @@ async def on_message(message):
     # UPLOAD GAME DATA
     
     # Parse every morning as long as it's before 4 a.m.
+    global parse_executed
     if parse_executed != True and today_hour < 4:
         parse_executed = True
         
