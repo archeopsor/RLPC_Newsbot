@@ -1,9 +1,6 @@
 import discord
 import os
 from discord.ext import commands
-import Google_Sheets as sheet
-import fantasy_infrastructure as fantasy
-import datetime
 
 prefix = '$'
 client = commands.Bot(command_prefix = prefix)
