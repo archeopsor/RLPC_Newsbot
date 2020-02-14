@@ -60,7 +60,7 @@ def list_new(limit = 5):
             author.append(submission.author)
             ups.append(submission.ups)
             downs.append(submission.downs)
-            comments.append(num_comments)
+            comments.append(submission.num_comments)
             contents.append(submission.selftext)
             links.append(submission.permalink)
     return (title, author, ups, downs, comments, contents, links)

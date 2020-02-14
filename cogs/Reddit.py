@@ -57,7 +57,8 @@ class Reddit(commands.Cog):
         number = int(number)
         if number < 1:
             await ctx.send("Please choose an integer number greater than 1.")
-        else: pass
+        else: 
+            pass
         async with ctx.typing():
             post = reddit.get_post(type, number)
         await ctx.send(f'**Title: {post[0]}, author: {post[1]}, score: {post[2]-post[3]}**')
@@ -70,6 +71,8 @@ class Reddit(commands.Cog):
         async with ctx.typing():
             post = reddit.get_post("new", 1)
         await ctx.send(f'**Title: {post[0]}, author: {post[1]}, score: {post[2]-post[3]}**')
+        if len(post[4]) > 2000:
+            await ctx.send(f'{post[4][0:1000]}... \n\n *This post is too long for discord, see the full post at: https://www.reddit.com{post[5]}*')
         await ctx.send(post[4])
 
 def setup(client):

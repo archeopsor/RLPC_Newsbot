@@ -11,4 +11,4 @@ def get_player_stats(player,stat="all"):
     all_player_stats = all_player_stats.loc[all_player_stats['Username']==player]
     if stat != "all":
         all_player_stats = all_player_stats.loc[all_player_stats.index[0],stat]
-    return(all_player_stats)    
+    return(all_player_stats)
