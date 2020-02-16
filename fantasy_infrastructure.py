@@ -22,7 +22,7 @@ def update_player_stats(league, player, series_won, series_played, games_won, ga
     game_points = goals + assists
     
     # Import current stats data
-    gsheet = sheet.get_google_sheet(sheet.SPREADSHEET_ID, 'Player Info!A1:X')
+    gsheet = sheet.get_google_sheet(sheet.SPREADSHEET_ID, 'Player Info!A1:I')
     current_stats = sheet.gsheet2df(gsheet)
     current_stats = current_stats.set_index('Username')
     
@@ -65,30 +65,12 @@ def update_player_stats(league, player, series_won, series_played, games_won, ga
         else:
             pass
     
-    # Updating total stats in spreadsheet
-    series_played = float(current_stats.loc[player, 'Series Played']) + float(series_played)
-    games_played = float(current_stats.loc[player, 'Games Played']) + float(games_played)
-    goals = float(current_stats.loc[player, 'Goals']) + float(goals)
-    assists = float(current_stats.loc[player, 'Assists']) + float(assists)
-    saves = float(current_stats.loc[player, 'Saves']) + float(saves)
-    game_points = float(current_stats.loc[player, 'Points']) + float(game_points)
-    game_wins = float(current_stats.loc[player, 'Game Wins']) + float(games_won)
-    series_wins = float(current_stats.loc[player, 'Series Wins']) + float(series_won)
-    shots = float(current_stats.loc[player, 'Shots']) + float(shots)
+    # Updating Fantasy Points in spreadsheet
     points = float(current_stats.loc[player, 'Fantasy Points']) + float(points)
     
     # Pushing total stats to spreadsheet
     current_stats = current_stats.reset_index()
     player_row = current_stats.loc[current_stats['Username']==player].index[0] + 2
-    sheet.update_cell(sheet_id, f'Player Info!G{player_row}',series_played)
-    sheet.update_cell(sheet_id, f'Player Info!H{player_row}',games_played)
-    sheet.update_cell(sheet_id, f'Player Info!I{player_row}',goals)
-    sheet.update_cell(sheet_id, f'Player Info!K{player_row}',assists)
-    sheet.update_cell(sheet_id, f'Player Info!M{player_row}',saves)
-    sheet.update_cell(sheet_id, f'Player Info!O{player_row}',game_points)
-    sheet.update_cell(sheet_id, f'Player Info!Q{player_row}',game_wins)
-    sheet.update_cell(sheet_id, f'Player Info!R{player_row}',series_wins)
-    sheet.update_cell(sheet_id, f'Player Info!U{player_row}',shots)
     sheet.update_cell(sheet_id, f'Player Info!X{player_row}',points)
     
 def parse_game_data(league):
@@ -96,6 +78,9 @@ def parse_game_data(league):
     if league.casefold() == "aaa" or league.casefold() == "aa" or league.casefold() == "a":
         league = league.upper()
     total_games_data = import_games(league)
+    
+    if total_games_data == None:
+        return(f"There were no games available for {league} league")
     
     T1_P1 = total_games_data.iat[0,2]
     T1_P2 = total_games_data.iat[1,2]

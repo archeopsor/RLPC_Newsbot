@@ -154,17 +154,17 @@ def add_games_manual(league,team1,team2,winner,score):
     Qa = 0
     Qb = 0
     if league.casefold() == "major":
-        Qa = 10**(major_elo.loc[major_elo['teams']==team1,'ELO'][0]/400)
-        Qb = 10**(major_elo.loc[major_elo['teams']==team2,'ELO'][0]/400)
+        Qa = 10**(int(major_elo.loc[major_elo['teams']==team1,'ELO'])/400)
+        Qb = 10**(int(major_elo.loc[major_elo['teams']==team2,'ELO'])/400)
     elif league.casefold() == "aaa":
-        Qa = 10**(aaa_elo.loc[aaa_elo['teams']==team1,'ELO'][0]/400)
-        Qb = 10**(aaa_elo.loc[aaa_elo['teams']==team2,'ELO'][0]/400)
+        Qa = 10**(int(aaa_elo.loc[aaa_elo['teams']==team1,'ELO'])/400)
+        Qb = 10**(int(aaa_elo.loc[aaa_elo['teams']==team2,'ELO'])/400)
     elif league.casefold() == "aa":
-        Qa = 10**(aa_elo.loc[aa_elo['teams']==team1,'ELO'][0]/400)
-        Qb = 10**(aa_elo.loc[aa_elo['teams']==team2,'ELO'][0]/400)
+        Qa = 10**(int(aa_elo.loc[aa_elo['teams']==team1,'ELO'])/400)
+        Qb = 10**(int(aa_elo.loc[aa_elo['teams']==team2,'ELO'])/400)
     elif league.casefold() == "a":
-        Qa = 10**(a_elo.loc[a_elo['teams']==team1,'ELO'][0]/400)
-        Qb = 10**(a_elo.loc[a_elo['teams']==team2,'ELO'][0]/400)
+        Qa = 10**(int(a_elo.loc[a_elo['teams']==team1,'ELO'])/400)
+        Qb = 10**(int(a_elo.loc[a_elo['teams']==team2,'ELO'])/400)
     Ea = Qa/(Qa+Qb)
     Eb = Qb/(Qa+Qb)
     Sa = 0
@@ -198,17 +198,17 @@ def add_games_manual(league,team1,team2,winner,score):
         Sa = Ea
         Sb = Eb
     if league == "major":
-        major_elo.loc[major_elo['teams']==team1,'ELO'] = round(major_elo.loc[major_elo['teams']==team1,'ELO'][0] + 100*(Sa - Ea))
-        major_elo.loc[major_elo['teams']==team2,'ELO'] = round(major_elo.loc[major_elo['teams']==team2,'ELO'][0] + 100*(Sb - Eb))
+        major_elo.loc[major_elo['teams']==team1,'ELO'] = round(int(major_elo.loc[major_elo['teams']==team1,'ELO']) + 100*(Sa - Ea))
+        major_elo.loc[major_elo['teams']==team2,'ELO'] = round(int(major_elo.loc[major_elo['teams']==team2,'ELO']) + 100*(Sb - Eb))
     if league == "aaa":
-        aaa_elo.loc[aaa_elo['teams']==team1,'ELO'] = round(aaa_elo.loc[aaa_elo['teams']==team1,'ELO'][0] + 100*(Sa - Ea))
-        aaa_elo.loc[aaa_elo['teams']==team2,'ELO'] = round(aaa_elo.loc[aaa_elo['teams']==team2,'ELO'][0] + 100*(Sb - Eb))
+        aaa_elo.loc[aaa_elo['teams']==team1,'ELO'] = round(int(aaa_elo.loc[aaa_elo['teams']==team1,'ELO']) + 100*(Sa - Ea))
+        aaa_elo.loc[aaa_elo['teams']==team2,'ELO'] = round(int(aaa_elo.loc[aaa_elo['teams']==team2,'ELO']) + 100*(Sb - Eb))
     if league == "aa":
-        aa_elo.loc[aa_elo['teams']==team1,'ELO'] = round(aa_elo.loc[aa_elo['teams']==team1,'ELO'][0] + 100*(Sa - Ea))
-        aa_elo.loc[aa_elo['teams']==team2,'ELO'] = round(aa_elo.loc[aa_elo['teams']==team2,'ELO'][0] + 100*(Sb - Eb))
+        aa_elo.loc[aa_elo['teams']==team1,'ELO'] = round(int(aa_elo.loc[aa_elo['teams']==team1,'ELO']) + 100*(Sa - Ea))
+        aa_elo.loc[aa_elo['teams']==team2,'ELO'] = round(int(aa_elo.loc[aa_elo['teams']==team2,'ELO']) + 100*(Sb - Eb))
     if league == "a":
-        a_elo.loc[a_elo['teams']==team1,'ELO'] = round(a_elo.loc[a_elo['teams']==team1,'ELO'][0] + 100*(Sa - Ea))
-        a_elo.loc[a_elo['teams']==team2,'ELO'] = round(a_elo.loc[a_elo['teams']==team2,'ELO'][0] + 100*(Sb - Eb))
+        a_elo.loc[a_elo['teams']==team1,'ELO'] = round(int(a_elo.loc[a_elo['teams']==team1,'ELO']) + 100*(Sa - Ea))
+        a_elo.loc[a_elo['teams']==team2,'ELO'] = round(int(a_elo.loc[a_elo['teams']==team2,'ELO']) + 100*(Sb - Eb))
         
     save_data()
 
