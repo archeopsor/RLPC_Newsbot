@@ -225,7 +225,7 @@ Welcome to RLPC Fantasy! This is a just-for-fun fantasy league in which people c
         elif len(embeds) == 1:
             await ctx.send(f"Here's the only player matching those parameters")
         else: 
-            await ctx.send(f"Here are {len(answer.index)} players matching those parameters (sorted alphabetically):")
+            await ctx.send(f"Here are {len(answer.index)} players matching those parameters:")
         for i in embeds:
             await ctx.send(embed=i)
         

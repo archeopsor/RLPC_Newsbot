@@ -4,7 +4,6 @@ import RLPC_ELO as elo
 from datetime import datetime
 import time
 import editdistance
-import random
 
 prefix = '$'
 
@@ -417,7 +416,8 @@ def search(minsalary=0, maxsalary=700, league="all", team="all", name="none", ma
     # Randomizing dataframe
     players = players.sample(frac=1)
     
-    players = players.sort_values(by='editdistance')
-    players = players.loc[players['editdistance'] <= maxdistance]
-    players = players.drop('editdistance',axis=1)
+    if name != "none":
+        players = players.sort_values(by='editdistance')
+        players = players.loc[players['editdistance'] <= maxdistance]
+        players = players.drop('editdistance',axis=1)
     return(players.head(5))
