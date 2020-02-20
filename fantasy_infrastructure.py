@@ -405,7 +405,8 @@ def search(minsalary=0, maxsalary=700, league="all", team="all", name="none", ma
         username = username.casefold()
         name = name.casefold()
         distance = editdistance.eval(name, username)
-        players.loc[row,'editdistance'] = distance
+        length = abs(len(name)-len(username))
+        players.loc[row,'editdistance'] = (distance-length)/2
     
     players = players.sort_values(by='editdistance')
     players = players.loc[players['editdistance'] <= maxdistance]
