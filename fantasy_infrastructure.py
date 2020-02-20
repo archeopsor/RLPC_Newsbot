@@ -216,7 +216,7 @@ def pick_player(person,player,slot=1):
     gsheet = sheet.get_google_sheet(sheet_id, sheet_range)
     fantasy_players = sheet.gsheet2df(gsheet)
     
-    gsheet2 = sheet.get_google_sheet(sheet_id,"Player Info!A1:F")
+    gsheet2 = sheet.get_google_sheet(sheet_id,"Player Info!A1:I")
     rlpc_players = sheet.gsheet2df(gsheet2)
     
     # If "None" is chosen, drop the player in the selected slot
