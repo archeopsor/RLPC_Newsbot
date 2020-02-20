@@ -4,6 +4,7 @@ import RLPC_ELO as elo
 from datetime import datetime
 import time
 import editdistance
+import random
 
 prefix = '$'
 
@@ -412,6 +413,9 @@ def search(minsalary=0, maxsalary=700, league="all", team="all", name="none", ma
         distance = editdistance.eval(name, username)
         length = abs(len(name)-len(username))
         players.loc[row,'editdistance'] = (distance-length)/2
+        
+    # Randomizing dataframe
+    players = players.sample(frac=1)
     
     players = players.sort_values(by='editdistance')
     players = players.loc[players['editdistance'] <= maxdistance]
