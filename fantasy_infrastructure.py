@@ -218,11 +218,16 @@ def pick_player(person,player,slot=1):
     
     gsheet2 = sheet.get_google_sheet(sheet_id,"Player Info!A1:I")
     rlpc_players = sheet.gsheet2df(gsheet2)
+    lower_players = rlpc_players['Username'].str.lower()
     
     # If "None" is chosen, drop the player in the selected slot
     drop = False
     if player.casefold() in ["none","not picked","nobody","drop","empty"]:
         drop = True
+        
+    if player.casefold() in lower_players.values:
+        pindex = lower_players[lower_players == player.casefold()].index[0]
+        player = rlpc_players.loc[pindex][0]
     
     account_check = fantasy_players[fantasy_players['Username']==person].index.values
     current_occupant = fantasy_players.loc[fantasy_players['Username']==person,f"Player {slot}"].values[0]

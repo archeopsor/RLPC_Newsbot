@@ -130,8 +130,9 @@ Welcome to RLPC Fantasy! This is a just-for-fun fantasy league in which people c
 **{prefix}info** - Gives important information about a player, such as their salary and a variety of stats.
     *Example: {prefix}info arco*
 **{prefix}pick_player** - Adds a player to your fantasy team, in one of 5 player slots. Please specify which player you want, as well as which slot.
-    *Example: {prefix}pick_player arco 4*
+    *Example: {prefix}pick arco 4*
 **{prefix}drop_player** - Can also be done with '{prefix}pick_player drop [slot]', drops the player in the specified slot, replacing them with 'Not Picked'.
+    *Example: {prefix}drop 4
 **{prefix}leaderboard** - Displays the current leaderboard of points
 **{prefix}search**- Searches for the top 5 players fiting specified parameters
     *Example: {prefix}search name: arco min: 100 max: 160 league: AA team: all strictness: 3
