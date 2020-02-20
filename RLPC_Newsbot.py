@@ -161,6 +161,14 @@ If you have any questions, notice any issues or bugs, or have any suggestions, p
 **{prefix}rankteams** - Ranks all the teams in a league based on their current ELO.
     *Example: {prefix}rankteams major*
     
+**__REDDIT COMMANDS__**
+
+**{prefix}top** - Displays the top x posts of all time on the RLPC subreddit. Use {prefix}top [#] to return a specified number of posts.
+**{prefix}hot** - Displays the x most popular recent posts on the RLPC subreddit. Use {prefix}hot [#] to return a specified number of posts.
+**{prefix}list_new** - Displays the x newest posts on the RLPC subreddit. Use {prefix}list_new [#] to return a specified number of posts.
+**{prefix}get** - Gets the text of a reddit post from one of the previous three commands. Use the format {prefix}get [type] [#] where type is "top", "hot", or "new" and # is where it is on the list
+    *Example: {prefix}get top 3
+    
 **__LINKS__**
 
 **{prefix}rlpclink** - Shows an invite link for the RLPC Server
