@@ -401,7 +401,7 @@ def search(minsalary=0, maxsalary=700, league="all", team="all", name="none", ma
         players = players.loc[players['Team'] == team]
     
     if name == "none":
-        return(players.head(5))
+        return(players.sample(5))
     
     # Search names by assigning an editdistance value 
     players['editdistance'] = 0
@@ -412,12 +412,9 @@ def search(minsalary=0, maxsalary=700, league="all", team="all", name="none", ma
         distance = editdistance.eval(name, username)
         length = abs(len(name)-len(username))
         players.loc[row,'editdistance'] = (distance-length)/2
-        
-    # Randomizing dataframe
-    players = players.sample(frac=1)
     
     if name != "none":
         players = players.sort_values(by='editdistance')
         players = players.loc[players['editdistance'] <= maxdistance]
         players = players.drop('editdistance',axis=1)
-    return(players.head(5))
+        return(players.head(5))
