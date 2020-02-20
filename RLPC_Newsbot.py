@@ -150,6 +150,8 @@ If you have any questions, notice any issues or bugs, or have any suggestions, p
     *Example: {prefix}pick_player arco 4*
 **{prefix}drop_player** - Can also be done with '{prefix}pick_player drop [slot]', drops the player in the specified slot, replacing them with 'Not Picked'.
 **{prefix}leaderboard** - Displays the current leaderboard of points
+**{prefix}search** - Finds the five players that best meet the specified requirements. Can specify a minimum salary, maximum salary, team, league, and name, although you can use as many or as few of these parameters as you want.
+    *Example: {prefix}search name: arco min: 100 max: 200 team: FA league: AA*
     """
     help_message2 = f"""
 **__NEWS/STATS COMMANDS__**
@@ -168,6 +170,7 @@ If you have any questions, notice any issues or bugs, or have any suggestions, p
 **{prefix}list_new** - Displays the x newest posts on the RLPC subreddit. Use {prefix}list_new [#] to return a specified number of posts.
 **{prefix}get** - Gets the text of a reddit post from one of the previous three commands. Use the format {prefix}get [type] [#] where type is "top", "hot", or "new" and # is where it is on the list
     *Example: {prefix}get top 3
+**{prefix}newest** - Same function as {prefix}get new 1, displays the most recent post.
     
 **__LINKS__**
 

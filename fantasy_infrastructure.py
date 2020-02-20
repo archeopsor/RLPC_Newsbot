@@ -360,7 +360,7 @@ def show_team(person):
 
 def info(player):
     sheet_id = sheet.SPREADSHEET_ID
-    sheet_range = 'Player Info!A1:F'
+    sheet_range = 'Player Info!A1:I'
     gsheet = sheet.get_google_sheet(sheet_id, sheet_range)
     players = sheet.gsheet2df(gsheet)
     for row in players.index:
@@ -371,7 +371,7 @@ def info(player):
 
 def search(minsalary=0, maxsalary=700, league="all", team="all", name="none", maxdistance=5):
     sheet_id = sheet.SPREADSHEET_ID
-    sheet_range = 'Player Info!A1:F'
+    sheet_range = 'Player Info!A1:I'
     gsheet = sheet.get_google_sheet(sheet_id, sheet_range)
     players = sheet.gsheet2df(gsheet)
     players = players.sort_values(by='Username')
