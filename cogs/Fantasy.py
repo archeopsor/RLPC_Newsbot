@@ -28,8 +28,23 @@ class Fantasy(commands.Cog):
             await ctx.send(f'Please include the league you play in. If you are not a player, use "{prefix}new_fantasy_player none"')
         
     @commands.command(aliases=("pick", "pickplayer", "addplayer", "add_player",))
-    async def pick_player(self,ctx,player,slot=1):
-        async with ctx.typing():    
+    async def pick_player(self,ctx,*,message):
+        async with ctx.typing():
+            message = message.split()
+            try: slot = int(message[-1])    
+            except: slot = 0
+            print(slot)
+            player = ""
+            if slot != 0:
+                for i in range(len(message)-1):
+                    player = player + message[i]
+                    print(player)
+            else:
+                for i in message:
+                    player = player + i
+                    print(player)
+            print(message)
+            print(player)
             author = ctx.message.author.name
             person = author
             answer = fantasy.pick_player(person,player,slot)
@@ -44,8 +59,8 @@ class Fantasy(commands.Cog):
     async def drop_player(self,ctx,slot):
         async with ctx.typing():
             author = ctx.message.author.name
-            person = author
-            answer = fantasy.pick_player(person,"drop",slot)
+            slot = int(slot)
+            answer = fantasy.pick_player(author,"drop",slot)
         await ctx.send(answer)
         
     @drop_player.error
@@ -89,7 +104,6 @@ class Fantasy(commands.Cog):
     async def player_info(self,ctx,player):
         async with ctx.typing():
             answer = fantasy.info(player)
-            print(answer)
             player_card=discord.Embed(title=f"{player}'s player info", color=0xff0000)
             player_card.add_field(name="Region", value=answer[0], inline=True)
             player_card.add_field(name="Platform", value=answer[1], inline=True)
@@ -110,7 +124,7 @@ class Fantasy(commands.Cog):
     async def fantasy_help(self,ctx):
         answer = f"""
 Welcome to RLPC Fantasy! This is a just-for-fun fantasy league in which people can build a team of RLPC players and compete against other fantasy teams.
-**To get started, type {prefix}new_fantasy_player to create a new fantasy account.**
+**To get started, type {prefix}newplayer to create a new fantasy account.**
 
 **__RULES/STRUCTURE__**
  - Each fantasy team has 5 players
@@ -135,7 +149,7 @@ Welcome to RLPC Fantasy! This is a just-for-fun fantasy league in which people c
     *Example: {prefix}drop 4
 **{prefix}leaderboard** - Displays the current leaderboard of points
 **{prefix}search**- Searches for the top 5 players fiting specified parameters
-    *Example: {prefix}search name: arco min: 100 max: 160 league: AA team: all strictness: 3
+    *Example: {prefix}search name: arco min: 100 max: 160 league: AA team: all strictness: 3*
         """
         await ctx.send(answer)
         

@@ -184,7 +184,7 @@ def add_fantasy_player(person, league):
     if len(player_check)!=0:
         return "You already have an account!"
     
-    values = [[person],[league],["Not Picked"],["Not Picked"],["Not Picked"],["Not Picked"],["Not Picked"],[2],[0],[0],[0],[0],[0],[0]]
+    values = [[person],[league],["Not Picked"],["Not Picked"],["Not Picked"],["Not Picked"],["Not Picked"],[10],[0],[0],[0],[0],[0],[0]]
     body = {"majorDimension": "COLUMNS", 'values': values}
     
     sheet.append_data(sheet_id, sheet_range, body, "OVERWRITE")
@@ -222,15 +222,15 @@ def pick_player(person,player,slot=0):
     lower_players = rlpc_players['Username'].str.lower()
     
     if slot == 0:
-        if fantasy_players.loc[fantasy_players['Username']==person,f"Player 1"].values[0] != "Not Picked":
+        if fantasy_players.loc[fantasy_players['Username']==person,f"Player 1"].values[0] == "Not Picked":
             slot = 1
-        elif fantasy_players.loc[fantasy_players['Username']==person,f"Player 2"].values[0] != "Not Picked":
+        elif fantasy_players.loc[fantasy_players['Username']==person,f"Player 2"].values[0] == "Not Picked":
             slot = 2
-        elif fantasy_players.loc[fantasy_players['Username']==person,f"Player 3"].values[0] != "Not Picked":
+        elif fantasy_players.loc[fantasy_players['Username']==person,f"Player 3"].values[0] == "Not Picked":
             slot = 3
-        elif fantasy_players.loc[fantasy_players['Username']==person,f"Player 4"].values[0] != "Not Picked":
+        elif fantasy_players.loc[fantasy_players['Username']==person,f"Player 4"].values[0] == "Not Picked":
             slot = 4
-        elif fantasy_players.loc[fantasy_players['Username']==person,f"Player 5"].values[0] != "Not Picked":
+        elif fantasy_players.loc[fantasy_players['Username']==person,f"Player 5"].values[0] == "Not Picked":
             slot = 5
         else: return("Please pick a slot to replace, your team is full")
     
@@ -296,7 +296,7 @@ def pick_player(person,player,slot=0):
         pass
     
     # Check to make sure it doesn't break the salary cap
-    salary_cap = 700
+    salary_cap = 800
     if cap_check > salary_cap and transfer == False:
         return(f"This player would cause you to exceed the salary cap of {salary_cap}. Please choose a different player, or drop a player by picking 'None' in the desired slot")
     elif transfer == True:
