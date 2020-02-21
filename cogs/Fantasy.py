@@ -31,20 +31,22 @@ class Fantasy(commands.Cog):
     async def pick_player(self,ctx,*,message):
         async with ctx.typing():
             message = message.split()
+            print(message)
             try: slot = int(message[-1])    
             except: slot = 0
             print(slot)
             player = ""
             if slot != 0:
                 for i in range(len(message)-1):
-                    player = player + message[i]
+                    player = player + " " + message[i]
+                    print(player)
+            elif len(message) > 1:
+                for i in message:
+                    player = player + " " + i
                     print(player)
             else:
-                for i in message:
-                    player = player + i
-                    print(player)
-            print(message)
-            print(player)
+                player = message[0]
+            player = player.lstrip()
             author = ctx.message.author.name
             person = author
             answer = fantasy.pick_player(person,player,slot)
