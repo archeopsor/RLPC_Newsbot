@@ -202,8 +202,9 @@ def add_rlpc_player(username, mmr, team, league):
     sheet.append_data(sheet_id, sheet_range, body, "OVERWRITE")
  
 # Picks a player to be added to an account
-def pick_player(person,player,slot=1):
-    if slot < 1 or slot > 5:
+def pick_player(person,player,slot=0):
+    
+    if slot not in [0, 1, 2, 3, 4, 5]:
         return("Please pick a slot between 1 and 5.")
     
     # Don't allow transfers on Tuesday or Thursday
@@ -219,6 +220,19 @@ def pick_player(person,player,slot=1):
     gsheet2 = sheet.get_google_sheet(sheet_id,"Player Info!A1:I")
     rlpc_players = sheet.gsheet2df(gsheet2)
     lower_players = rlpc_players['Username'].str.lower()
+    
+    if slot == 0:
+        if fantasy_players.loc[fantasy_players['Username']==person,f"Player 1"].values[0] != "Not Picked":
+            slot = 1
+        elif fantasy_players.loc[fantasy_players['Username']==person,f"Player 2"].values[0] != "Not Picked":
+            slot = 2
+        elif fantasy_players.loc[fantasy_players['Username']==person,f"Player 3"].values[0] != "Not Picked":
+            slot = 3
+        elif fantasy_players.loc[fantasy_players['Username']==person,f"Player 4"].values[0] != "Not Picked":
+            slot = 4
+        elif fantasy_players.loc[fantasy_players['Username']==person,f"Player 5"].values[0] != "Not Picked":
+            slot = 5
+        else: return("Please pick a slot to replace, your team is full")
     
     # If "None" is chosen, drop the player in the selected slot
     drop = False
@@ -368,6 +382,10 @@ def info(player):
     sheet_range = 'Player Info!A1:I'
     gsheet = sheet.get_google_sheet(sheet_id, sheet_range)
     players = sheet.gsheet2df(gsheet)
+    lower_players = players['Username'].str.lower()
+    if player.casefold() in lower_players.values:
+        pindex = lower_players[lower_players == player.casefold()].index[0]
+        player = players.loc[pindex][0]
     for row in players.index:
         players.loc[row,'Username'] = players.loc[row,'Username'].upper()
     player = player.upper()
