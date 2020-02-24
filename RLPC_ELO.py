@@ -20,7 +20,7 @@ def reset_elo(league=""):
     aa_elo = aa_elo.rename(columns={'AA Teams': 'teams','AA ELO': 'ELO'})
     global a_elo
     a_elo = total_elo_data[['A Teams','A ELO']]
-    a_elo = a_elo.rename(columns={'A Teams': 'teams','A ElO': 'ELO'})
+    a_elo = a_elo.rename(columns={'A Teams': 'teams','A ELO': 'ELO'})
     
 reset_elo()
 
@@ -172,7 +172,7 @@ def add_games_manual(league,team1,team2,winner,score):
     scparts = score.split()
     score1 = int(scparts[0])
     score2 = int(scparts[2])
-    if score != "FF":
+    if score.casefold() != "ff":
         if winner == team1 and score1 > score2:
             Sa = score1/(score1+score2)
             Sb = score2/(score1+score2)
@@ -185,28 +185,28 @@ def add_games_manual(league,team1,team2,winner,score):
         elif winner == team2 and score2 > score1:
             Sb = score1/(score1+score2)
             Sa = score2/(score1+score2)
-        elif winner == "Double FF":
+        elif winner.casefold() == "double ff":
             Sa = Ea
             Sb = Eb
         else:
             Sa = Ea
             Sb = Eb
-    elif score == "FF":
+    elif score.casefold() == "ff":
         Sa = Ea
         Sb = Eb
     else:
         Sa = Ea
         Sb = Eb
-    if league == "major":
+    if league.casefold() == "major":
         major_elo.loc[major_elo['teams']==team1,'ELO'] = round(int(major_elo.loc[major_elo['teams']==team1,'ELO']) + 100*(Sa - Ea))
         major_elo.loc[major_elo['teams']==team2,'ELO'] = round(int(major_elo.loc[major_elo['teams']==team2,'ELO']) + 100*(Sb - Eb))
-    if league == "aaa":
+    if league.casefold() == "aaa":
         aaa_elo.loc[aaa_elo['teams']==team1,'ELO'] = round(int(aaa_elo.loc[aaa_elo['teams']==team1,'ELO']) + 100*(Sa - Ea))
         aaa_elo.loc[aaa_elo['teams']==team2,'ELO'] = round(int(aaa_elo.loc[aaa_elo['teams']==team2,'ELO']) + 100*(Sb - Eb))
-    if league == "aa":
+    if league.casefold() == "aa":
         aa_elo.loc[aa_elo['teams']==team1,'ELO'] = round(int(aa_elo.loc[aa_elo['teams']==team1,'ELO']) + 100*(Sa - Ea))
         aa_elo.loc[aa_elo['teams']==team2,'ELO'] = round(int(aa_elo.loc[aa_elo['teams']==team2,'ELO']) + 100*(Sb - Eb))
-    if league == "a":
+    if league.casefold() == "a":
         a_elo.loc[a_elo['teams']==team1,'ELO'] = round(int(a_elo.loc[a_elo['teams']==team1,'ELO']) + 100*(Sa - Ea))
         a_elo.loc[a_elo['teams']==team2,'ELO'] = round(int(a_elo.loc[a_elo['teams']==team2,'ELO']) + 100*(Sb - Eb))
         
@@ -244,10 +244,14 @@ Score: Pure toss up''')
         
 def rank_teams(league):
     if league.casefold() == "major":
+        major_elo['ELO'] = major_elo['ELO'].map(lambda a: int(a))
         return major_elo.sort_values(by=['ELO'], ascending=False)
     if league.casefold() == "aaa":
+        aaa_elo['ELO'] = aaa_elo['ELO'].map(lambda a: int(a))
         return aaa_elo.sort_values(by=['ELO'], ascending=False)
     if league.casefold() == "aa" or league.casefold() == "indy":
+        aa_elo['ELO'] = aa_elo['ELO'].map(lambda a: int(a))
         return aa_elo.sort_values(by=['ELO'], ascending=False)
     if league.casefold() == "a" or league.casefold() == "mav":
+        a_elo['ELO'] = a_elo['ELO'].map(lambda a: int(a))
         return a_elo.sort_values(by=['ELO'], ascending=False)

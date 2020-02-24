@@ -31,19 +31,15 @@ class Fantasy(commands.Cog):
     async def pick_player(self,ctx,*,message):
         async with ctx.typing():
             message = message.split()
-            print(message)
             try: slot = int(message[-1])    
             except: slot = 0
-            print(slot)
             player = ""
             if slot != 0:
                 for i in range(len(message)-1):
                     player = player + " " + message[i]
-                    print(player)
             elif len(message) > 1:
                 for i in message:
                     player = player + " " + i
-                    print(player)
             else:
                 player = message[0]
             player = player.lstrip()
@@ -103,7 +99,7 @@ class Fantasy(commands.Cog):
         await ctx.send(embed=team)
     
     @commands.command(aliases=("player","playerinfo","info",))
-    async def player_info(self,ctx,player):
+    async def player_info(self,ctx,*,player):
         async with ctx.typing():
             answer = fantasy.info(player)
             player_card=discord.Embed(title=f"{player}'s player info", color=0xff0000)
@@ -139,7 +135,7 @@ Welcome to RLPC Fantasy! This is a just-for-fun fantasy league in which people c
 **__FANTASY COMMANDS__**
 
 **{prefix}fantasy_help** - Shows this message
-**{prefix}new_fantasy_player** - Creates a fantasy team linked to your discord account. Please include the league you play in, or 'none'.
+**{prefix}newplayer** - Creates a fantasy team linked to your discord account. Please include the league you play in, or 'none'.
     *Example: {prefix}new_fantasy_player major*
 **{prefix}team** - Shows the current fantasy team of any fantasy player. "{prefix}team" will display your own team, although you can include any discord account name (Don't use nicknames')
     *Example: {prefix}team arco*

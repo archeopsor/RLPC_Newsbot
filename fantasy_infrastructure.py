@@ -221,6 +221,9 @@ def pick_player(person,player,slot=0):
     rlpc_players = sheet.gsheet2df(gsheet2)
     lower_players = rlpc_players['Username'].str.lower()
     
+    try: fantasy_players.loc[fantasy_players['Username']==person,"Player 1"]
+    except: return(f"You don't currently have an account! Use {prefix}newplayer [league] to make an account")
+    
     if slot == 0:
         if fantasy_players.loc[fantasy_players['Username']==person,f"Player 1"].values[0] == "Not Picked":
             slot = 1
@@ -238,10 +241,13 @@ def pick_player(person,player,slot=0):
     drop = False
     if player.casefold() in ["none","not picked","nobody","drop","empty"]:
         drop = True
-        
+    
+    # Make it not case sensitive, and return if the player doesn't exist
     if player.casefold() in lower_players.values:
         pindex = lower_players[lower_players == player.casefold()].index[0]
         player = rlpc_players.loc[pindex][0]
+    else:
+        return("That player couldn't be found on the sheet. Make sure you spelled their name correctly")
     
     account_check = fantasy_players[fantasy_players['Username']==person].index.values
     current_occupant = fantasy_players.loc[fantasy_players['Username']==person,f"Player {slot}"].values[0]
@@ -350,10 +356,10 @@ def pick_player(person,player,slot=0):
         return(f'You have dropped {current_occupant}')
     
     # Check to make sure the player isn't in the same league as the account
-    if rlpc_players.loc[rlpc_players['Username']==player,'League'].values[0] == fantasy_players.loc[fantasy_players['Username']==person,'Account League'].values[0]:
-        return("You must select a player in a league other than your own")
-    else:
-        pass
+    # if rlpc_players.loc[rlpc_players['Username']==player,'League'].values[0] == fantasy_players.loc[fantasy_players['Username']==person,'Account League'].values[0]:
+    #     return("You must select a player in a league other than your own")
+    # else:
+    #     pass
     
     sheet.update_cell(sheet_id,cell,player)
     
