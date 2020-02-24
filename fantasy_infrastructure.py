@@ -243,10 +243,10 @@ def pick_player(person,player,slot=0):
         drop = True
     
     # Make it not case sensitive, and return if the player doesn't exist
-    if player.casefold() in lower_players.values:
+    if player.casefold() in lower_players.values and drop == False:
         pindex = lower_players[lower_players == player.casefold()].index[0]
         player = rlpc_players.loc[pindex][0]
-    else:
+    elif drop == False:
         return("That player couldn't be found on the sheet. Make sure you spelled their name correctly")
     
     account_check = fantasy_players[fantasy_players['Username']==person].index.values
