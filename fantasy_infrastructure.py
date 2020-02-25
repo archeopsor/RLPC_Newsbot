@@ -161,7 +161,9 @@ def generate_leaderboard():
     gsheet = sheet.get_google_sheet(sheet.SPREADSHEET_ID,'Fantasy Players!A1:O')
     fantasy_players = sheet.gsheet2df(gsheet)
     fantasy_players = fantasy_players[['Username','Total Points']]
-    return(fantasy_players.sort_values(by='Total Points',ascending=False))
+    lb = fantasy_players.sort_values(by='Total Points',ascending=False)
+    lb = lb.reset_index(drop=True)
+    return(lb)
 
 # Creates an account for someone who wants to play, and sets their team of 5 all to "Not Picked"
 def add_fantasy_player(person, league):
@@ -410,6 +412,13 @@ def search(minsalary=0, maxsalary=700, league="all", team="all", name="none", ma
         team = "all"
     if league.casefold() in ["all","none","no","idc"]:
         league = "all"
+    if league.casefold() not in ['major','aaa','aa','a','all']:
+        return("League could not be understood")
+    if league.casefold() == "major":
+        league = "Major"
+    team = team.title()
+    if team == "Fa":
+        team = "FA"
     
     for row in players.index:
         salary = int(players.loc[row,'Fantasy Value'])
@@ -425,7 +434,11 @@ def search(minsalary=0, maxsalary=700, league="all", team="all", name="none", ma
         players = players.loc[players['Team'] == team]
     
     if name == "none":
-        return(players.sample(5))
+        if len(players.index) > 4:
+            return(players.sample(5))
+        else:
+            num = len(players.index)
+            return(players.sample(num))
     
     # Search names by assigning an editdistance value 
     players['editdistance'] = 0
