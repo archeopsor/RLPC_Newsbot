@@ -130,7 +130,7 @@ Welcome to RLPC Fantasy! This is a just-for-fun fantasy league in which people c
  - You can't pick up players that play in the same league as you
  - Points are calculated after every gameday (Wednesday/Friday)
  - Each team can do 2 transfers (replacing one player with another player) every week. Filling an empty slot doesn't add to this counter
- - Each player is given a specific "salary" based on their mmr and team. The total salary value of a fantasy team must be below 700 at all times.
+ - Each player is given a specific "salary" based on their mmr and team. The total salary value of a fantasy team must be below 800 at all times.
 
 **__FANTASY COMMANDS__**
 
@@ -144,7 +144,7 @@ Welcome to RLPC Fantasy! This is a just-for-fun fantasy league in which people c
 **{prefix}pick_player** - Adds a player to your fantasy team, in one of 5 player slots. Please specify which player you want, as well as which slot.
     *Example: {prefix}pick arco 4*
 **{prefix}drop_player** - Can also be done with '{prefix}pick_player drop [slot]', drops the player in the specified slot, replacing them with 'Not Picked'.
-    *Example: {prefix}drop 4
+    *Example: {prefix}drop 4*
 **{prefix}leaderboard** - Displays the current leaderboard of points
 **{prefix}search**- Searches for the top 5 players fiting specified parameters
     *Example: {prefix}search name: arco min: 100 max: 160 league: AA team: all strictness: 3*
