@@ -400,7 +400,7 @@ def info(player):
     players = players.set_index("Username")
     return(players.loc[player])
 
-def search(minsalary=0, maxsalary=700, league="all", team="all", name="none", maxdistance=5):
+def search(minsalary=0, maxsalary=800, league="all", team="all", name="none", maxdistance=5):
     sheet_id = sheet.SPREADSHEET_ID
     sheet_range = 'Player Info!A1:I'
     gsheet = sheet.get_google_sheet(sheet_id, sheet_range)
@@ -416,15 +416,12 @@ def search(minsalary=0, maxsalary=700, league="all", team="all", name="none", ma
         return("League could not be understood")
     if league.casefold() == "major":
         league = "Major"
-    team = team.title()
-    if team == "Fa":
-        team = "FA"
+    if team.casefold() not in ['all','FA']:
+        team = team.title()
     
     for row in players.index:
         salary = int(players.loc[row,'Fantasy Value'])
         players.loc[row,'Fantasy Value'] = salary
-        mmr = int(players.loc[row, 'MMR'])
-        players.loc[row,'MMR'] = mmr
     
     players = players.loc[players['Fantasy Value'] >= minsalary]
     players = players.loc[players['Fantasy Value'] <= maxsalary]
@@ -432,6 +429,9 @@ def search(minsalary=0, maxsalary=700, league="all", team="all", name="none", ma
         players = players.loc[players['League'] == league]
     if team != "all":
         players = players.loc[players['Team'] == team]
+        
+    if len(players.index) == 0:
+        return("There were no players that matched those parameters")
     
     if name == "none":
         if len(players.index) > 4:
