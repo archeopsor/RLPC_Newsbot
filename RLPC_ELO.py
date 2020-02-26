@@ -245,13 +245,21 @@ Score: Pure toss up''')
 def rank_teams(league):
     if league.casefold() == "major":
         major_elo['ELO'] = major_elo['ELO'].map(lambda a: int(a))
-        return major_elo.sort_values(by=['ELO'], ascending=False)
+        lb = major_elo.sort_values(by=['ELO'], ascending=False)
+        lb = lb.reset_index(drop=True)
+        return(lb)
     if league.casefold() == "aaa":
         aaa_elo['ELO'] = aaa_elo['ELO'].map(lambda a: int(a))
-        return aaa_elo.sort_values(by=['ELO'], ascending=False)
+        lb = aaa_elo.sort_values(by=['ELO'], ascending=False)
+        lb = lb.reset_index(drop=True)
+        return(lb)
     if league.casefold() == "aa" or league.casefold() == "indy":
         aa_elo['ELO'] = aa_elo['ELO'].map(lambda a: int(a))
-        return aa_elo.sort_values(by=['ELO'], ascending=False)
+        lb = aa_elo.sort_values(by=['ELO'], ascending=False)
+        lb = lb.reset_index(drop=True)
+        return(lb)
     if league.casefold() == "a" or league.casefold() == "mav":
         a_elo['ELO'] = a_elo['ELO'].map(lambda a: int(a))
-        return a_elo.sort_values(by=['ELO'], ascending=False)
+        lb = a_elo.sort_values(by=['ELO'], ascending=False)
+        lb = lb.reset_index(drop=True)
+        return(lb)
