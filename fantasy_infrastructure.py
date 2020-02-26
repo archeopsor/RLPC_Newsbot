@@ -161,7 +161,8 @@ def generate_leaderboard():
     gsheet = sheet.get_google_sheet(sheet.SPREADSHEET_ID,'Fantasy Players!A1:O')
     fantasy_players = sheet.gsheet2df(gsheet)
     fantasy_players = fantasy_players[['Username','Total Points']]
-    lb = fantasy_players.sort_values(by='Total Points',ascending=False)
+    fantasy_players['Total Points'] = fantasy_players['Total Points'].map(lambda a: int(a))
+    lb = fantasy_players.sort_values(by=['Total Points'],ascending=False)
     lb = lb.reset_index(drop=True)
     return(lb)
 
