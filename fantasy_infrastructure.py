@@ -211,8 +211,8 @@ def pick_player(person,player,slot=0):
         return("Please pick a slot between 1 and 5.")
     
     # Don't allow transfers on Tuesday or Thursday
-    #if datetime.today().weekday() in [1,3]:
-        #return("You are not allowed to make transfers on game days!")
+    if datetime.today().weekday() in [1,3]:
+        return("You are not allowed to make transfers on game days!")
     
     sheet_id = sheet.SPREADSHEET_ID
     sheet_range = "Fantasy Players!A1:P"
