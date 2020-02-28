@@ -15,6 +15,11 @@ def import_games(league):
     gsheet = sheet.get_google_sheet(sheet.SPREADSHEET_ID, sheet_range)
     game_data = sheet.gsheet2df(gsheet)
     
+    try: 
+        if game_data == None:
+            game_data = []
+    except: pass
+    
     return game_data
 
 # Takes in the stats from parse_game_data and distributes them to both players and fantasy teams    
@@ -71,7 +76,7 @@ def update_player_stats(league, player, series_won, series_played, games_won, ga
     # Pushing total stats to spreadsheet
     current_stats = current_stats.reset_index()
     player_row = current_stats.loc[current_stats['Username']==player].index[0] + 2
-    sheet.update_cell(sheet_id, f'Player Info!X{player_row}',points)
+    sheet.update_cell(sheet_id, f'Player Info!I{player_row}',points)
     
 def parse_game_data(league):
     league = league.title()
@@ -79,7 +84,7 @@ def parse_game_data(league):
         league = league.upper()
     total_games_data = import_games(league)
     
-    if total_games_data == None:
+    if len(total_games_data) == 0:
         return(f"There were no games available for {league} league")
     
     T1_P1 = total_games_data.iat[0,2]
