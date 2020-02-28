@@ -77,6 +77,7 @@ recall_data()
         
 # Adding games via copy/paste from the sheet
 def add_games_auto(league):
+    recall_data(league)
     data=input("Copy/paste data from spreadsheet: ")
     game_data = []
     game_data = data.split("	")
@@ -147,6 +148,7 @@ def add_games_auto(league):
     save_data()
         
 def add_games_manual(league,team1,team2,winner,score):
+    recall_data(league)
     score = list(score)
     score = f"{score[0]} - {score[-1]}"
     team1 = team1.title()
@@ -214,6 +216,7 @@ def add_games_manual(league,team1,team2,winner,score):
 
 #Get the expected score and winner of a matchup
 def exp_score(league,team1,team2,bestof=100):
+    recall_data(league)
     team1 = team1.title()
     team2 = team2.title()
     if league.casefold() == "major":
@@ -243,6 +246,7 @@ Score: {str(int(round(exp_score_2*bestof)))} - {str(int(round(exp_score_1*bestof
 Score: Pure toss up''')
         
 def rank_teams(league):
+    recall_data(league)
     if league.casefold() == "major":
         major_elo['ELO'] = major_elo['ELO'].map(lambda a: int(a))
         lb = major_elo.sort_values(by=['ELO'], ascending=False)
