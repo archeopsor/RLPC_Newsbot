@@ -271,7 +271,7 @@ def pick_player(person,player,slot=0):
     
     # Check if this is a transfer
     transfer = False
-    if current_occupant != "Not Picked" and drop != True:
+    if current_occupant != "Not Picked":
         transfer = True
         global transfers_left
         transfers_left = fantasy_players.loc[fantasy_players['Username']==person,'Transfers Left'].values[0]

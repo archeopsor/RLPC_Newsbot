@@ -76,7 +76,7 @@ class Fantasy(commands.Cog):
         await ctx.send(embed=leaderboard)
         
     @commands.command(aliases=("show","team","showteam",))
-    async def show_team(self,ctx,author="none"):
+    async def show_team(self,ctx,*,author="none"):
         async with ctx.typing():
             if author == "none":
                 author = ctx.message.author.name
