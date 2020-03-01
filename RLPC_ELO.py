@@ -220,17 +220,17 @@ def exp_score(league,team1,team2,bestof=100):
     team1 = team1.title()
     team2 = team2.title()
     if league.casefold() == "major":
-        team1elo = major_elo.loc[major_elo['teams']==team1,'ELO'][0]
-        team2elo = major_elo.loc[major_elo['teams']==team2,'ELO'][0]
+        team1elo = int(major_elo.loc[major_elo['teams']==team1,'ELO'].values[0])
+        team2elo = int(major_elo.loc[major_elo['teams']==team2,'ELO'].values[0])
     elif league.casefold() == "aaa":
-        team1elo = aaa_elo.loc[aaa_elo['teams']==team1,'ELO'][0]
-        team2elo = aaa_elo.loc[aaa_elo['teams']==team2,'ELO'][0]
+        team1elo = int(aaa_elo.loc[aaa_elo['teams']==team1,'ELO'].values[0])
+        team2elo = int(aaa_elo.loc[aaa_elo['teams']==team2,'ELO'].values[0])
     elif league.casefold() == "aa" or league.casefold() == "indy":
-        team1elo = aa_elo.loc[aa_elo['teams']==team1,'ELO'][0]
-        team2elo = aa_elo.loc[aa_elo['teams']==team2,'ELO'][0]
+        team1elo = int(aa_elo.loc[aa_elo['teams']==team1,'ELO'].values[0])
+        team2elo = int(aa_elo.loc[aa_elo['teams']==team2,'ELO'].values[0])
     elif league.casefold() == "a" or league.casefold() == "mav":
-        team1elo = a_elo.loc[a_elo['teams']==team1,'ELO'][0]
-        team2elo = a_elo.loc[a_elo['teams']==team2,'ELO'][0]
+        team1elo = int(a_elo.loc[a_elo['teams']==team1,'ELO'].values[0])
+        team2elo = int(a_elo.loc[a_elo['teams']==team2,'ELO'].values[0])
     Q1 = 10**(team1elo/400)
     Q2 = 10**(team2elo/400)
     exp_score_1 = Q1/(Q1+Q2)
