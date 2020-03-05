@@ -6,7 +6,6 @@ today_day = datetime.datetime.today().weekday()
 
 # RESET WEEKLY TRANSFERS 
 # Do this on Friday only
-
 if today_day == 4:
     gsheet = sheet.get_google_sheet(sheet.SPREADSHEET_ID,"Fantasy Players!H2:H")
     rows = gsheet['values']

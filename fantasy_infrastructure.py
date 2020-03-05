@@ -69,7 +69,6 @@ def update_player_stats(league, player, series_won, series_played, games_won, ga
             sheet.update_cell(sheet_id, f'Fantasy Players!N{row+2}', new_slot_points)
         else:
             pass
-        time.sleep(5)
     
     # Updating Fantasy Points in spreadsheet
     points = float(current_stats.loc[player, 'Fantasy Points']) + float(points)
@@ -146,7 +145,7 @@ def parse_game_data(league):
                 shots = int(game_data.loc[row, 'Shots'])
                 
                 # Trying not to overload Sheets API
-                time.sleep(10)
+                print(f"{player} has been updated")
                 
                 update_player_stats(league,player,series_won,series_played,games_won,games_played,goals,assists,saves,shots)
             
