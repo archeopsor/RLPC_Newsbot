@@ -242,7 +242,7 @@ Score: {str(int(round(exp_score_1*bestof)))} - {str(int(round(exp_score_2*bestof
         return(f'''Winner: {team2}
 Score: {str(int(round(exp_score_2*bestof)))} - {str(int(round(exp_score_1*bestof)))}''')
     else:
-        return(f'''Winner: Pure toss up)
+        return(f'''Winner: Pure toss up
 Score: Pure toss up''')
         
 def rank_teams(league):

@@ -127,7 +127,6 @@ Welcome to RLPC Fantasy! This is a just-for-fun fantasy league in which people c
 **__RULES/STRUCTURE__**
  - Each fantasy team has 5 players
  - You can pick up players at any time EXCEPT for Tuesdays and Thursdays (Gamedays)
- - You can't pick up players that play in the same league as you
  - Points are calculated after every gameday (Wednesday/Friday)
  - Each team can do 2 transfers (replacing one player with another player) every week. Filling an empty slot doesn't add to this counter
  - Each player is given a specific "salary" based on their mmr and team. The total salary value of a fantasy team must be below 800 at all times.

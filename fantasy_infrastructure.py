@@ -2,7 +2,6 @@ import Google_Sheets as sheet
 import pandas as pd
 import RLPC_ELO as elo
 from datetime import datetime
-import time
 import editdistance
 
 prefix = '$'
@@ -121,7 +120,7 @@ def parse_game_data(league):
         
         for row in game_data.index:
             player = game_data.loc[row, 'Player']
-            if player != "Sub":
+            if player != "Sub" and player != "Sub-SD":
                 if (True in game_stats.index.isin([player])) == False:
                     game_stats.loc[player] = {'Series Won':0, 'Series Played':0, 'Games Won':0, 'Games Played':0, 'Goals':0, 'Assists':0, 'Saves':0, 'Shots':0}
                 if game_data.loc[row, 'Team'] == game_winner:
@@ -144,7 +143,6 @@ def parse_game_data(league):
                 saves = int(game_data.loc[row, 'Saves'])
                 shots = int(game_data.loc[row, 'Shots'])
                 
-                # Trying not to overload Sheets API
                 print(f"{player} has been updated")
                 
                 update_player_stats(league,player,series_won,series_played,games_won,games_played,goals,assists,saves,shots)
