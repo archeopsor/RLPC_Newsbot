@@ -136,7 +136,9 @@ def gsheet2df(gsheet):
         for col_id, col_name in enumerate(header):
             column_data = []
             for row in values:
-                column_data.append(row[col_id])
+                try: datapoint = row[col_id]
+                except: datapoint = ""
+                column_data.append(datapoint)
             ds = pd.Series(data=column_data, name=col_name)
             all_data.append(ds)
         df = pd.concat(all_data, axis=1)

@@ -156,7 +156,41 @@ def parse_game_data(league):
         score = f"3 - {series_length-3}"        
         elo.add_games_manual(league, game_winner, game_loser, game_winner, score)
         elo.save_data()
-        
+    
+    game_stats['Points'] = game_stats.apply(lambda x: (x['Series Won']*15)+(x['Games Won']*5)+(x['Goals']*15)+(x['Assists']*10)+(x['Saves']*5)+(x['Shots']*5), axis=1)
+    game_stats = game_stats.sort_values(by='Points',ascending=False)
+    mvp_players = game_stats.head(3)
+    
+    # Update MVPs
+    if league.casefold() == "major":
+        sheet.update_cell(sheet.SPREADSHEET_ID, "Player Leaderboard!K2", mvp_players.index[0])
+        sheet.update_cell(sheet.SPREADSHEET_ID, "Player Leaderboard!L2", int(mvp_players.loc[mvp_players.index[0],"Points"]))
+        sheet.update_cell(sheet.SPREADSHEET_ID, "Player Leaderboard!K3", mvp_players.index[1])
+        sheet.update_cell(sheet.SPREADSHEET_ID, "Player Leaderboard!L3", int(mvp_players.loc[mvp_players.index[1],"Points"]))
+        sheet.update_cell(sheet.SPREADSHEET_ID, "Player Leaderboard!K4", mvp_players.index[2])
+        sheet.update_cell(sheet.SPREADSHEET_ID, "Player Leaderboard!L4", int(mvp_players.loc[mvp_players.index[2],"Points"]))
+    elif league.casefold() == "aaa":
+        sheet.update_cell(sheet.SPREADSHEET_ID, "Player Leaderboard!M2", mvp_players.index[0])
+        sheet.update_cell(sheet.SPREADSHEET_ID, "Player Leaderboard!N2", int(mvp_players.loc[mvp_players.index[0],"Points"]))
+        sheet.update_cell(sheet.SPREADSHEET_ID, "Player Leaderboard!M3", mvp_players.index[1])
+        sheet.update_cell(sheet.SPREADSHEET_ID, "Player Leaderboard!N3", int(mvp_players.loc[mvp_players.index[1],"Points"]))
+        sheet.update_cell(sheet.SPREADSHEET_ID, "Player Leaderboard!M4", mvp_players.index[2])
+        sheet.update_cell(sheet.SPREADSHEET_ID, "Player Leaderboard!N4", int(mvp_players.loc[mvp_players.index[2],"Points"]))
+    elif league.casefold() == "aa":
+        sheet.update_cell(sheet.SPREADSHEET_ID, "Player Leaderboard!O2", mvp_players.index[0])
+        sheet.update_cell(sheet.SPREADSHEET_ID, "Player Leaderboard!P2", int(mvp_players.loc[mvp_players.index[0],"Points"]))
+        sheet.update_cell(sheet.SPREADSHEET_ID, "Player Leaderboard!O3", mvp_players.index[1])
+        sheet.update_cell(sheet.SPREADSHEET_ID, "Player Leaderboard!P3", int(mvp_players.loc[mvp_players.index[1],"Points"]))
+        sheet.update_cell(sheet.SPREADSHEET_ID, "Player Leaderboard!O4", mvp_players.index[2])
+        sheet.update_cell(sheet.SPREADSHEET_ID, "Player Leaderboard!P4", int(mvp_players.loc[mvp_players.index[2],"Points"]))
+    elif league.casefold() == "a":
+        sheet.update_cell(sheet.SPREADSHEET_ID, "Player Leaderboard!Q2", mvp_players.index[0])
+        sheet.update_cell(sheet.SPREADSHEET_ID, "Player Leaderboard!R2", int(mvp_players.loc[mvp_players.index[0],"Points"]))
+        sheet.update_cell(sheet.SPREADSHEET_ID, "Player Leaderboard!Q3", mvp_players.index[1])
+        sheet.update_cell(sheet.SPREADSHEET_ID, "Player Leaderboard!R3", int(mvp_players.loc[mvp_players.index[1],"Points"]))
+        sheet.update_cell(sheet.SPREADSHEET_ID, "Player Leaderboard!Q4", mvp_players.index[2])
+        sheet.update_cell(sheet.SPREADSHEET_ID, "Player Leaderboard!R4", int(mvp_players.loc[mvp_players.index[2],"Points"]))
+    
     return(game_stats)
     
 # Create a leaderboard of all fantasy accounts, and return it sorted by total points
@@ -459,3 +493,6 @@ def search(minsalary=0, maxsalary=800, league="all", team="all", name="none", ma
         players = players.loc[players['editdistance'] <= maxdistance]
         players = players.drop('editdistance',axis=1)
         return(players.head(5))
+    
+def player_lb(league,sortby="Fantasy Points"):
+    players = sheet.get_google_sheet(sheet.SPREADSHEET_ID,"Player Leaderboard!A1:I")
