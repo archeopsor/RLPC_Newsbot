@@ -37,7 +37,12 @@ def get_player_stats(player,stat="all"):
         stat = "Shots Per Game"
     
     playersheet = sheet.get_google_sheet(sheet_id, 'Players!A1:I')
-    players = sheet.gsheet2df(playersheet).set_index("Username")
+    players = sheet.gsheet2df(playersheet)
+    lower_players = players['Username'].str.lower()
+    if player.casefold() in lower_players.values:
+        pindex = lower_players[lower_players == player.casefold()].index[0]
+        player = players.loc[pindex][0]
+    players = players.set_index("Username")
     league = players.loc[player, "League"]
     statsheet = sheet.get_google_sheet(sheet_id, f"{league} League Stat Database!C3:R")    
     stats = sheet.gsheet2df(statsheet)

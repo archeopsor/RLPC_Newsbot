@@ -10,7 +10,7 @@ class Reddit(commands.Cog):
     def __init__(self,client):
         self.client = client
         
-    @commands.command(aliases=("top",))
+    @commands.command(aliases=("top","listtop","listop",))
     async def list_top(self, ctx, limit=5):
         async with ctx.typing():
             posts = reddit.list_top(limit)
@@ -24,7 +24,7 @@ class Reddit(commands.Cog):
                 
         await ctx.send(f"Use '{prefix}get top [number]' to get the contents of any specific post")
                 
-    @commands.command(aliases=("hot",))
+    @commands.command(aliases=("hot","listhot",))
     async def list_hot(self, ctx, limit=5):
         async with ctx.typing():
             posts = reddit.list_hot(limit)
@@ -38,7 +38,7 @@ class Reddit(commands.Cog):
                 
         await ctx.send(f"Use '{prefix}get hot [number]' to get the contents of any specific post")
                 
-    @commands.command()
+    @commands.command(aliases=("listnew",))
     async def list_new(self, ctx, limit=5):
         async with ctx.typing():
             posts = reddit.list_new(limit)

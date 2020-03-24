@@ -14,6 +14,9 @@ class Stats(commands.Cog):
     async def get_player_stats(self, ctx, player, stat="all"):
         async with ctx.typing():
             answer = stats.get_player_stats(player, stat)
+            embed = discord.Embed(title=f"{player}'s Stats", color=0x3333ff)
+            for i, col in enumerate(answer.columns):
+                embed.add_field(name=col, value=answer.values[0][i])
         await ctx.send(answer)
             
 
