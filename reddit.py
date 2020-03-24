@@ -54,7 +54,7 @@ def list_new(limit = 5):
     comments = []
     contents = []
     links = []
-    for submission in subreddit.new(limit=limit+2):
+    for submission in subreddit.new(limit=limit):
         if not submission.stickied:
             title.append(submission.title)
             author.append(submission.author)
