@@ -101,7 +101,8 @@ def parse_game_data(league):
     
         # Gathering information to add to a dataframe for a game in the spreadsheet
         
-        series_length = int(total_games_data.iat[0,4])*6
+        max_series = [int(total_games_data.iat[0,4]), int(total_games_data.iat[1,4]), int(total_games_data.iat[2,4]), int(total_games_data.iat[3,4]), int(total_games_data.iat[4,4]), int(total_games_data.iat[5,4])]
+        series_length = max(max_series)*6
         game_data = total_games_data.head(series_length)
         game_winner = None
         game_loser = None

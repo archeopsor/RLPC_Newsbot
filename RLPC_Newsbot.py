@@ -161,8 +161,10 @@ If you have any questions, notice any issues or bugs, or have any suggestions, p
 
 **{prefix}predict** - Predicts the score of a hypothetical match between two teams, based on the teams' current ELO. Include the league (major, AAA, etc), two teams, and number of games.
     *Example: {prefix}predict major allusion evolution 5*
-**{prefix}rankteams** - Ranks all the teams in a league based on their current ELO.
-    *Example: {prefix}rankteams major*
+**{prefix}rank** - Ranks all the teams in a league based on their current ELO.
+    *Example: {prefix}rank major*
+**{prefix}stats** - Displays a player's stats. You can choose a specific stat, or display all stats.
+    *Example: {prefix}stats arco ppg
     
 **__REDDIT COMMANDS__**
 

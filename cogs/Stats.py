@@ -11,9 +11,12 @@ class Stats(commands.Cog):
         self.client = client
         
     @commands.command(aliases=("getstats","stats","get_stats",))
-    async def get_player_stats(self, ctx, player, stat="all"):
+    async def get_player_stats(self, ctx, *, msg):
         async with ctx.typing():
-            answer = stats.get_player_stats(player, stat)
+            first = msg.split()[:-1]
+            last = msg.split()[-1]
+            try: answer = stats.get_player_stats(first, last)
+            except: answer = stats.get_player_stats(msg)
             embed = discord.Embed(title=f"{answer.values[0][0]}'s Stats", color=0x3333ff)
             for i, col in enumerate(answer.columns[1:]):
                 embed.add_field(name=col, value=answer.values[0][i+1])

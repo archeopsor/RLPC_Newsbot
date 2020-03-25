@@ -50,6 +50,6 @@ def get_player_stats(player,stat="all"):
         return("That stat could not be understood.")
     stats = stats.loc[stats['Player']==player]
     if stat != "all":
-        stats = stats.loc[stats.index[0],stat]
+        stats = stats[['Player',stat]]
     return(stats)
 
