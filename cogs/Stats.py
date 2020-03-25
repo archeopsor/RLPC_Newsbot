@@ -13,7 +13,7 @@ class Stats(commands.Cog):
     @commands.command(aliases=("getstats","stats","get_stats",))
     async def get_player_stats(self, ctx, *, msg):
         async with ctx.typing():
-            first = msg.split()[:-1]
+            first = " ".join(msg.split()[:-1])
             last = msg.split()[-1]
             try: answer = stats.get_player_stats(first, last)
             except: answer = stats.get_player_stats(msg)
