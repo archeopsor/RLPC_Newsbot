@@ -101,7 +101,12 @@ def parse_game_data(league):
     
         # Gathering information to add to a dataframe for a game in the spreadsheet
         
-        max_series = [int(total_games_data.iat[0,4]), int(total_games_data.iat[1,4]), int(total_games_data.iat[2,4]), int(total_games_data.iat[3,4]), int(total_games_data.iat[4,4]), int(total_games_data.iat[5,4])]
+        if "Sub" in total_games_data.head(3).values:
+            max_series = [int(total_games_data.iat[3,4]), int(total_games_data.iat[4,4]), int(total_games_data.iat[5,4])]
+        elif "Sub" in total_games_data.head(6).values:
+            max_series = [int(total_games_data.iat[0,4]), int(total_games_data.iat[1,4]), int(total_games_data.iat[2,4])]
+        else:
+            max_series = [int(total_games_data.iat[0,4]), int(total_games_data.iat[1,4]), int(total_games_data.iat[2,4]), int(total_games_data.iat[3,4]), int(total_games_data.iat[4,4]), int(total_games_data.iat[5,4])]
         series_length = max(max_series)*6
         game_data = total_games_data.head(series_length)
         game_winner = None
@@ -143,7 +148,6 @@ def parse_game_data(league):
                 assists = int(game_data.loc[row, 'Assists'])
                 saves = int(game_data.loc[row, 'Saves'])
                 shots = int(game_data.loc[row, 'Shots'])
-                
                 print(f"{player} has been updated")
                 
                 update_player_stats(league,player,series_won,series_played,games_won,games_played,goals,assists,saves,shots)

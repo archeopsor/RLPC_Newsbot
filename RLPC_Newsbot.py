@@ -28,11 +28,6 @@ async def reload(ctx, extension):
 @client.command()
 async def unload(ctx, extension):
     client.unload_extension(f'cogs.{extension}')
-    
-@client.event
-async def on_command_error(ctx, error):
-    if isinstance(error, commands.CommandNotFound):
-        await ctx.send('Invalid command used.')
 
 @client.command(pass_context = True)
 async def help(ctx,specified="none"):
