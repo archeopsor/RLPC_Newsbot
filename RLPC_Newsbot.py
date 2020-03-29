@@ -2,6 +2,7 @@ import discord
 import os
 from discord.ext import commands
 from datetime import datetime
+import passwords
 
 prefix = '$'
 client = commands.Bot(command_prefix = prefix)
@@ -212,4 +213,4 @@ for filename in os.listdir('./cogs'):
         client.load_extension(f'cogs.{filename[:-3]}')
 
 
-client.run('NjM1MTg4NTc2NDQ2ODQwODU4.XhtcHw.n1k7IKXxDbrt1sbQE4wzCaqb7xc')
+client.run(passwords.BOT_TOKEN)
