@@ -2,6 +2,7 @@ import Google_Sheets as sheet
 import pandas as pd
 import RLPC_ELO as elo
 from datetime import datetime
+import pytz
 import editdistance
 
 prefix = '$'
@@ -253,7 +254,7 @@ def pick_player(person,player,slot=0):
         return("Please pick a slot between 1 and 5.")
     
     # Don't allow transfers on Tuesday or Thursday
-    if datetime.today().weekday() in [1,3]:
+    if datetime.now(pytz.timezone("EST")).weekday() in [1,3]:
         return("You are not allowed to make transfers on game days!")
     
     sheet_id = sheet.SPREADSHEET_ID

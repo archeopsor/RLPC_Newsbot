@@ -54,9 +54,7 @@ def get_player_stats(player,stat="all"):
         stats = stats[['Player',stat]]
     return(stats)
 
-def forecast_image(league, forecast=""):
-    
-    forecast = ({'Bulls': 9.4, 'Lions': 6.7, 'Panthers': 10.7, 'Sharks': 10.2, 'Cobras': 15.2, 'Ducks': 11.7, 'Eagles': 8.0, 'Hawks': 9.0, 'Ascension': 11.0, 'Flames': 10.4, 'Storm': 5.6, 'Whitecaps': 7.1, 'Kings': 9.6, 'Lumberjacks': 5.0, 'Pirates': 8.9, 'Spartans': 5.5}, {'Bulls': 0.5, 'Lions': 0.0, 'Panthers': 0.8, 'Sharks': 0.5, 'Cobras': 1.0, 'Ducks': 0.9, 'Eagles': 0.0, 'Hawks': 0.3, 'Ascension': 0.9, 'Flames': 1.0, 'Storm': 0.1, 'Whitecaps': 0.1, 'Kings': 0.9, 'Lumberjacks': 0.0, 'Pirates': 1.0, 'Spartans': 0.0}, {'Bulls': 0.3, 'Lions': 0.0, 'Panthers': 0.3, 'Sharks': 0.3, 'Cobras': 0.6, 'Ducks': 0.5, 'Eagles': 0.0, 'Hawks': 0.0, 'Ascension': 0.4, 'Flames': 0.5, 'Storm': 0.0, 'Whitecaps': 0.0, 'Kings': 0.6, 'Lumberjacks': 0.0, 'Pirates': 0.5, 'Spartans': 0.0}, {'Bulls': 0.0, 'Lions': 0.0, 'Panthers': 0.1, 'Sharks': 0.1, 'Cobras': 0.4, 'Ducks': 0.4, 'Eagles': 0.0, 'Hawks': 0.0, 'Ascension': 0.3, 'Flames': 0.1, 'Storm': 0.0, 'Whitecaps': 0.0, 'Kings': 0.3, 'Lumberjacks': 0.0, 'Pirates': 0.3, 'Spartans': 0.0}, {'Bulls': 0.0, 'Lions': 0.0, 'Panthers': 0.0, 'Sharks': 0.0, 'Cobras': 0.4, 'Ducks': 0.3, 'Eagles': 0.0, 'Hawks': 0.0, 'Ascension': 0.1, 'Flames': 0.0, 'Storm': 0.0, 'Whitecaps': 0.0, 'Kings': 0.1, 'Lumberjacks': 0.0, 'Pirates': 0.1, 'Spartans': 0.0})
+def forecast_image(league, forecast):
     
     if league.casefold() == "major":  
         template = Image.open("./Image_templates/major_template.png")
