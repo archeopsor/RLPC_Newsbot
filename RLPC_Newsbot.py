@@ -214,6 +214,6 @@ for filename in os.listdir('./cogs'):
 
 
 try: from passwords import BOT_TOKEN
-except: pass
+except: BOT_TOKEN = os.environ.get('TIMES',3)
 
 client.run(BOT_TOKEN)
