@@ -1,6 +1,5 @@
 praw==6.5.1
 pytz==2019.3
-~umpy==1.17.4
 editdistance==0.5.3
 discord.py==1.3.2
 pandas==0.25.3
