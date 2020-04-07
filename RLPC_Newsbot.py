@@ -213,7 +213,7 @@ for filename in os.listdir('./cogs'):
         client.load_extension(f'cogs.{filename[:-3]}')
 
 
-try: s3 = S3Connection(os.environ['S3_KEY'], os.environ['S3_SECRET'])
-except: from passwords import BOT_TOKEN
+try: from passwords import BOT_TOKEN
+except: pass
 
 client.run(BOT_TOKEN)
