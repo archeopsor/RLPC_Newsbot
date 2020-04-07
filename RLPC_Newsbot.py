@@ -2,6 +2,7 @@ import discord
 import os
 from discord.ext import commands
 from datetime import datetime
+from boto.s3.connection import S3Connection
 
 prefix = '$'
 client = commands.Bot(command_prefix = prefix)
@@ -211,5 +212,8 @@ for filename in os.listdir('./cogs'):
     if filename.endswith('.py'):
         client.load_extension(f'cogs.{filename[:-3]}')
 
-from passwords import BOT_TOKEN
-client.run(BOT_TOKEN) #Replace with BOT_TOKEN
+
+try: s3 = S3Connection(os.environ['S3_KEY'], os.environ['S3_SECRET'])
+except: from passwords import BOT_TOKEN
+
+client.run(BOT_TOKEN)
