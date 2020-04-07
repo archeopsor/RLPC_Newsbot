@@ -211,5 +211,5 @@ for filename in os.listdir('./cogs'):
     if filename.endswith('.py'):
         client.load_extension(f'cogs.{filename[:-3]}')
 
-#from passwords import BOT_TOKEN
-client.run("NjM1MTg4NTc2NDQ2ODQwODU4.XoEZrw.V0c_svnQOqD0i7zy0RRO_taPggc") #Replace with BOT_TOKEN
+from passwords import BOT_TOKEN
+client.run(BOT_TOKEN) #Replace with BOT_TOKEN
