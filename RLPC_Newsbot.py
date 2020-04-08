@@ -1,8 +1,6 @@
 import discord
 import os
 from discord.ext import commands
-from datetime import datetime
-from boto.s3.connection import S3Connection
 
 prefix = '$'
 client = commands.Bot(command_prefix = prefix)
