@@ -56,50 +56,83 @@ def get_player_stats(player,stat="all"):
 
 def forecast_image(league, forecast):
     
-    if league.casefold() == "major":  
-        template = Image.open("./Image_templates/major_template.png")
-        img = ImageDraw.Draw(template)
-        bigfont = ImageFont.truetype('C:/Windows/Fonts/cambriab.ttf', size=25)
-        smallfont = ImageFont.truetype('C:/Windows/Fonts/palab.ttf', size=15)
-        
-        predator = {"Bulls": forecast[0]['Bulls'], "Lions": forecast[0]['Lions'], "Panthers": forecast[0]['Panthers'], "Sharks": forecast[0]['Sharks']}
-        wild = {"Cobras": forecast[0]['Cobras'], "Ducks": forecast[0]['Ducks'], "Eagles": forecast[0]['Eagles'], "Hawks": forecast[0]['Hawks']}
-        elements = {"Ascension": forecast[0]['Ascension'], "Flames": forecast[0]['Flames'], "Storm": forecast[0]['Storm'], "Whitecaps": forecast[0]['Whitecaps']}
-        brawler = {"Kings": forecast[0]['Kings'], "Lumberjacks": forecast[0]['Lumberjacks'], "Pirates": forecast[0]['Pirates'], "Spartans": forecast[0]['Spartans']}
-        
+    template = Image.open(f"./Image_templates/{league.casefold()}_template.png")
+    img = ImageDraw.Draw(template)
+    bigfont = ImageFont.truetype('C:/Windows/Fonts/cambriab.ttf', size=25)
+    smallfont = ImageFont.truetype('C:/Windows/Fonts/palab.ttf', size=18)
+    
+    results = forecast[0]
+    predator = {}
+    wild = {}
+    elements = {}
+    brawler = {}
+    for team in list(results)[0:4]:
+        predator[team] = results[team]
+    for team in list(results)[4:8]:
+        wild[team] = results[team]
+    for team in list(results)[8:12]:
+        elements[team] = results[team]
+    for team in list(results)[12:]:
+        brawler[team] = results[team]
+     
     for i in range(4):
         team = max(predator, key=predator.get)
-        img.text((90, 107+(37*i)), team, font=bigfont, fill="black")
-        img.text((249, 117+(37*i)), str(round(predator[team],1)), font=smallfont, fill="black")
-        img.text((293, 117+(37*i)), str(round(18-predator[team],1)), font=smallfont, fill="black")
+        w, h = img.textsize(team, font=bigfont)
+        img.text((((198-w)/2)+108, ((40-h)/2)+141+46*i), team, font=bigfont, fill="black")
+        
+        wins = str(round(predator[team],1))
+        w, h = img.textsize(wins, font=smallfont)
+        img.text((((40-w)/2)+324, ((40-h)/2)+141+47*i), wins, font=smallfont, fill="black")
+        
+        losses = str(round(18-predator[team],1))
+        w, h = img.textsize(losses, font=smallfont)
+        img.text((((40-w)/2)+380, ((40-h)/2)+141+47*i), losses, font=smallfont, fill="black")
+        
         predator.pop(team)
         
     for i in range(4):
         team = max(wild, key=wild.get)
-        img.text((90, 267+(36*i)), team, font=bigfont, fill="black")
-        img.text((249, 277+(36*i)), str(round(wild[team],1)), font=smallfont, fill="black")
-        img.text((293, 277+(36*i)), str(round(18-wild[team],1)), font=smallfont, fill="black")
+        w, h = img.textsize(team, font=bigfont)
+        img.text((((198-w)/2)+108, ((40-h)/2)+350+46*i), team, font=bigfont, fill="black")
+        
+        wins = str(round(wild[team],1))
+        w, h = img.textsize(wins, font=smallfont)
+        img.text((((40-w)/2)+324, ((40-h)/2)+350+47*i), wins, font=smallfont, fill="black")
+        
+        losses = str(round(18-wild[team],1))
+        w, h = img.textsize(losses, font=smallfont)
+        img.text((((40-w)/2)+380, ((40-h)/2)+350+47*i), losses, font=smallfont, fill="black")
+        
         wild.pop(team)
     
     for i in range(4):
         team = max(elements, key=elements.get)
-        img.text((480, 107+(37*i)), team, font=bigfont, fill="black")
-        img.text((646, 117+(37*i)), str(round(elements[team],1)), font=smallfont, fill="black")
-        img.text((689, 117+(37*i)), str(round(18-elements[team],1)), font=smallfont, fill="black")
+        w, h = img.textsize(team, font=bigfont)
+        img.text((((198-w)/2)+628, ((40-h)/2)+141+47*i), team, font=bigfont, fill="black")
+        
+        wins = str(round(elements[team],1))
+        w, h = img.textsize(wins, font=smallfont)
+        img.text((((40-w)/2)+844, ((40-h)/2)+141+47*i), wins, font=smallfont, fill="black")
+        
+        losses = str(round(18-elements[team],1))
+        w, h = img.textsize(losses, font=smallfont)
+        img.text((((40-w)/2)+900, ((40-h)/2)+141+47*i), losses, font=smallfont, fill="black")
+        
         elements.pop(team)
         
     for i in range(4):
         team = max(brawler, key=brawler.get)
-        img.text((480, 267+(36*i)), team, font=bigfont, fill="black")
-        img.text((646, 277+(36*i)), str(round(brawler[team],1)), font=smallfont, fill="black")
-        img.text((689, 277+(36*i)), str(round(18-brawler[team],1)), font=smallfont, fill="black")
+        w, h = img.textsize(team, font=bigfont)
+        img.text((((198-w)/2)+628, ((40-h)/2)+350+47*i), team, font=bigfont, fill="black")
+        
+        wins = str(round(brawler[team],1))
+        w, h = img.textsize(wins, font=smallfont)
+        img.text((((40-w)/2)+844, ((40-h)/2)+350+47*i), wins, font=smallfont, fill="black")
+        
+        losses = str(round(18-brawler[team],1))
+        w, h = img.textsize(losses, font=smallfont)
+        img.text((((40-w)/2)+900, ((40-h)/2)+350+47*i), losses, font=smallfont, fill="black")
+        
         brawler.pop(team)
         
-    template.save(f"{league} forecast.png")
-    
-    
-    
-    
-    
-    
-    
+    template.save(f"{league.casefold()} forecast.png")
