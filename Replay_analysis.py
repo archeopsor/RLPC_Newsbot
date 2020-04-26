@@ -1,5 +1,6 @@
 import carball
 from google.protobuf.json_format import MessageToDict
+import os
 
 def get_replay_stats(replay):
 
@@ -14,3 +15,11 @@ def get_replay_stats(replay):
     stats = MessageToDict(proto_object)
     
     return(stats, dataframe)
+
+
+def get_replay_files(path = 'C:/Users/Owner/Documents/My Games/Rocket League/TAGame/Demos'):
+    # Gets the replay files from the Rocket League demos file
+    replays = []
+    for file in os.listdir(path):
+        replays.append(f"{path}/{file}")
+    return replays

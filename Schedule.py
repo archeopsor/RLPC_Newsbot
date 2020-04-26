@@ -16,6 +16,10 @@ if today_day == 4:
     
 # PARSE/UPLOAD GAME DATA
 fantasy.parse_game_data("major")
+print("Major games are done!")
 fantasy.parse_game_data("AAA")
+print("AAA games are done!")
 fantasy.parse_game_data("AA")
+print("AA games are done!")
 fantasy.parse_game_data("A")
+print("A games are done!")
