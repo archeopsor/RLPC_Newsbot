@@ -8,7 +8,10 @@ client.remove_command('help')
 
 @client.event
 async def on_ready():
-    print('Bot is ready.')
+    print('Logged in as')
+    print(f"Username:  {client.user.name}")
+    print(f"User ID:  {client.user.id}")
+    print('---------------------------------')
     await client.change_presence(activity=discord.Game(f'{prefix}help for commands'))
 
 @client.command()

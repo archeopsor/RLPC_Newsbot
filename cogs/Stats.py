@@ -66,7 +66,7 @@ class Stats(commands.Cog):
     @probabilities.error
     async def probabilities_error(self,ctx,error):
         if isinstance(error,commands.MissingRequiredArgument):
-            await ctx.send("Please pick a league")
+            await ctx.send("You haven't chosen a league. You can also see all of the data here: https://docs.google.com/spreadsheets/d/1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ/edit?usp=sharing")
 
 def setup(client):
     client.add_cog(Stats(client))
