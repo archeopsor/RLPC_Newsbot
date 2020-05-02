@@ -20,10 +20,10 @@ a_wins = []
 a_losses = []
 
 # Schedule for all the games in each league
-major_schedule = ['Bulls - Pirates', 'Lions - Spartans', 'Panthers - Kings', 'Sharks - Lumberjacks', 'Cobras - Storm', 'Ducks - Whitecaps', 'Eagles - Ascension', 'Hawks - Flames', 'Bulls - Spartans', 'Lions - Pirates', 'Panthers - Lumberjacks', 'Sharks - Kings', 'Cobras - Whitecaps', 'Ducks - Storm', 'Eagles - Flames', 'Hawks - Ascension', 'Bulls - Lions', 'Panthers - Sharks', 'Cobras - Ducks', 'Eagles - Hawks', 'Ascension - Flames', 'Storm - Whitecaps', 'Kings - Lumberjacks', 'Pirates - Spartans', 'Bulls - Panthers', 'Lions - Sharks', 'Cobras - Eagles', 'Ducks - Hawks', 'Ascension - Storm', 'Flames - Whitecaps', 'Kings - Pirates', 'Lumberjacks - Spartans', 'Bulls - Sharks', 'Lions - Panthers', 'Cobras - Hawks', 'Ducks - Eagles', 'Ascension - Whitecaps', 'Flames - Storm', 'Kings - Spartans', 'Lumberjacks - Pirates']
-aaa_schedule = ['Bulldogs - Raiders', 'Tigers - Trojans', 'Bobcats - Knights', 'Dolphins - Pioneers', 'Vipers - Thunder', 'Geese - Tundra', 'Osprey - Entropy', 'Owls - Heat', 'Bulldogs - Trojans', 'Tigers - Raiders', 'Bobcats - Pioneers', 'Dolphins - Knights', 'Vipers - Tundra', 'Geese - Thunder', 'Osprey - Heat', 'Owls - Entropy', 'Bulldogs - Tigers', 'Bobcats - Dolphins', 'Vipers - Geese', 'Osprey - Owls', 'Entropy - Heat', 'Thunder - Tundra', 'Knights - Pioneers', 'Raiders - Trojans', 'Bulldogs - Bobcats', 'Tigers - Dolphins', 'Vipers - Osprey', 'Geese - Owls', 'Entropy - Thunder', 'Heat - Tundra', 'Knights - Raiders', 'Pioneers - Trojans', 'Bulldogs - Dolphins', 'Tigers - Bobcats', 'Vipers - Owls', 'Geese - Osprey', 'Entropy - Tundra', 'Heat - Thunder', 'Knights - Trojans', 'Pioneers - Raiders']
-aa_schedule = ['Mustangs - Bandits', 'Lynx - Warriors', 'Jaguars - Dukes', 'Barracuda - Voyagers', 'Pythons - Lightning', 'Herons - Avalanche', 'Falcons - Pulsars', 'Vultures - Inferno', 'Mustangs - Warriors', 'Lynx - Bandits', 'Jaguars - Voyagers', 'Barracuda - Dukes', 'Pythons - Avalanche', 'Herons - Lightning', 'Falcons - Inferno', 'Vultures - Pulsars', 'Mustangs - Lynx', 'Jaguars - Barracuda', 'Pythons - Herons', 'Falcons - Vultures', 'Pulsars - Inferno', 'Lightning - Avalanche', 'Dukes - Voyagers', 'Bandits - Warriors', 'Mustangs - Jaguars', 'Lynx - Barracuda', 'Pythons - Falcons', 'Herons - Vultures', 'Pulsars - Lightning', 'Inferno - Avalanche', 'Dukes - Bandits', 'Voyagers - Warriors', 'Mustangs - Barracuda', 'Lynx - Jaguars', 'Pythons - Vultures', 'Herons - Falcons', 'Pulsars - Avalanche', 'Inferno - Lightning', 'Dukes - Warriors', 'Voyagers - Bandits']
-a_schedule = ['Stallions - Wranglers', 'Cougars - Titans', 'Leopards - Jesters', 'Gulls - Miners', 'Rattlers - Tempest', 'Pelicans - Eskimos', 'Ravens - Genesis', 'Cardinals - Embers', 'Stallions - Titans', 'Cougars - Wranglers', 'Leopards - Miners', 'Gulls - Jesters', 'Rattlers - Eskimos', 'Pelicans - Tempest', 'Ravens - Embers', 'Cardinals - Genesis', 'Stallions - Cougars', 'Leopards - Gulls', 'Rattlers - Pelicans', 'Ravens - Cardinals', 'Genesis - Embers', 'Tempest - Eskimos', 'Jesters - Miners', 'Wranglers - Titans', 'Stallions - Leopards', 'Cougars - Gulls', 'Rattlers - Ravens', 'Pelicans - Cardinals', 'Genesis - Tempest', 'Embers - Eskimos', 'Jesters - Wranglers', 'Miners - Titans', 'Stallions - Gulls', 'Cougars - Leopards', 'Rattlers - Cardinals', 'Pelicans - Ravens', 'Genesis - Eskimos', 'Embers - Tempest', 'Jesters - Titans', 'Miners - Wranglers']
+major_schedule = ['Bulls - Lions', 'Panthers - Sharks', 'Cobras - Ducks', 'Eagles - Hawks', 'Ascension - Flames', 'Storm - Whitecaps', 'Kings - Lumberjacks', 'Pirates - Spartans', 'Bulls - Panthers', 'Lions - Sharks', 'Cobras - Eagles', 'Ducks - Hawks', 'Ascension - Storm', 'Flames - Whitecaps', 'Kings - Pirates', 'Lumberjacks - Spartans', 'Bulls - Sharks', 'Lions - Panthers', 'Cobras - Hawks', 'Ducks - Eagles', 'Ascension - Whitecaps', 'Flames - Storm', 'Kings - Spartans', 'Lumberjacks - Pirates']
+aaa_schedule = ['Bulldogs - Tigers', 'Bobcats - Dolphins', 'Vipers - Geese', 'Osprey - Owls', 'Entropy - Heat', 'Thunder - Tundra', 'Knights - Pioneers', 'Raiders - Trojans', 'Bulldogs - Bobcats', 'Tigers - Dolphins', 'Vipers - Osprey', 'Geese - Owls', 'Entropy - Thunder', 'Heat - Tundra', 'Knights - Raiders', 'Pioneers - Trojans', 'Bulldogs - Dolphins', 'Tigers - Bobcats', 'Vipers - Owls', 'Geese - Osprey', 'Entropy - Tundra', 'Heat - Thunder', 'Knights - Trojans', 'Pioneers - Raiders']
+aa_schedule = ['Mustangs - Lynx', 'Jaguars - Barracuda', 'Pythons - Herons', 'Falcons - Vultures', 'Pulsars - Inferno', 'Lightning - Avalanche', 'Dukes - Voyagers', 'Bandits - Warriors', 'Mustangs - Jaguars', 'Lynx - Barracuda', 'Pythons - Falcons', 'Herons - Vultures', 'Pulsars - Lightning', 'Inferno - Avalanche', 'Dukes - Bandits', 'Voyagers - Warriors', 'Mustangs - Barracuda', 'Lynx - Jaguars', 'Pythons - Vultures', 'Herons - Falcons', 'Pulsars - Avalanche', 'Inferno - Lightning', 'Dukes - Warriors', 'Voyagers - Bandits']
+a_schedule = ['Stallions - Cougars', 'Leopards - Gulls', 'Rattlers - Pelicans', 'Ravens - Cardinals', 'Genesis - Embers', 'Tempest - Eskimos', 'Jesters - Miners', 'Wranglers - Titans', 'Stallions - Leopards', 'Cougars - Gulls', 'Rattlers - Ravens', 'Pelicans - Cardinals', 'Genesis - Tempest', 'Embers - Eskimos', 'Jesters - Wranglers', 'Miners - Titans', 'Stallions - Gulls', 'Cougars - Leopards', 'Rattlers - Cardinals', 'Pelicans - Ravens', 'Genesis - Eskimos', 'Embers - Tempest', 'Jesters - Titans', 'Miners - Wranglers']
 
 # Get the wins and losses of all the teams in a dataframe from the sheet
 gsheet = sheet.get_google_sheet("1Tlc_TgGMrY5aClFF-Pb5xvtKrJ1Hn2PJOLy2fUDDdFI","Team Wins!A1:O17")
@@ -285,30 +285,6 @@ def sim_schedule(league):
         playoffs.append(max(brawler, key=brawler.get))
         conf2_teams[max(brawler, key=brawler.get)] = brawler[max(brawler, key=brawler.get)]
         brawler.pop(max(brawler, key=brawler.get))
-        conf1 = {}
-        conf1.update(predator)
-        conf1.update(wild)
-        conf1 = randomize_dict(conf1)
-        playoffs.append(max(conf1, key=conf1.get))
-        conf1_teams[max(conf1, key=conf1.get)] = conf1[max(conf1, key=conf1.get)]
-        conf1.pop(max(conf1, key=conf1.get))
-        playoffs.append(max(conf1, key=conf1.get))
-        conf1_teams[max(conf1, key=conf1.get)] = conf1[max(conf1, key=conf1.get)]
-        conf1_teams = sorted(conf1_teams, key=conf1_teams.get, reverse=True)
-        quarter_games.append(f"{conf1_teams[0]} - {conf1_teams[3]}")
-        quarter_games.append(f"{conf1_teams[1]} - {conf1_teams[2]}")
-        conf2 = {}
-        conf2.update(elements)
-        conf2.update(brawler)
-        conf2 = randomize_dict(conf2)
-        playoffs.append(max(conf2, key=conf2.get))
-        conf2_teams[max(conf2, key=conf2.get)] = conf2[max(conf2, key=conf2.get)]
-        conf2.pop(max(conf2, key=conf2.get))
-        playoffs.append(max(conf2, key=conf2.get))
-        conf2_teams[max(conf2, key=conf2.get)] = conf2[max(conf2, key=conf2.get)]
-        conf2_teams = sorted(conf2_teams, key=conf2_teams.get, reverse=True)
-        quarter_games.append(f"{conf2_teams[0]} - {conf2_teams[3]}")
-        quarter_games.append(f"{conf2_teams[1]} - {conf2_teams[2]}")
     elif league.casefold() == "aaa":
         predator = {"Bulldogs": aaa_records.loc["Bulldogs","Wins"], "Tigers": aaa_records.loc["Tigers","Wins"], "Bobcats": aaa_records.loc["Bobcats","Wins"], "Dolphins": aaa_records.loc["Dolphins","Wins"]}
         predator = randomize_dict(predator)
@@ -330,30 +306,6 @@ def sim_schedule(league):
         playoffs.append(max(brawler, key=brawler.get))
         conf2_teams[max(brawler, key=brawler.get)] = brawler[max(brawler, key=brawler.get)]
         brawler.pop(max(brawler, key=brawler.get))
-        conf1 = {}
-        conf1.update(predator)
-        conf1.update(wild)
-        conf1 = randomize_dict(conf1)
-        playoffs.append(max(conf1, key=conf1.get))
-        conf1_teams[max(conf1, key=conf1.get)] = conf1[max(conf1, key=conf1.get)]
-        conf1.pop(max(conf1, key=conf1.get))
-        playoffs.append(max(conf1, key=conf1.get))
-        conf1_teams[max(conf1, key=conf1.get)] = conf1[max(conf1, key=conf1.get)]
-        conf1_teams = sorted(conf1_teams, key=conf1_teams.get, reverse=True)
-        quarter_games.append(f"{conf1_teams[0]} - {conf1_teams[3]}")
-        quarter_games.append(f"{conf1_teams[1]} - {conf1_teams[2]}")
-        conf2 = {}
-        conf2.update(elements)
-        conf2.update(brawler)
-        conf2 = randomize_dict(conf2)
-        playoffs.append(max(conf2, key=conf2.get))
-        conf2_teams[max(conf2, key=conf2.get)] = conf2[max(conf2, key=conf2.get)]
-        conf2.pop(max(conf2, key=conf2.get))
-        playoffs.append(max(conf2, key=conf2.get))
-        conf2_teams[max(conf2, key=conf2.get)] = conf2[max(conf2, key=conf2.get)]
-        conf2_teams = sorted(conf2_teams, key=conf2_teams.get, reverse=True)
-        quarter_games.append(f"{conf2_teams[0]} - {conf2_teams[3]}")
-        quarter_games.append(f"{conf2_teams[1]} - {conf2_teams[2]}")
     elif league.casefold() == "aa":
         predator = {"Mustangs": aa_records.loc["Mustangs","Wins"], "Lynx": aa_records.loc["Lynx","Wins"], "Jaguars": aa_records.loc["Jaguars","Wins"], "Barracuda": aa_records.loc["Barracuda","Wins"]}
         predator = randomize_dict(predator)
@@ -375,30 +327,6 @@ def sim_schedule(league):
         playoffs.append(max(brawler, key=brawler.get))
         conf2_teams[max(brawler, key=brawler.get)] = brawler[max(brawler, key=brawler.get)]
         brawler.pop(max(brawler, key=brawler.get))
-        conf1 = {}
-        conf1.update(predator)
-        conf1.update(wild)
-        conf1 = randomize_dict(conf1)
-        playoffs.append(max(conf1, key=conf1.get))
-        conf1_teams[max(conf1, key=conf1.get)] = conf1[max(conf1, key=conf1.get)]
-        conf1.pop(max(conf1, key=conf1.get))
-        playoffs.append(max(conf1, key=conf1.get))
-        conf1_teams[max(conf1, key=conf1.get)] = conf1[max(conf1, key=conf1.get)]
-        conf1_teams = sorted(conf1_teams, key=conf1_teams.get, reverse=True)
-        quarter_games.append(f"{conf1_teams[0]} - {conf1_teams[3]}")
-        quarter_games.append(f"{conf1_teams[1]} - {conf1_teams[2]}")
-        conf2 = {}
-        conf2.update(elements)
-        conf2.update(brawler)
-        conf2 = randomize_dict(conf2)
-        playoffs.append(max(conf2, key=conf2.get))
-        conf2_teams[max(conf2, key=conf2.get)] = conf2[max(conf2, key=conf2.get)]
-        conf2.pop(max(conf2, key=conf2.get))
-        playoffs.append(max(conf2, key=conf2.get))
-        conf2_teams[max(conf2, key=conf2.get)] = conf2[max(conf2, key=conf2.get)]
-        conf2_teams = sorted(conf2_teams, key=conf2_teams.get, reverse=True)
-        quarter_games.append(f"{conf2_teams[0]} - {conf2_teams[3]}")
-        quarter_games.append(f"{conf2_teams[1]} - {conf2_teams[2]}")
     elif league.casefold() == "a":
         predator = {"Stallions": a_records.loc["Stallions","Wins"], "Cougars": a_records.loc["Cougars","Wins"], "Leopards": a_records.loc["Leopards","Wins"], "Gulls": a_records.loc["Gulls","Wins"]}
         predator = randomize_dict(predator)
@@ -420,30 +348,30 @@ def sim_schedule(league):
         playoffs.append(max(brawler, key=brawler.get))
         conf2_teams[max(brawler, key=brawler.get)] = brawler[max(brawler, key=brawler.get)]
         brawler.pop(max(brawler, key=brawler.get))
-        conf1 = {}
-        conf1.update(predator)
-        conf1.update(wild)
-        conf1 = randomize_dict(conf1)
-        playoffs.append(max(conf1, key=conf1.get))
-        conf1_teams[max(conf1, key=conf1.get)] = conf1[max(conf1, key=conf1.get)]
-        conf1.pop(max(conf1, key=conf1.get))
-        playoffs.append(max(conf1, key=conf1.get))
-        conf1_teams[max(conf1, key=conf1.get)] = conf1[max(conf1, key=conf1.get)]
-        conf1_teams = sorted(conf1_teams, key=conf1_teams.get, reverse=True)
-        quarter_games.append(f"{conf1_teams[0]} - {conf1_teams[3]}")
-        quarter_games.append(f"{conf1_teams[1]} - {conf1_teams[2]}")
-        conf2 = {}
-        conf2.update(elements)
-        conf2.update(brawler)
-        conf2 = randomize_dict(conf2)
-        playoffs.append(max(conf2, key=conf2.get))
-        conf2_teams[max(conf2, key=conf2.get)] = conf2[max(conf2, key=conf2.get)]
-        conf2.pop(max(conf2, key=conf2.get))
-        playoffs.append(max(conf2, key=conf2.get))
-        conf2_teams[max(conf2, key=conf2.get)] = conf2[max(conf2, key=conf2.get)]
-        conf2_teams = sorted(conf2_teams, key=conf2_teams.get, reverse=True)
-        quarter_games.append(f"{conf2_teams[0]} - {conf2_teams[3]}")
-        quarter_games.append(f"{conf2_teams[1]} - {conf2_teams[2]}")
+    conf1 = {}
+    conf1.update(predator)
+    conf1.update(wild)
+    conf1 = randomize_dict(conf1)
+    playoffs.append(max(conf1, key=conf1.get))
+    conf1_teams[max(conf1, key=conf1.get)] = conf1[max(conf1, key=conf1.get)]
+    conf1.pop(max(conf1, key=conf1.get))
+    playoffs.append(max(conf1, key=conf1.get))
+    conf1_teams[max(conf1, key=conf1.get)] = conf1[max(conf1, key=conf1.get)]
+    conf1_teams = sorted(conf1_teams, key=conf1_teams.get, reverse=True)
+    quarter_games.append(f"{conf1_teams[0]} - {conf1_teams[3]}")
+    quarter_games.append(f"{conf1_teams[1]} - {conf1_teams[2]}")
+    conf2 = {}
+    conf2.update(elements)
+    conf2.update(brawler)
+    conf2 = randomize_dict(conf2)
+    playoffs.append(max(conf2, key=conf2.get))
+    conf2_teams[max(conf2, key=conf2.get)] = conf2[max(conf2, key=conf2.get)]
+    conf2.pop(max(conf2, key=conf2.get))
+    playoffs.append(max(conf2, key=conf2.get))
+    conf2_teams[max(conf2, key=conf2.get)] = conf2[max(conf2, key=conf2.get)]
+    conf2_teams = sorted(conf2_teams, key=conf2_teams.get, reverse=True)
+    quarter_games.append(f"{conf2_teams[0]} - {conf2_teams[3]}")
+    quarter_games.append(f"{conf2_teams[1]} - {conf2_teams[2]}")
 
     # Reset the ELO because it's messed up for some reason
     major_elo = tempmajor.copy()

@@ -4,6 +4,7 @@ import RLPC_ELO as elo
 from datetime import datetime
 import pytz
 import editdistance
+from time import sleep
 
 prefix = '$'
 
@@ -149,10 +150,16 @@ def parse_game_data(league):
                 assists = int(game_data.loc[row, 'Assists'])
                 saves = int(game_data.loc[row, 'Saves'])
                 shots = int(game_data.loc[row, 'Shots'])
+                
+                try:
+                    update_player_stats(league,player,series_won,series_played,games_won,games_played,goals,assists,saves,shots)
+                except TimeoutError:
+                    print("TimeoutError, waiting 5 seconds")
+                    sleep(5)
+                    update_player_stats(league,player,series_won,series_played,games_won,games_played,goals,assists,saves,shots)
+                
                 print(f"{player} has been updated")
                 
-                update_player_stats(league,player,series_won,series_played,games_won,games_played,goals,assists,saves,shots)
-            
             else: pass
             
         total_games_data = total_games_data.iloc[series_length:]

@@ -1,5 +1,6 @@
 import os
 import psycopg2
+import sqlite3
 
 def open():
     try: DATABASE_URL = os.environ['DATABASE_URL']

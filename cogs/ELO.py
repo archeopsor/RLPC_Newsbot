@@ -18,6 +18,7 @@ class ELO(commands.Cog):
     @commands.command(aliases=("predict","predictscore","score_predict","predict_score",))
     async def scorepredict(self,ctx,league,team1,team2,bestof=100):
         async with ctx.typing():
+            bestof = float(bestof)
             answer = RLPC_ELO.exp_score(league,team1,team2,bestof)
         await ctx.send(answer)
         
