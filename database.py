@@ -36,10 +36,13 @@ def select(table, columns=("*"), As=None, where=None, order_by=None, group_by=No
     
 def insert(table, *values, columns=None,):
     open()
-    
+    new_values = "("
+    for value in values:
+        new_values += str(value)
+    new_values += ")"
     if columns == None:
         cursor.execute(f'''INSERT INTO {table}
-                       VALUES {values};''')
+                       VALUES {new_values};''')
     else:
         col = f'('
         for column in columns:
@@ -81,8 +84,12 @@ def alter(table, add=[], drop=[], alter={}):
     
     close()
 
-def delete(table):
-    pass
+def delete(table, where):
+    open()
+    command = f'DELETE FROM {table} WHERE {where};'
+    cursor.execute(command)
+    conn.commit()
+    close()
 
 def update(table):
     pass
