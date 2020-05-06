@@ -1,8 +1,9 @@
 from discord.ext import commands
-from database import insert, select, delete
+from database import engine, select
 import RLPC_ELO as elo
 import Google_Sheets as sheet
 from random import choice
+import pandas as pd
 
 class Alerts(commands.Cog):
     
@@ -12,12 +13,13 @@ class Alerts(commands.Cog):
     @commands.command(aliases=("alert","subscribe",))
     async def alerts(self, ctx):
         async with ctx.typing():
-            if ctx.channel.id in list(sum(select("alerts_channels"), ())):
-                delete("alerts_channels", f"ID = {ctx.channel.id}")
+            channels = select("select id from alerts_channels")['id'].to_list()
+            if ctx.channel.id in channels:
+                engine.execute(f"delete from alerts_channels where id={ctx.channel.id}")
                 await ctx.send("This channel will no longer receive alerts.")
                 return
             else:
-                insert("alerts_channels", ctx.channel.id)
+                engine.execute(f"insert into alerts_channels (id) values ({ctx.channel.id})")
                 await ctx.send("This channel will now receive alerts!")
                 return
             

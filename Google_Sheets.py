@@ -5,6 +5,8 @@ import os.path
 import pickle
 import pandas as pd
 
+import gspread
+import df2gspread as d2g
 
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 SPREADSHEET_ID = "1rmJVnfWvVe3tSnFrXpExv4XGbIN3syZO12dGBeoAf-w"
@@ -78,7 +80,7 @@ def get_google_sheet(spreadsheet_id, range_name):
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
-            flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
+            flow = InstalledAppFlow.from_client_secrets_file("C:/Users/Owner/RLPC News/credentials.json", SCOPES)
             creds = flow.run_local_server()
         # Save the credentials for the next run
         with open("token.pickle", "wb") as token:
@@ -143,3 +145,11 @@ def gsheet2df(gsheet):
             all_data.append(ds)
         df = pd.concat(all_data, axis=1)
         return df
+    
+def df_to_sheet(sheet_id, range_name, df):
+    values = []
+    for column in df.columns:
+        col_values = df[column].to_list()
+        values.append(col_values)
+    body = {'majorDimension': 'COLUMNS', 'values': values}
+    append_data(sheet_id, range_name, body)

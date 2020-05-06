@@ -2,10 +2,10 @@ import carball
 from google.protobuf.json_format import MessageToDict
 import os
 from Google_Sheets import get_google_sheet, gsheet2df
-import pickle
+from database import engine, select
 
 def get_replay_stats(replay):
-    analysis_manager = carball.analyze_replay_file(replay)
+    analysis_manager = carball.analyze_replay_file(replay, calculate_intensive_events=True)
         
     # return the proto object in python
     proto_object = analysis_manager.get_protobuf_data()
@@ -34,7 +34,12 @@ def get_rlpc_replays(path='C:/Users/Owner/Desktop/Replay Files'):
 
 def rlpc_replay_analysis():
     # Get player names, teams, leagues, and IDs in a dataframe for reference
-    players = gsheet2df(get_google_sheet("1CM0cojzf-j-rZ-4H5fsfx1yelIKDLUW9eVGckIDy_nE", 'Players!A1:O'))
+    players = select("players")
     replays = get_rlpc_replays()
     for game in replays:
         # Analyze the game here
+        stats = get_replay_stats(game)[0]
+        if stats['gameMetadata']['playlist'] != "CUSTOM LOBBY":
+            print(f"Error {game}: replay does not appear to be the right playlist")
+            return
+        players = stats[players]
