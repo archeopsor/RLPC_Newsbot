@@ -60,7 +60,7 @@ class Alerts(commands.Cog):
             
             descriptors = ["have taken down","have defeated","beat","were victorious over", "thwarted", "have upset", "have overpowered", "got the better of", "overcame", "triumphed over"]
             
-            if team2_rating - team1_rating > 100:
+            if team2_rating - team1_rating > 60:
                 message = f"""**UPSET ALERT**
 {team1} {team1_record} {choice(descriptors)} {team2} {team2_record} with a score of {team1_score} - {team2_score}
                 """
