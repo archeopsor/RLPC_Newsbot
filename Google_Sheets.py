@@ -5,9 +5,6 @@ import os.path
 import pickle
 import pandas as pd
 
-import gspread
-import df2gspread as d2g
-
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 SPREADSHEET_ID = "1rmJVnfWvVe3tSnFrXpExv4XGbIN3syZO12dGBeoAf-w"
 
