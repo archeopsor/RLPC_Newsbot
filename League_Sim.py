@@ -20,10 +20,10 @@ a_wins = []
 a_losses = []
 
 # Schedule for all the games in each league
-major_schedule = ['Bulls - Panthers', 'Lions - Sharks', 'Cobras - Eagles', 'Ducks - Hawks', 'Ascension - Storm', 'Flames - Whitecaps', 'Kings - Pirates', 'Lumberjacks - Spartans', 'Bulls - Sharks', 'Lions - Panthers', 'Cobras - Hawks', 'Ducks - Eagles', 'Ascension - Whitecaps', 'Flames - Storm', 'Kings - Spartans', 'Lumberjacks - Pirates']
-aaa_schedule = ['Bulldogs - Bobcats', 'Tigers - Dolphins', 'Vipers - Osprey', 'Geese - Owls', 'Entropy - Thunder', 'Heat - Tundra', 'Knights - Raiders', 'Pioneers - Trojans', 'Bulldogs - Dolphins', 'Tigers - Bobcats', 'Vipers - Owls', 'Geese - Osprey', 'Entropy - Tundra', 'Heat - Thunder', 'Knights - Trojans', 'Pioneers - Raiders']
-aa_schedule = ['Mustangs - Jaguars', 'Lynx - Barracuda', 'Pythons - Falcons', 'Herons - Vultures', 'Pulsars - Lightning', 'Inferno - Avalanche', 'Dukes - Bandits', 'Voyagers - Warriors', 'Mustangs - Barracuda', 'Lynx - Jaguars', 'Pythons - Vultures', 'Herons - Falcons', 'Pulsars - Avalanche', 'Inferno - Lightning', 'Dukes - Warriors', 'Voyagers - Bandits']
-a_schedule = ['Stallions - Leopards', 'Cougars - Gulls', 'Rattlers - Ravens', 'Pelicans - Cardinals', 'Genesis - Tempest', 'Embers - Eskimos', 'Jesters - Wranglers', 'Miners - Titans', 'Stallions - Gulls', 'Cougars - Leopards', 'Rattlers - Cardinals', 'Pelicans - Ravens', 'Genesis - Eskimos', 'Embers - Tempest', 'Jesters - Titans', 'Miners - Wranglers']
+major_schedule = ['Bulls - Sharks', 'Lions - Panthers', 'Cobras - Hawks', 'Ducks - Eagles', 'Ascension - Whitecaps', 'Flames - Storm', 'Kings - Spartans', 'Lumberjacks - Pirates']
+aaa_schedule = ['Bulldogs - Dolphins', 'Tigers - Bobcats', 'Vipers - Owls', 'Geese - Osprey', 'Entropy - Tundra', 'Heat - Thunder', 'Knights - Trojans', 'Pioneers - Raiders']
+aa_schedule = ['Mustangs - Barracuda', 'Lynx - Jaguars', 'Pythons - Vultures', 'Herons - Falcons', 'Pulsars - Avalanche', 'Inferno - Lightning', 'Dukes - Warriors', 'Voyagers - Bandits']
+a_schedule = ['Stallions - Gulls', 'Cougars - Leopards', 'Rattlers - Cardinals', 'Pelicans - Ravens', 'Genesis - Eskimos', 'Embers - Tempest', 'Jesters - Titans', 'Miners - Wranglers']
 
 # Get the wins and losses of all the teams in a dataframe from the sheet
 gsheet = sheet.get_google_sheet("1Tlc_TgGMrY5aClFF-Pb5xvtKrJ1Hn2PJOLy2fUDDdFI","Team Wins!A1:O17")
