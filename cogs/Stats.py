@@ -30,6 +30,7 @@ class Stats(commands.Cog):
             league = "none"
             team = "none"
             part = "none"
+            
             for word in msg:
                 if word.casefold() in ["major","aaa","aa","a"]:
                     league = word.casefold()
@@ -38,7 +39,7 @@ class Stats(commands.Cog):
                 elif word.casefold() in ["wins","record","playoffs","playoff","semifinals","semifinal","finals","final","finalist","champions","champion","winners","winner"]:
                     part = word
             if league == "none":
-                await ctx.send("You haven't chosen a league. You can also see all of the data here: https://docs.google.com/spreadsheets/d/1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ/edit?usp=sharing")
+                await ctx.send("You haven't chosen a league. You can also see all of the data here: <https://docs.google.com/spreadsheets/d/1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ/edit?usp=sharing>")
                 return
             elif league == "major":
                 gsheet = sheet.get_google_sheet("1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ", "Most Recent!A2:F18")
@@ -51,7 +52,18 @@ class Stats(commands.Cog):
             data = sheet.gsheet2df(gsheet).set_index('Teams')
             
             if team == "none" and part == "none": 
-                await ctx.send(data.reset_index())
+                message = f"""
+╔═══════╦══════╦═════╦═══════╗ 
+║ Teams        ║ Record    ║ Playoffs ║ Champions ║"""
+                for team in data.index.values:
+                    wins = str(data.loc[team, 'Expected Wins'])
+                    playoffs = str(data.loc[team, 'Playoffs'])
+                    champs = str(data.loc[team, 'Champions'])
+                    message = message + f"\n╠═══════╬══════╬═════╬═══════╣\n║ {team+('  '*(9-len(team)))} ║ {wins+('  '*(8-len(wins)))} ║ {playoffs+('  '*(8-len(playoffs)))} ║ {champs+('  '*(10-len(champs)))} ║"
+                message = message + "\n╚═══════╩══════╩═════╩═══════╝"
+                embed=discord.Embed()
+                embed.set_footer(text=message)
+                await ctx.send(embed=embed) # TODO: Fix Formatting
                 return
             
             if team != "none":
@@ -61,7 +73,7 @@ class Stats(commands.Cog):
                 data = data[part.title()]
                 
             await ctx.send(data)
-            await ctx.send("See all of the data here: https://docs.google.com/spreadsheets/d/1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ/edit?usp=sharing")
+            await ctx.send("See all of the data here: <https://docs.google.com/spreadsheets/d/1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ/edit?usp=sharing>")
         
     @probabilities.error
     async def probabilities_error(self,ctx,error):

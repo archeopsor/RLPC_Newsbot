@@ -101,8 +101,8 @@ async def on_message(message):
                 print(channel)
                 channel = client.get_channel(channel)
                 await channel.send(message)
-    else:
-        await client.process_commands(message)
+                
+    await client.process_commands(message)
 
 @client.command(pass_context = True)
 async def help(ctx,specified="none"):
