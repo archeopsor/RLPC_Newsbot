@@ -5,7 +5,6 @@ from database import engine, select
 import RLPC_ELO as elo
 import Google_Sheets as sheet
 from random import choice
-import pandas as pd
 
 prefix = '$'
 client = commands.Bot(command_prefix = prefix)
@@ -18,6 +17,15 @@ async def on_ready():
     print(f"User ID:  {client.user.id}")
     print('---------------------------------')
     await client.change_presence(activity=discord.Game(f'{prefix}help for commands'))
+    
+async def is_bdong(ctx):
+    return ctx.author.id == 565629521571741722
+    
+@client.command()
+@commands.check(is_bdong)
+async def bdong(ctx, specified_channel, seconds: int = 1):
+    channel = client.get_channel(int(specified_channel[2:-1]))
+    await channel.send(f'{client.get_user(232305914160349185).mention} i miss you', delete_after=seconds) # @Rumble Truck™#2578 i miss you
 
 @client.command()
 async def ping(ctx):
@@ -55,7 +63,7 @@ async def alerts(ctx):
 
 @client.event
 async def on_message(message):
-    channels = {501552099373350926: "Major", 598237603254239238: "Major", 598237794762227713: "AAA", 598237830824591490: "AA", 598237861837537304: "A"}
+    channels = {598237603254239238: "Major", 598237794762227713: "AAA", 598237830824591490: "AA", 598237861837537304: "A"}
     if message.channel.id in list(channels):
                     
         # Parse messages
