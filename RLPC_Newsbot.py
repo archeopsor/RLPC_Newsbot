@@ -5,6 +5,8 @@ from database import engine, select
 import RLPC_ELO as elo
 import Google_Sheets as sheet
 from random import choice
+from discord.ext.commands import has_permissions
+
 
 prefix = '$'
 client = commands.Bot(command_prefix = prefix)
@@ -27,6 +29,11 @@ async def bdong(ctx, specified_channel, seconds: int = 1):
     channel = client.get_channel(int(specified_channel[2:-1]))
     await channel.send(f'{client.get_user(232305914160349185).mention} i miss you', delete_after=seconds) # @Rumble Truck™#2578 i miss you
 
+@bdong.error
+async def bdong_error(error, ctx):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.send("You're not bdong!")
+
 @client.command()
 async def ping(ctx):
     await ctx.send(f'Pong! {round(client.latency * 1000)}ms')
@@ -48,6 +55,7 @@ async def unload(ctx, extension):
     await ctx.send(f"{extension} unloaded")
     
 @commands.command(aliases=("alert","subscribe",))
+@has_permissions(administrator=True)
 async def alerts(ctx):
     async with ctx.typing():
         channels = select("select id from alerts_channels")['id'].to_list()

@@ -149,4 +149,4 @@ def df_to_sheet(sheet_id, range_name, df):
         col_values = df[column].to_list()
         values.append(col_values)
     body = {'majorDimension': 'COLUMNS', 'values': values}
-    append_data(sheet_id, range_name, body)
+    append_data(sheet_id, range_name, body, insertDataOption = 'OVERWRITE')

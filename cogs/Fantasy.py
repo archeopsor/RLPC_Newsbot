@@ -1,5 +1,5 @@
 from discord.ext import commands
-import fantasy_infrastructure as fantasy
+import fantasy_infrastructure_new as fantasy
 import discord
 
 prefix = '$'
@@ -13,7 +13,7 @@ class Fantasy(commands.Cog):
     @commands.command(aliases=("createaccount","create_account","newplayer", "new_player","newaccount","new_account","add_fantasy_player","new"))
     async def new_fantasy_player(self,ctx,league):
         async with ctx.typing():
-            if league.casefold() not in ["major","aaa","aa","a","none"]:
+            if league.casefold() not in ["major","aaa","aa","a","independent", "indy", "maverick", "mav", "none"]:
                 await ctx.send(f"{league} could not be understood")
                 return
             else:
@@ -57,7 +57,10 @@ class Fantasy(commands.Cog):
     async def drop_player(self,ctx,slot):
         async with ctx.typing():
             author = ctx.message.author.name
-            slot = int(slot)
+            try: slot = int(slot)
+            except: 
+                await ctx.send("Please choose a slot (1-5) rather than a player")
+                return
             answer = fantasy.pick_player(author,"drop",slot)
         await ctx.send(answer)
         
@@ -69,7 +72,7 @@ class Fantasy(commands.Cog):
     @commands.command(aliases=("leaderboard","lb","standings",))
     async def generate_leaderboard(self,ctx):
         async with ctx.typing():
-            answer = fantasy.generate_leaderboard()
+            answer = fantasy.fantasy_lb()
             leaderboard=discord.Embed(title="Fantasy Leaderboard", color=0xffff00)
             for row in answer.index:
                 leaderboard.add_field(name=f'{row+1}: {answer.loc[row,"Username"]}', value=answer.loc[row,"Total Points"], inline=False)
@@ -83,19 +86,19 @@ class Fantasy(commands.Cog):
             answer = fantasy.show_team(author)
             team=discord.Embed(title=f"{author}'s team", color=0x008080)
             team.add_field(name="Account League", value=answer[0], inline=True)
-            team.add_field(name="Player 1", value=answer[1], inline=True)
-            team.add_field(name="Player 2", value=answer[2], inline=True)
-            team.add_field(name="Player 3", value=answer[3], inline=True)
-            team.add_field(name="Player 4", value=answer[4], inline=True)
-            team.add_field(name="Player 5", value=answer[5], inline=True)
-            team.add_field(name="Transfers Left", value=answer[6], inline=True)
-            team.add_field(name="Salary", value=answer[7], inline=True)
-            team.add_field(name="Player 1 Points", value=answer[8], inline=True)
-            team.add_field(name="Player 2 Points", value=answer[9], inline=True)
-            team.add_field(name="Player 3 Points", value=answer[10], inline=True)
-            team.add_field(name="Player 4 Points", value=answer[11], inline=True)
-            team.add_field(name="Player 5 Points", value=answer[12], inline=True)
-            team.add_field(name="Total Points", value=answer[13], inline=False)
+            team.add_field(name="Player 1", value=answer[1][0], inline=True)
+            team.add_field(name="Player 2", value=answer[1][1], inline=True)
+            team.add_field(name="Player 3", value=answer[1][2], inline=True)
+            team.add_field(name="Player 4", value=answer[1][3], inline=True)
+            team.add_field(name="Player 5", value=answer[1][4], inline=True)
+            team.add_field(name="Transfers Left", value=answer[3], inline=True)
+            team.add_field(name="Salary", value=answer[4], inline=True)
+            team.add_field(name="Player 1 Points", value=answer[2][0], inline=True)
+            team.add_field(name="Player 2 Points", value=answer[2][1], inline=True)
+            team.add_field(name="Player 3 Points", value=answer[2][2], inline=True)
+            team.add_field(name="Player 4 Points", value=answer[2][3], inline=True)
+            team.add_field(name="Player 5 Points", value=answer[2][4], inline=True)
+            team.add_field(name="Total Points", value=answer[5], inline=False)
         await ctx.send(embed=team)
     
     @commands.command(aliases=("player","playerinfo","info",))
