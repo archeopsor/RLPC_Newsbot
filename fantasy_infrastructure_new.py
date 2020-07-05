@@ -130,9 +130,9 @@ def pick_player(person: str , player: str, slot: int=0) -> str:
     
     if drop == False:
         player_check = rlpc_players[rlpc_players['Username']==player]
-        permission_check = rlpc_players.loc[rlpc_players['Username']==player,'Allowed?'].values[0]
-        cap_check = rlpc_players.loc[rlpc_players['Username']==player,'Fantasy Value'].values[0]
-        cap_check = int(cap_check) + int(fantasy_players.loc[person,'salary'].values[0])
+        permission_check = rlpc_players.loc[rlpc_players['Username']==player,'Allowed?'].values
+        cap_check = rlpc_players.loc[rlpc_players['Username']==player,'Fantasy Value'].values
+        cap_check = int(cap_check) + int(fantasy_players.loc[person,'salary'])
     elif drop == True:
         player_check = []
         permission_check = "Yes"
