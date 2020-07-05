@@ -103,13 +103,13 @@ def pick_player(person: str , player: str, slot: int=0) -> str:
     if slot == 0:
         if fantasy_players.loc[person, f"players"][0] == "Not Picked":
             slot = 1
-        elif fantasy_players.loc[person, f"players"][0] == "Not Picked":
+        elif fantasy_players.loc[person, f"players"][1] == "Not Picked":
             slot = 2
-        elif fantasy_players.loc[person, f"players"][0] == "Not Picked":
+        elif fantasy_players.loc[person, f"players"][2] == "Not Picked":
             slot = 3
-        elif fantasy_players.loc[person, f"players"][0] == "Not Picked":
+        elif fantasy_players.loc[person, f"players"][3] == "Not Picked":
             slot = 4
-        elif fantasy_players.loc[person, f"players"][0] == "Not Picked":
+        elif fantasy_players.loc[person, f"players"][4] == "Not Picked":
             slot = 5
         else: return("Please pick a slot to replace, your team is full")
     
