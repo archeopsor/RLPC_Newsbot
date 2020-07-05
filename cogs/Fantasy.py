@@ -11,7 +11,7 @@ class Fantasy(commands.Cog):
         self.client = client
         
     @commands.command(aliases=("createaccount","create_account","newplayer", "new_player","newaccount","new_account","add_fantasy_player","new"))
-    async def new_fantasy_player(self,ctx,league):
+    async def new_fantasy_player(self,ctx,league="none"):
         async with ctx.typing():
             if league.casefold() not in ["major","aaa","aa","a","independent", "indy", "maverick", "mav", "none"]:
                 await ctx.send(f"{league} could not be understood")
@@ -25,7 +25,7 @@ class Fantasy(commands.Cog):
     @new_fantasy_player.error
     async def new_fantasy_player_error(self,ctx,error):
         if isinstance(error,commands.MissingRequiredArgument):
-            await ctx.send(f'Please include the league you play in. If you are not a player, use "{prefix}new_fantasy_player none"')
+            await ctx.send(f'Please include the league you play in. If you are not a player, use "{prefix}new none"')
         
     @commands.command(aliases=("pick", "pickplayer", "addplayer", "add_player",))
     async def pick_player(self,ctx,*,message):
