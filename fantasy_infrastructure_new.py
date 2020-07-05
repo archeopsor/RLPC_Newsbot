@@ -125,7 +125,7 @@ def pick_player(person: str , player: str, slot: int=0) -> str:
     elif drop == False:
         return("That player couldn't be found in the database. Make sure you spelled their name correctly")
     
-    account_check = fantasy_players.loc[person].values
+    account_check = fantasy_players.loc[person].index
     current_occupant = fantasy_players.loc[person,"players"][slot-1]
     
     if drop == False:
