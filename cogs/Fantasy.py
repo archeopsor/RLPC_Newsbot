@@ -133,21 +133,22 @@ Welcome to RLPC Fantasy! This is a just-for-fun fantasy league in which people c
  - Points are calculated after every gameday (Wednesday/Friday)
  - Each team can do 2 transfers (replacing one player with another player) every week. Filling an empty slot doesn't add to this counter
  - Each player is given a specific "salary" based on their mmr and team. The total salary value of a fantasy team must be below 800 at all times.
+ - More detailed player info can be found here: <https://docs.google.com/spreadsheets/d/1rmJVnfWvVe3tSnFrXpExv4XGbIN3syZO12dGBeoAf-w/edit?usp=sharing>
 
 **__FANTASY COMMANDS__**
 
-**{prefix}fantasy_help** - Shows this message
-**{prefix}newplayer** - Creates a fantasy team linked to your discord account. Please include the league you play in, or 'none'.
+**{prefix}fantasy** - Shows this message
+**{prefix}new** - Creates a fantasy team linked to your discord account. Please include the league you play in, or 'none'.
     *Example: {prefix}new_fantasy_player major*
 **{prefix}team** - Shows the current fantasy team of any fantasy player. "{prefix}team" will display your own team, although you can include any discord account name (Don't use nicknames')
     *Example: {prefix}team arco*
 **{prefix}info** - Gives important information about a player, such as their salary and a variety of stats.
     *Example: {prefix}info arco*
-**{prefix}pick_player** - Adds a player to your fantasy team, in one of 5 player slots. Please specify which player you want, as well as which slot.
+**{prefix}pick** - Adds a player to your fantasy team, in one of 5 player slots. Please specify which player you want, as well as which slot.
     *Example: {prefix}pick arco 4*
-**{prefix}drop_player** - Can also be done with '{prefix}pick_player drop [slot]', drops the player in the specified slot, replacing them with 'Not Picked'.
+**{prefix}drop** - Can also be done with '{prefix}pick_player drop [slot]', drops the player in the specified slot, replacing them with 'Not Picked'.
     *Example: {prefix}drop 4*
-**{prefix}leaderboard** - Displays the current leaderboard of points
+**{prefix}lb** - Displays the current leaderboard of points
 **{prefix}search**- Searches for the top 5 players fiting specified parameters
     *Example: {prefix}search name: arco min: 100 max: 160 league: AA team: all strictness: 3*
         """

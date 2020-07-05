@@ -21,7 +21,7 @@ def fantasy_lb() -> pd.DataFrame:
     lb = lb.reset_index(drop=True)
     return(lb)
 
-def add_fantasy_player(person: str, league: str) -> None:
+def add_fantasy_player(person: str, league: str = "none") -> None:
     """
 
     Parameters
