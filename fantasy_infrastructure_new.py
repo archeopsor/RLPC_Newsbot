@@ -93,23 +93,23 @@ def pick_player(person: str , player: str, slot: int=0) -> str:
         return "You're not allowed to make transfers right now, probably because there are games currently happening or the previous games have not yet been entered into the database. Please contact arco if you think this is an error."
     
     # Get dataframes with all the player and fantasy data in them
-    fantasy_players = select("fantasy_players")
+    fantasy_players = select("fantasy_players").set_index('username')
     rlpc_players = select("players")
     lower_players = rlpc_players['Username'].str.lower()
     
-    try: fantasy_players.loc[fantasy_players['username']==person,"players"].reset_index(drop=True)[0]
-    except: return(f"You don't currently have an account! Use {prefix}newplayer [league] to make an account")
+    try: fantasy_players.loc[person,"players"][0]
+    except: return(f"You don't currently have an account! Use {prefix}new [league] to make an account")
     
     if slot == 0:
-        if fantasy_players.loc[fantasy_players['username']==person, f"players"][0][0] == "Not Picked":
+        if fantasy_players.loc[person, f"players"][0] == "Not Picked":
             slot = 1
-        elif fantasy_players.loc[fantasy_players['username']==person, f"players"][0][1] == "Not Picked":
+        elif fantasy_players.loc[person, f"players"][0] == "Not Picked":
             slot = 2
-        elif fantasy_players.loc[fantasy_players['username']==person, f"players"][0][2] == "Not Picked":
+        elif fantasy_players.loc[person, f"players"][0] == "Not Picked":
             slot = 3
-        elif fantasy_players.loc[fantasy_players['username']==person, f"players"][0][3] == "Not Picked":
+        elif fantasy_players.loc[person, f"players"][0] == "Not Picked":
             slot = 4
-        elif fantasy_players.loc[fantasy_players['username']==person, f"players"][0][4] == "Not Picked":
+        elif fantasy_players.loc[person, f"players"][0] == "Not Picked":
             slot = 5
         else: return("Please pick a slot to replace, your team is full")
     
@@ -125,14 +125,14 @@ def pick_player(person: str , player: str, slot: int=0) -> str:
     elif drop == False:
         return("That player couldn't be found in the database. Make sure you spelled their name correctly")
     
-    account_check = fantasy_players[fantasy_players['username']==person].index.values
-    current_occupant = fantasy_players.loc[fantasy_players['username']==person,"players"][0][slot-1]
+    account_check = fantasy_players.loc[person].values
+    current_occupant = fantasy_players.loc[person,"players"][slot-1]
     
     if drop == False:
         player_check = rlpc_players[rlpc_players['Username']==player]
         permission_check = rlpc_players.loc[rlpc_players['Username']==player,'Allowed?'].values[0]
         cap_check = rlpc_players.loc[rlpc_players['Username']==player,'Fantasy Value'].values[0]
-        cap_check = int(cap_check) + int(fantasy_players.loc[fantasy_players['username']==person,'salary'].values[0])
+        cap_check = int(cap_check) + int(fantasy_players.loc[person,'salary'].values[0])
     elif drop == True:
         player_check = []
         permission_check = "Yes"
@@ -143,7 +143,7 @@ def pick_player(person: str , player: str, slot: int=0) -> str:
     transfers_left = 0
     if current_occupant != "Not Picked":
         transfer = True
-        transfers_left = fantasy_players.loc[fantasy_players['username']==person,'transfers_left'].values[0]
+        transfers_left = fantasy_players.loc[person,'transfers_left']
         transfers_left = int(transfers_left)
         
     if (transfer == True or drop == True) and transfers_left == 0:
@@ -151,7 +151,7 @@ def pick_player(person: str , player: str, slot: int=0) -> str:
     
     # Check to make sure the account exists, the specified player exists, and they are allowed to be picked
     if len(account_check) == 0:
-        return("You don't currently have an account! Use {prefix}newaccount to create an account")
+        return("You don't currently have an account! Use {prefix}new to create an account")
     else:
         pass
     
@@ -166,7 +166,7 @@ def pick_player(person: str , player: str, slot: int=0) -> str:
         pass
     
     # Check to make sure this player isn't already on the fantasy team
-    existing_check = fantasy_players.loc[fantasy_players['username']==person, "players"][0]
+    existing_check = fantasy_players.loc[person, "players"]
     if player in existing_check:
         return("You already have this player on your team!")
     else:
@@ -199,7 +199,7 @@ def pick_player(person: str , player: str, slot: int=0) -> str:
     
     if drop == True:
         engine.execute(f"""update fantasy_players set players[{slot}] = 'Not Picked' where "username" = '{person}'""")
-        new_salary = fantasy_players.loc[fantasy_players['username']==person, 'salary'].values[0] - rlpc_players.loc[rlpc_players['Username']==player_out,'Fantasy Value'].values[0]
+        new_salary = fantasy_players.loc[person, 'salary'] - rlpc_players.loc[rlpc_players['Username']==player_out,'Fantasy Value'].values[0]
         engine.execute(f"""update fantasy_players set "salary" = {new_salary} where "username" = '{person}'""")
         return(f'You have dropped {current_occupant}')
     else:
@@ -219,7 +219,7 @@ def pick_player(person: str , player: str, slot: int=0) -> str:
     elif current_occupant != "Not Picked":
         return(f'Success! {current_occupant} has been replaced with {player}')
     else:
-        return(f"You already have {fantasy_players.loc[fantasy_players['Username']==person,f'Player {slot}'].values[0]} in this slot. They have been replaced by {player}.")
+        return(f"You already have {fantasy_players.loc[person,'players'][slot-1]} in this slot. They have been replaced by {player}.")
     
 # Display a player's team
 def show_team(person: str) -> pd.Series:
