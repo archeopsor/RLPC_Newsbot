@@ -67,10 +67,12 @@ def download_ids():
     None.
 
     """
-    
+    print('Downloading IDs...')
     gsheet = sheet.get_google_sheet("1C10LolATTti0oDuW64pxDhYRLkdUxrXP0fHYBk3ZwmU", 'Players!A1:O')
     sheetdata = sheet.gsheet2df(gsheet) 
     sheetdata['Unique IDs'] = sheetdata['Unique IDs'].map(lambda x: x.split(","))
+    sheetdata = sheetdata.drop_duplicates(subset='Username')
+    sheetdata.drop(sheetdata.tail(1).index,inplace=True)
     
     dbdata = select('players')
     
@@ -89,9 +91,11 @@ def download_ids():
                     break
             playerinfo = sheetdata.loc[sheetdata['Username']==player]
             add_player(player, playerinfo['Region'].values[0], playerinfo['Platform'].values[0], playerinfo['Sheet MMR'].values[0], playerinfo['Team'].values[0], playerinfo['League'].values[0], ids = playerinfo['Unique IDs'])
+            print(f'{player} added')
         elif sheetdata.loc[sheetdata['Username']==player, 'Unique IDs'].values != dbdata.loc[dbdata['Username']==player, 'id'].values:
             engine.execute(f"""update players set "id" = array[{str(sheetdata.loc[sheetdata['Username']==player, 'Unique IDs'].values[0])[1:-1]}] where "Username" = '{player}'""")
-        print(f"{player} updated")
+            print(f"{player} updated")
+    print('Done downloading IDs.')
 
 def identify(id: str, players: pd.DataFrame) -> str:
     """
@@ -187,9 +191,12 @@ def find_league(team: str, players: pd.DataFrame) -> str:
 
     """
     
+    return 'AA'
+    
     return players.loc[players['Team']==team, 'League'].values[0]
 
 def check_players():
+    print("Checking players...")
     players = select('players')
     gsheet = sheet.get_google_sheet("1C10LolATTti0oDuW64pxDhYRLkdUxrXP0fHYBk3ZwmU", 'Players!A1:O')
     sheetdata = sheet.gsheet2df(gsheet)
@@ -211,17 +218,22 @@ def check_players():
                     # TODO: Update this in the database
                     break
             add_player(player, sheetdata.loc[player, 'Region'], sheetdata.loc[player, 'Platform'], sheetdata.loc[player, 'Sheet MMR'], sheetdata.loc[player, 'Team'], sheetdata.loc[player, 'League'])            
+            print(f'{player} added')
         
         else: # If they do appear in the database, check Region, Platform, MMR, Team, and League
             if sheetdata.loc[player, 'Region'] != players.loc[player, 'Region']:
                 engine.execute(f"""update players set "Region" = '{sheetdata.loc[player, 'Region']}' where "Username" = '{player}'""")
+                print(f'{player} updated')
             if sheetdata.loc[player, 'Platform'] != players.loc[player, 'Platform']:
                 engine.execute(f"""update players set "Platform" = '{sheetdata.loc[player, 'Platform']}' where "Username" = '{player}'""")
-            if sheetdata.loc[player, 'Sheet MMR'] != players.loc[player, 'MMR']:
+                print(f'{player} updated')
+            if int(sheetdata.loc[player, 'Sheet MMR']) != players.loc[player, 'MMR']:
                 engine.execute(f"""update players set "MMR" = '{sheetdata.loc[player, 'Sheet MMR']}' where "Username" = '{player}'""")
+                print(f'{player} updated')
             if sheetdata.loc[player, 'Team'] != players.loc[player, 'Team']:
                 engine.execute(f"""update players set "Team" = '{sheetdata.loc[player, 'Team']}' where "Username" = '{player}'""")
+                print(f'{player} updated')
             if sheetdata.loc[player, 'League'] != players.loc[player, 'League']:
                 engine.execute(f"""update players set "League" = '{sheetdata.loc[player, 'League']}' where "Username" = '{player}'""")
-                
-        print(f'{player} checked')
+                print(f'{player} updated')
+    print("Done checking players.")

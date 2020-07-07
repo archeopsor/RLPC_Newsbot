@@ -2,13 +2,11 @@ import carball
 from google.protobuf.json_format import MessageToDict
 import os
 from database import engine, select
-import shutil
 from zipfile import ZipFile
 import time
 import pandas as pd
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 from RLPC_Players import download_ids, identify, find_team, find_league, check_players
-import numpy as np
+import logging
 
 def fantasy_formula(row: pd.Series) -> int:
     """
@@ -30,7 +28,7 @@ def fantasy_formula(row: pd.Series) -> int:
     points += (row['Goals']/gp)*21
     points += (row['Assists']/gp)*15
     points += (row['Shots']/gp)*3
-    points += (row['Saves']/gp)*14
+    points += (row['Saves']/gp)*13
     points += (row['Demos Inflicted']/gp)*6
     points += (row['Clears']/gp)*4
     points += (row['Passes']/gp)*2
@@ -38,7 +36,6 @@ def fantasy_formula(row: pd.Series) -> int:
     points += (row['Turnovers Lost']/gp)*(-0.3)
     points += (row['Series Won'])*5
     points += (row['Games Won'])*1
-    points += gp*(-1)
     
     return round(points)
 
@@ -56,13 +53,14 @@ def get_replay_stats(replay: str) -> dict:
     the structure to find stuff, though, since it's pretty disorganized.
 
     """
-    analysis_manager = carball.analyze_replay_file(replay)
+
+    analysis_manager = carball.analyze_replay_file(replay, logging_level=logging.CRITICAL)
         
     # return the proto object in python
     proto_object = analysis_manager.get_protobuf_data()
     
     # return the pandas data frame in python
-    dataframe = analysis_manager.get_data_frame()
+    #dataframe = analysis_manager.get_data_frame()
     
     stats = MessageToDict(proto_object)
     
@@ -143,8 +141,8 @@ def get_series_stats(replays: list, players: pd.DataFrame) -> pd.DataFrame:
     """
 
     players.fillna(value=0, inplace=True)
-    player_stats = pd.DataFrame(columns = list(players.columns)).set_index("Username")
-    player_stats = player_stats.iloc[:,8:]
+    player_stats = pd.DataFrame(columns = list(players.columns))
+    player_stats = player_stats.iloc[:,9:]
     columns = list(player_stats.columns)
     team_stats = pd.DataFrame(columns = columns)
     for replay in replays:
@@ -283,14 +281,19 @@ def rlpc_replay_analysis():
     players = select("players").set_index('Username')
     replays = get_rlpc_replays()
     team_stats = select("team_stats")
-    points = pd.DataFrame(columns = ['Username', 'Points'])
-    points = points.set_index('Username')
     all_stats = pd.DataFrame(columns = list(players.columns[8:]))
     all_stats.index = all_stats.index.rename('Username')
+    fantasy_players = select('fantasy_players').set_index('username')
+    
+    counter = 1
+
     for series in list(replays): # Repeats this for every series downloaded
+        print(f'Analyzing series {counter} of {len(list(replays))} ({round((counter/len(list(replays))))*100}%)')
+        counter += 1
+    
         indiv_stats, group_stats = get_series_stats(replays[series], players.reset_index())
         all_stats = all_stats.append(indiv_stats)
-        league = find_league(group_stats.index[0], players)
+        league = find_league(group_stats.index[0], players.reset_index())
         
         # Upload team stats
         for team in group_stats.index:
@@ -306,11 +309,17 @@ def rlpc_replay_analysis():
         # Upload player stats
         for player in indiv_stats.index:
             for col in indiv_stats.columns:
-                try: current_value = players.loc[player, col].values[0]
+                try: engine.execute(f"""update players set "{col}" = "{col}" + {indiv_stats.loc[player, col]} where "Username" = {player}""")
                 except: continue # Temporary solution for if a player isn't on the sheet
-                engine.execute(f"""update players set "{col}" = {indiv_stats.loc[player, col]} where "Username" = {player}""")
     
     # Calculate fantasy points for each player
     all_stats['Fantasy Points'] = all_stats.apply(lambda row: fantasy_formula(row), axis=1)
     
-    return all_stats
+    # Add fantasy points to accounts
+    for player in all_stats.index:
+        for user in fantasy_players.index:
+            if player in fantasy_players.loc[user, 'players']:
+                slot = fantasy_players.loc[user, 'players'].index(player)
+                engine.execute(f"""update fantasy_players set points[{slot}] = points[{slot}] + {all_stats.loc[player, 'Fantasy Points']} where "username" = '{user}'""")
+                
+    return all_stats.sort_values(by='Fantasy Points')
