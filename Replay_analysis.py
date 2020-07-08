@@ -107,7 +107,7 @@ def get_rlpc_replays(path='C:/Users/Owner/Downloads', download_files = True) -> 
     
     files = {}
     for download in os.listdir(path):
-        new = os.path.getmtime(f"{path}/{download}") > time.time()-(12*80000) # Make sure to only include files newer than 1 day
+        new = os.path.getmtime(f"{path}/{download}") > time.time()-(80000) # Make sure to only include files newer than 1 day
         if download.endswith('.zip') and new:
             replays = []
             teams = download.split(" - ")[0].split(" vs. ")
@@ -322,4 +322,4 @@ def rlpc_replay_analysis():
                 slot = fantasy_players.loc[user, 'players'].index(player)
                 engine.execute(f"""update fantasy_players set points[{slot}] = points[{slot}] + {all_stats.loc[player, 'Fantasy Points']} where "username" = '{user}'""")
                 
-    return all_stats.sort_values(by='Fantasy Points')
+    return all_stats

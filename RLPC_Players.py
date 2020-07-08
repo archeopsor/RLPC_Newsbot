@@ -76,6 +76,8 @@ def download_ids():
     
     dbdata = select('players')
     
+    return sheetdata.loc[sheetdata['Username']=='kmrty', 'Unique IDs'].values[0]
+    
     for player in sheetdata['Username']:
         if '' in sheetdata.loc[sheetdata['Username']==player, 'Unique IDs'].values[0]:
             sheetdata.loc[sheetdata['Username']==player, 'Unique IDs'] = None
@@ -93,7 +95,8 @@ def download_ids():
             add_player(player, playerinfo['Region'].values[0], playerinfo['Platform'].values[0], playerinfo['Sheet MMR'].values[0], playerinfo['Team'].values[0], playerinfo['League'].values[0], ids = playerinfo['Unique IDs'])
             print(f'{player} added')
         elif sheetdata.loc[sheetdata['Username']==player, 'Unique IDs'].values != dbdata.loc[dbdata['Username']==player, 'id'].values:
-            engine.execute(f"""update players set "id" = array[{str(sheetdata.loc[sheetdata['Username']==player, 'Unique IDs'].values[0])[1:-1]}] where "Username" = '{player}'""")
+            try: engine.execute(f"""update players set "id" = array[{str(sheetdata.loc[sheetdata['Username']==player, 'Unique IDs'].values[0])[1:-1]}] where "Username" = '{player}'""")
+            except: pass
             print(f"{player} updated")
     print('Done downloading IDs.')
 
@@ -139,17 +142,7 @@ def find_team(names: list, players: pd.DataFrame, id_players: bool = False) -> s
         Team name.
 
     """
-    
-    if '76561198255787871' in names:       # THESE          PLEASE DELETE THESE FOUR LINES
-        return 'Rams'                      # ARE
-    elif '76561198100673745' in names:     # ALL
-        return 'Cowboys'                   # TEMPORARY
-    elif '' in names:
-        return 'Flowerhorns'
-    elif '' in names:
-        return 'Turtles'
-    
-    
+        
     if id_players:
         new_names = []
         for id in names:

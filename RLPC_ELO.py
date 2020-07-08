@@ -3,9 +3,8 @@ import Google_Sheets as sheet
 
 spreadsheet_id = sheet.SPREADSHEET_ID
 
-# Initial ELO for each team = 1000
 def reset_elo(league=""):
-    gsheet = sheet.get_google_sheet(spreadsheet_id, 'ELO!A1:H')
+    gsheet = sheet.get_google_sheet(spreadsheet_id, 'ELO!A1:L')
     global total_elo_data
     total_elo_data = sheet.gsheet2df(gsheet)
     
@@ -21,6 +20,12 @@ def reset_elo(league=""):
     global a_elo
     a_elo = total_elo_data[['A Teams','A ELO']]
     a_elo = a_elo.rename(columns={'A Teams': 'teams','A ELO': 'ELO'})
+    global indy_elo
+    indy_elo = total_elo_data[['Indy Teams','Indy ELO']]
+    indy_elo = indy_elo.rename(columns={'Indy Teams': 'teams','Indy ELO': 'ELO'})
+    global mav_elo
+    mav_elo = total_elo_data[['Mav Teams','Mav ELO']]
+    mav_elo = mav_elo.rename(columns={'Mav Teams': 'teams','Mav ELO': 'ELO'})
     
 reset_elo()
 
@@ -50,11 +55,25 @@ def save_data(league=""):
                 sheet.update_cell(spreadsheet_id,f'ELO!H{row+2}',a_elo.iloc[row,1])
             else:
                 pass
+    elif league.casefold() in ['independent', 'indy']:
+        for row in major_elo.index:
+            if indy_elo.iloc[row,1] != total_elo_data.iloc[row,9]:
+                sheet.update_cell(spreadsheet_id,f'ELO!J{row+2}',indy_elo.iloc[row,1])
+            else:
+                pass
+    elif league.casefold() in ['maverick', 'mav']:
+        for row in major_elo.index:
+            if mav_elo.iloc[row,1] != total_elo_data.iloc[row,11]:
+                sheet.update_cell(spreadsheet_id,f'ELO!L{row+2}',mav_elo.iloc[row,1])
+            else:
+                pass
     else:
         save_data("major")
         save_data("aaa")
         save_data("aa")
         save_data("a")
+        save_data('indy')
+        save_data('mav')
     
 def recall_data(league=""):
     if league.casefold() == "major":
@@ -69,6 +88,12 @@ def recall_data(league=""):
     elif league.casefold() == "a":
         reset_elo("a")
         return(a_elo)
+    elif league.casefold() in ['independent', 'indy']:
+        reset_elo("indy")
+        return(indy_elo)
+    elif league.casefold() in ['maverick', 'mav']:
+        reset_elo("mav")
+        return(mav_elo)
     else:
         reset_elo()
         return(total_elo_data)
@@ -149,7 +174,7 @@ def add_games_auto(league):
         
 def add_games_manual(league,team1,team2,winner,score):
     recall_data(league)
-    k = 60
+    k = 30
     score = list(score)
     score = f"{score[0]} - {score[-1]}"
     team1 = team1.title()
@@ -168,6 +193,12 @@ def add_games_manual(league,team1,team2,winner,score):
     elif league.casefold() == "a":
         Qa = 10**(int(a_elo.loc[a_elo['teams']==team1,'ELO'])/600)
         Qb = 10**(int(a_elo.loc[a_elo['teams']==team2,'ELO'])/600)
+    elif league.casefold() in ['indy', 'independent']:
+        Qa = 10**(int(indy_elo.loc[indy_elo['teams']==team1,'ELO'])/600)
+        Qb = 10**(int(indy_elo.loc[indy_elo['teams']==team2,'ELO'])/600)
+    elif league.casefold() in ['mav', 'maverick']:
+        Qa = 10**(int(mav_elo.loc[mav_elo['teams']==team1,'ELO'])/600)
+        Qb = 10**(int(mav_elo.loc[mav_elo['teams']==team2,'ELO'])/600)
     Ea = Qa/(Qa+Qb)
     Eb = Qb/(Qa+Qb)
     Sa = 0
@@ -212,6 +243,12 @@ def add_games_manual(league,team1,team2,winner,score):
     if league.casefold() == "a":
         a_elo.loc[a_elo['teams']==team1,'ELO'] = round(int(a_elo.loc[a_elo['teams']==team1,'ELO']) + k*(Sa - Ea))
         a_elo.loc[a_elo['teams']==team2,'ELO'] = round(int(a_elo.loc[a_elo['teams']==team2,'ELO']) + k*(Sb - Eb))
+    if league.casefold() in ['independent', 'indy']:
+        indy_elo.loc[indy_elo['teams']==team1,'ELO'] = round(int(indy_elo.loc[indy_elo['teams']==team1,'ELO']) + k*(Sa - Ea))
+        indy_elo.loc[indy_elo['teams']==team2,'ELO'] = round(int(indy_elo.loc[indy_elo['teams']==team2,'ELO']) + k*(Sb - Eb))
+    if league.casefold() in ['maverick', 'mav']:
+        mav_elo.loc[mav_elo['teams']==team1,'ELO'] = round(int(mav_elo.loc[mav_elo['teams']==team1,'ELO']) + k*(Sa - Ea))
+        mav_elo.loc[mav_elo['teams']==team2,'ELO'] = round(int(mav_elo.loc[mav_elo['teams']==team2,'ELO']) + k*(Sb - Eb))
         
     save_data()
 
@@ -226,12 +263,18 @@ def exp_score(league,team1,team2,bestof=100):
     elif league.casefold() == "aaa":
         team1elo = int(aaa_elo.loc[aaa_elo['teams']==team1,'ELO'].values[0])
         team2elo = int(aaa_elo.loc[aaa_elo['teams']==team2,'ELO'].values[0])
-    elif league.casefold() == "aa" or league.casefold() == "indy":
+    elif league.casefold() == "aa":
         team1elo = int(aa_elo.loc[aa_elo['teams']==team1,'ELO'].values[0])
         team2elo = int(aa_elo.loc[aa_elo['teams']==team2,'ELO'].values[0])
-    elif league.casefold() == "a" or league.casefold() == "mav":
+    elif league.casefold() == "a":
         team1elo = int(a_elo.loc[a_elo['teams']==team1,'ELO'].values[0])
         team2elo = int(a_elo.loc[a_elo['teams']==team2,'ELO'].values[0])
+    elif league.casefold() in['indy', 'independent']:
+        team1elo = int(indy_elo.loc[indy_elo['teams']==team1,'ELO'].values[0])
+        team2elo = int(indy_elo.loc[indy_elo['teams']==team2,'ELO'].values[0])
+    elif league.casefold() in ['maverick', 'mav']:
+        team1elo = int(mav_elo.loc[mav_elo['teams']==team1,'ELO'].values[0])
+        team2elo = int(mav_elo.loc[mav_elo['teams']==team2,'ELO'].values[0])
     Q1 = 10**(team1elo/400)
     Q2 = 10**(team2elo/400)
     exp_score_1 = Q1/(Q1+Q2)
@@ -258,13 +301,23 @@ def rank_teams(league):
         lb = aaa_elo.sort_values(by=['ELO'], ascending=False)
         lb = lb.reset_index(drop=True)
         return(lb)
-    if league.casefold() == "aa" or league.casefold() == "indy":
+    if league.casefold() == "aa":
         aa_elo['ELO'] = aa_elo['ELO'].map(lambda a: int(a))
         lb = aa_elo.sort_values(by=['ELO'], ascending=False)
         lb = lb.reset_index(drop=True)
         return(lb)
-    if league.casefold() == "a" or league.casefold() == "mav":
+    if league.casefold() == "a":
         a_elo['ELO'] = a_elo['ELO'].map(lambda a: int(a))
         lb = a_elo.sort_values(by=['ELO'], ascending=False)
+        lb = lb.reset_index(drop=True)
+        return(lb)
+    if league.casefold() in ['indy', 'independent']:
+        indy_elo['ELO'] = indy_elo['ELO'].map(lambda a: int(a))
+        lb = indy_elo.sort_values(by=['ELO'], ascending=False)
+        lb = lb.reset_index(drop=True)
+        return(lb)
+    if league.casefold() in ['mav', 'maverick']:
+        mav_elo['ELO'] = mav_elo['ELO'].map(lambda a: int(a))
+        lb = mav_elo.sort_values(by=['ELO'], ascending=False)
         lb = lb.reset_index(drop=True)
         return(lb)
