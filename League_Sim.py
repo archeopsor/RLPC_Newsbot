@@ -18,12 +18,12 @@ aa_losses = []
 a_teams = ['Stallions', 'Cougars', 'Leopards', 'Gulls', 'Rattlers', 'Pelicans', 'Ravens', 'Cardinals', 'Genesis', 'Embers', 'Tempest', 'Eskimos', 'Jesters', 'Miners', 'Wranglers', 'Titans']
 a_wins = []
 a_losses = []
-
-# Schedule for all the games in each league
-major_schedule = []
-aaa_schedule = []
-aa_schedule = []
-a_schedule = []
+indy_teams = ['Vikings','Wildcats', 'Beavers', 'Coyotes', 'Cyclones', 'Dragons', 'Pilots', 'Rhinos', 'Toucans', 'Yellow Jackets', 'Bears', 'Centurions', 'Pandas', 'Puffins', 'Scorpions', 'Terriers']
+indy_wins = []
+indy_losses = []
+mav_teams = ['Wizards', 'Jackrabbits', 'Otters', 'Foxes', 'Tides', 'Yetis', 'Sailors', 'Zebras', 'Macaws', 'Fireflies', 'Cubs', 'Samurai', 'Gorillas', 'Penguins', 'Camels', 'Hounds']
+mav_wins = []
+mav_losses = []
 
 # Get the wins and losses of all the teams in a dataframe from the sheet
 gsheet = sheet.get_google_sheet("1Tlc_TgGMrY5aClFF-Pb5xvtKrJ1Hn2PJOLy2fUDDdFI","Team Wins!A1:O17")
@@ -37,7 +37,10 @@ for i in range(0,16):
     aa_losses.append(int(winloss.iloc[i,10]))
     a_wins.append(int(winloss.iloc[i,13]))
     a_losses.append(int(winloss.iloc[i,14]))
-
+    indy_wins.append(int(winloss.iloc[i, 17]))
+    indy_losses.append(int(winloss.iloc[i, 18]))
+    mav_wins.append(int(winloss.iloc[i, 21]))
+    mav_losses.append(int(winloss.iloc[i, 22]))
 
 # Current record for each team
 major_records = {"Team": major_teams, "Wins": major_wins, "Losses": major_losses}
@@ -48,6 +51,10 @@ aa_records = {"Team": aa_teams, "Wins": aa_wins, "Losses": aa_losses}
 aa_records = pd.DataFrame.from_dict(aa_records).set_index("Team")
 a_records = {"Team": a_teams, "Wins": a_wins, "Losses": a_losses}
 a_records = pd.DataFrame.from_dict(a_records).set_index("Team")
+indy_records = {"Team": indy_teams, "Wins": indy_wins, "Losses": indy_losses}
+indy_records = pd.DataFrame.from_dict(indy_records).set_index("Team")
+mav_records = {"Team": mav_teams, "Wins": mav_wins, "Losses": mav_losses}
+mav_records = pd.DataFrame.from_dict(mav_records).set_index("Team")
 
 def randomize_dict(dict):
     keys = list(dict.keys())
@@ -57,48 +64,31 @@ def randomize_dict(dict):
         answer[key] = dict[key]
     return(answer)
 
-def reset_schedule(league):
-    if league.casefold() == "major":
-        major_schedule.clear()
-    elif league.casefold() == "aaa":
-        aaa_schedule.clear()
-    elif league.casefold() == "aa":
-        aa_schedule.clear()
-    elif league.casefold() == "a":
-        a_schedule.clear()
-
 def gen_schedule(league):
-    reset_schedule(league)
-    data = input("Please input schedule as copied from the spreadsheet: \n")
-    data = data.replace("\t","\n")
-    data = data.split("\n")
-    
-    if league.casefold() == "major":    
-        while len(data) > 0:
-            major_schedule.append(f"{data[0]} - {data[2]}")
-            data = data[3:]
-    elif league.casefold() == "aaa":
-        while len(data) > 0:
-            aaa_schedule.append(f"{data[0]} - {data[2]}")
-            data = data[3:]
-    elif league.casefold() == "aa":
-        while len(data) > 0:
-            aa_schedule.append(f"{data[0]} - {data[2]}")
-            data = data[3:]
-    elif league.casefold() == "a":
-        while len(data) > 0:
-            a_schedule.append(f"{data[0]} - {data[2]}")
-            data = data[3:]
+    games= []
+    if league.casefold() in ['major', 'aaa', 'aa', 'a']:
+        schedule = sheet.gsheet2df(sheet.get_google_sheet("1C10LolATTti0oDuW64pxDhYRLkdUxrXP0fHYBk3ZwmU", f'{league} Schedule!N4:V'))
+    elif league.casefold() in ['independent', 'maverick']:
+        schedule = sheet.gsheet2df(sheet.get_google_sheet("1NXTt5IKwwT7ui4njt0DPPr03YUc_HYcV-rqW6hqrFjY", f'{league} Schedule!N4:V'))
+    for row in schedule.index:
+        if schedule.loc[row, "Winner"] == '':
+            game = f'{schedule.iloc[row, 2]} - {schedule.iloc[row, 4]}'
+            games.append(game)
+    return games
 
 def recall_data():
     global major_elo
     global aaa_elo
     global aa_elo
     global a_elo
+    global indy_elo
+    global mav_elo
     major_elo = elo.recall_data("Major")
     aaa_elo = elo.recall_data("AAA")
     aa_elo = elo.recall_data("AA")
     a_elo = elo.recall_data("A")
+    indy_elo = elo.recall_data("indy")
+    mav_elo = elo.recall_data("mav")
 
 recall_data()
 
@@ -113,17 +103,23 @@ def update_elo(league,team1,team2,winner,score):
     Qa = 0
     Qb = 0
     if league.casefold() == "major":
-        Qa = 10**(int(major_elo.loc[major_elo['teams']==team1,'ELO'])/400)
-        Qb = 10**(int(major_elo.loc[major_elo['teams']==team2,'ELO'])/400)
+        Qa = 10**(int(major_elo.loc[major_elo['teams']==team1,'ELO'])/600)
+        Qb = 10**(int(major_elo.loc[major_elo['teams']==team2,'ELO'])/600)
     elif league.casefold() == "aaa":
-        Qa = 10**(int(aaa_elo.loc[aaa_elo['teams']==team1,'ELO'])/400)
-        Qb = 10**(int(aaa_elo.loc[aaa_elo['teams']==team2,'ELO'])/400)
+        Qa = 10**(int(aaa_elo.loc[aaa_elo['teams']==team1,'ELO'])/600)
+        Qb = 10**(int(aaa_elo.loc[aaa_elo['teams']==team2,'ELO'])/600)
     elif league.casefold() == "aa":
-        Qa = 10**(int(aa_elo.loc[aa_elo['teams']==team1,'ELO'])/400)
-        Qb = 10**(int(aa_elo.loc[aa_elo['teams']==team2,'ELO'])/400)
+        Qa = 10**(int(aa_elo.loc[aa_elo['teams']==team1,'ELO'])/600)
+        Qb = 10**(int(aa_elo.loc[aa_elo['teams']==team2,'ELO'])/600)
     elif league.casefold() == "a":
-        Qa = 10**(int(a_elo.loc[a_elo['teams']==team1,'ELO'])/400)
-        Qb = 10**(int(a_elo.loc[a_elo['teams']==team2,'ELO'])/400)
+        Qa = 10**(int(a_elo.loc[a_elo['teams']==team1,'ELO'])/600)
+        Qb = 10**(int(a_elo.loc[a_elo['teams']==team2,'ELO'])/600)
+    elif league.casefold() in ['indy', 'independent']:
+        Qa = 10**(int(indy_elo.loc[indy_elo['teams']==team1,'ELO'])/600)
+        Qb = 10**(int(indy_elo.loc[indy_elo['teams']==team2,'ELO'])/600)
+    elif league.casefold() in ['mav', 'maverick']:
+        Qa = 10**(int(mav_elo.loc[mav_elo['teams']==team1,'ELO'])/600)
+        Qb = 10**(int(mav_elo.loc[mav_elo['teams']==team2,'ELO'])/600)
     Ea = Qa/(Qa+Qb)
     Eb = Qb/(Qa+Qb)
     Sa = 0
@@ -163,6 +159,16 @@ def update_elo(league,team1,team2,winner,score):
         a_elo.loc[a_elo['teams']==team2,'ELO'] = round(int(a_elo.loc[a_elo['teams']==team2,'ELO']) + 100*(Sb - Eb))
         a_records.loc[winner][0] = a_records.loc[winner][0] + 1
         a_records.loc[loser][1] = a_records.loc[loser][1] + 1
+    if league.casefold() == "independent":
+        indy_elo.loc[indy_elo['teams']==team1,'ELO'] = round(int(indy_elo.loc[indy_elo['teams']==team1,'ELO']) + 100*(Sa - Ea))
+        indy_elo.loc[indy_elo['teams']==team2,'ELO'] = round(int(indy_elo.loc[indy_elo['teams']==team2,'ELO']) + 100*(Sb - Eb))
+        indy_records.loc[winner][0] = indy_records.loc[winner][0] + 1
+        indy_records.loc[loser][1] = indy_records.loc[loser][1] + 1
+    if league.casefold() == "maverick":
+        mav_elo.loc[mav_elo['teams']==team1,'ELO'] = round(int(mav_elo.loc[mav_elo['teams']==team1,'ELO']) + 100*(Sa - Ea))
+        mav_elo.loc[mav_elo['teams']==team2,'ELO'] = round(int(mav_elo.loc[mav_elo['teams']==team2,'ELO']) + 100*(Sb - Eb))
+        mav_records.loc[winner][0] = mav_records.loc[winner][0] + 1
+        mav_records.loc[loser][1] = mav_records.loc[loser][1] + 1
         
 def play_game(league, game):
     # Find the probability of either team winning based on ELO

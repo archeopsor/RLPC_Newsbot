@@ -2,7 +2,7 @@ import pandas as pd
 import Google_Sheets as sheet
 from PIL import Image, ImageDraw, ImageFont
 
-sheet_id = "1CM0cojzf-j-rZ-4H5fsfx1yelIKDLUW9eVGckIDy_nE"
+sheet_id = "1C10LolATTti0oDuW64pxDhYRLkdUxrXP0fHYBk3ZwmU"
 
 def get_player_stats(player,stat="all"):
     # Make sure the program understands the specified stat if it's mis-capitalized or whatever
