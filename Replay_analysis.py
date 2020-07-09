@@ -25,6 +25,10 @@ def fantasy_formula(row: pd.Series) -> int:
     """
     points = 0
     gp = row['Games Played']
+    
+    if gp == 0:
+        return 0
+    
     points += (row['Goals']/gp)*21
     points += (row['Assists']/gp)*15
     points += (row['Shots']/gp)*3
@@ -107,7 +111,7 @@ def get_rlpc_replays(path='C:/Users/Owner/Downloads', download_files = True) -> 
     
     files = {}
     for download in os.listdir(path):
-        new = os.path.getmtime(f"{path}/{download}") > time.time()-(80000) # Make sure to only include files newer than 1 day
+        new = os.path.getmtime(f"{path}/{download}") > time.time()-(5*80000) # Make sure to only include files newer than 1 day
         if download.endswith('.zip') and new:
             replays = []
             teams = download.split(" - ")[0].split(" vs. ")
@@ -279,6 +283,7 @@ def rlpc_replay_analysis():
     check_players() # Ensure that players database is up to date
     download_ids() # Ensure that all IDs are up to date
     players = select("players").set_index('Username')
+    players = players.fillna(value=0)
     replays = get_rlpc_replays()
     team_stats = select("team_stats")
     all_stats = pd.DataFrame(columns = list(players.columns[8:]))
@@ -288,7 +293,7 @@ def rlpc_replay_analysis():
     counter = 1
 
     for series in list(replays): # Repeats this for every series downloaded
-        print(f'Analyzing series {counter} of {len(list(replays))} ({round((counter/len(list(replays))))*100}%)')
+        print(f'Analyzing series {counter} of {len(list(replays))} ({round(((counter-1)/len(list(replays)))*100)}%)')
         counter += 1
     
         indiv_stats, group_stats = get_series_stats(replays[series], players.reset_index())
@@ -309,7 +314,7 @@ def rlpc_replay_analysis():
         # Upload player stats
         for player in indiv_stats.index:
             for col in indiv_stats.columns:
-                try: engine.execute(f"""update players set "{col}" = "{col}" + {indiv_stats.loc[player, col]} where "Username" = {player}""")
+                try: engine.execute(f"""update players set "{col}" = coalesce("{col}", 0) + {indiv_stats.loc[player, col]} where "Username" = '{player}'""")
                 except: continue # Temporary solution for if a player isn't on the sheet
     
     # Calculate fantasy points for each player
@@ -319,7 +324,23 @@ def rlpc_replay_analysis():
     for player in all_stats.index:
         for user in fantasy_players.index:
             if player in fantasy_players.loc[user, 'players']:
-                slot = fantasy_players.loc[user, 'players'].index(player)
+                slot = fantasy_players.loc[user, 'players'].index(player) + 1
                 engine.execute(f"""update fantasy_players set points[{slot}] = points[{slot}] + {all_stats.loc[player, 'Fantasy Points']} where "username" = '{user}'""")
+                engine.execute(f"""update fantasy_players set "total_points" = coalesce("total_points", 0) + {all_stats.loc[player, 'Fantasy Points']} where "username" = '{user}'""")
                 
     return all_stats
+
+def temp():
+    players = select('players').set_index("Username")
+    players = players.fillna(value=0)
+    players['Fantasy Points'] = players.apply(lambda row: fantasy_formula(row), axis=1)
+    fantasy = select('fantasy_players').set_index('username')
+    
+    for user in fantasy.index:
+        for player in fantasy.loc[user, 'players']:
+            if player == "Not Picked":
+                continue
+            points = players.loc[player, 'Fantasy Points']
+            slot = fantasy.loc[user, 'players'].index(player) + 1
+            engine.execute(f"""update fantasy_players set points[{slot}] = points[{slot}] + {points} where "username" = '{user}'""")
+            engine.execute(f"""update fantasy_players set "total_points" = coalesce("total_points", 0) + {points} where "username" = '{user}'""")

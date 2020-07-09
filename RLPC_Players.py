@@ -76,8 +76,6 @@ def download_ids():
     
     dbdata = select('players')
     
-    return sheetdata.loc[sheetdata['Username']=='kmrty', 'Unique IDs'].values[0]
-    
     for player in sheetdata['Username']:
         if '' in sheetdata.loc[sheetdata['Username']==player, 'Unique IDs'].values[0]:
             sheetdata.loc[sheetdata['Username']==player, 'Unique IDs'] = None
@@ -120,8 +118,10 @@ def identify(id: str, players: pd.DataFrame) -> str:
     """
     
     for player in players['Username']:
-        if id in players.loc[players['Username']==player, 'id']:
-            return player
+        try:
+            if id in players.loc[players['Username']==player, 'id'].values[0]:
+                return player
+        except: pass
         
 def find_team(names: list, players: pd.DataFrame, id_players: bool = False) -> str:
     """
@@ -161,10 +161,7 @@ def find_team(names: list, players: pd.DataFrame, id_players: bool = False) -> s
         if teams.count(team) > 1:
             return team # This will return if any two players are on the same team
     
-    print(names)
-    
-    return choice(teams) # If all three teams are different, pick a random one
-                         # Yes I know this is a terrible way to do this
+    return "Undetermined" # If every player belongs to a different team
                          
 def find_league(team: str, players: pd.DataFrame) -> str:
     """
@@ -183,8 +180,6 @@ def find_league(team: str, players: pd.DataFrame) -> str:
         Name of the league.
 
     """
-    
-    return 'AA'
     
     return players.loc[players['Team']==team, 'League'].values[0]
 

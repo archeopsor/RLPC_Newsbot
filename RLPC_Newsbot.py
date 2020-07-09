@@ -7,7 +7,6 @@ import Google_Sheets as sheet
 from random import choice
 from discord.ext.commands import has_permissions
 
-
 prefix = '$'
 client = commands.Bot(command_prefix = prefix)
 client.remove_command('help')

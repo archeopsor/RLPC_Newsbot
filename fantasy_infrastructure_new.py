@@ -3,6 +3,7 @@ from datetime import datetime
 import editdistance
 from database import engine, select
 import Google_Sheets as sheet
+import pytz
 
 prefix = '$'
 
@@ -91,6 +92,10 @@ def pick_player(person: str , player: str, slot: int=0) -> str:
     admin = select("admin_things").set_index("row_id")
     if admin.loc[1, 'allow_transfers'] == False:
         return "You're not allowed to make transfers right now, probably because there are games currently happening or the previous games have not yet been entered into the database. Please contact arco if you think this is an error."
+    
+    if datetime.now(tz=pytz.timezone("US/Eastern")).weekday() in [1, 3]:
+        if datetime.now(tz=pytz.timezone("US/Eastern")).time().hour > 16:
+            return "You're not allowed to make transfers right now, probably because there are games currently happening or the previous games have not yet been entered into the database. Please contact arco if you think this is an error."
     
     # Get dataframes with all the player and fantasy data in them
     fantasy_players = select("fantasy_players").set_index('username')
@@ -348,7 +353,7 @@ def search(minsalary: int=0, maxsalary: int=800, league: str="all", team: str="a
         players = players.drop('editdistance',axis=1)
         return(players.head(5))
     
-def player_lb(league: str, sortby: str="Fantasy Points") -> pd.DataFrame:
+def player_lb(league: str = None, sortby: str="Fantasy Points") -> pd.DataFrame:
     """
     Sorts the list of rlpc players
 
@@ -365,7 +370,11 @@ def player_lb(league: str, sortby: str="Fantasy Points") -> pd.DataFrame:
 
     """
     players = select("players")
-    return(players)
+    
+    if league != None:
+        players = players[players['League'].str.contains(league, case=False)]
+        
+    return players.sort_values(by='Fantasy Points', ascending=False)
 
 def push_to_sheet():
     players = select('players')

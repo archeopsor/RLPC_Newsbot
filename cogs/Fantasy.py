@@ -120,8 +120,18 @@ class Fantasy(commands.Cog):
     async def player_info_error(self,ctx,error):
         if isinstance(error,commands.MissingRequiredArgument):
             await ctx.send("Please include a player")
+            
+    @commands.command(aliases=("playerlb", "player_lb", "playerslb",))
+    async def players(self,ctx,league=None):
+        async with ctx.typing():
+            lb = fantasy.player_lb(league)
+            lb = lb.head(20)
+            message = f"**1)** {lb['Username'][0]} ({lb.loc[0, 'Fantasy Points']})"
+            for i in range(1,20):
+                message = message + f"\n**{i+1})** {lb['Username'][i]} ({lb.loc[i, 'Fantasy Points']})"
+        await ctx.send(message)
         
-    @commands.command(aliases=("fantasy","fhelp","f_help"))
+    @commands.command(aliases=("fantasy","fhelp","f_help",))
     async def fantasy_help(self,ctx):
         answer = f"""
 Welcome to RLPC Fantasy! This is a just-for-fun fantasy league in which people can build a team of RLPC players and compete against other fantasy teams.
