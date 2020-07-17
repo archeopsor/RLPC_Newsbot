@@ -143,10 +143,10 @@ def gsheet2df(gsheet):
         df = pd.concat(all_data, axis=1)
         return df
     
-def df_to_sheet(sheet_id, range_name, df):
+def df_to_sheet(sheet_id, range_name, df, dimension="COLUMNS"):
     values = []
     for column in df.columns:
         col_values = df[column].to_list()
         values.append(col_values)
-    body = {'majorDimension': 'COLUMNS', 'values': values}
+    body = {'majorDimension': f'{dimension}', 'values': values}
     append_data(sheet_id, range_name, body, insertDataOption = 'OVERWRITE')

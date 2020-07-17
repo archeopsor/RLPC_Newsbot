@@ -5,7 +5,8 @@ import pandas as pd
 import Google_Sheets as sheet
 from RLPC_Stats import forecast_image
 
-# All the major teams
+
+# All the teams
 major_teams = ['Bulls', 'Lions', 'Panthers', 'Sharks', 'Cobras', 'Ducks', 'Eagles', 'Hawks', 'Ascension', 'Flames', 'Storm', 'Whitecaps', 'Kings', 'Lumberjacks', 'Pirates', 'Spartans']
 major_wins = []
 major_losses = []
@@ -56,560 +57,26 @@ indy_records = pd.DataFrame.from_dict(indy_records).set_index("Team")
 mav_records = {"Team": mav_teams, "Wins": mav_wins, "Losses": mav_losses}
 mav_records = pd.DataFrame.from_dict(mav_records).set_index("Team")
 
-def randomize_dict(dict):
-    keys = list(dict.keys())
-    random.shuffle(keys)
-    answer = {}
-    for key in keys:
-        answer[key] = dict[key]
-    return(answer)
-
-def gen_schedule(league):
-    games= []
-    if league.casefold() in ['major', 'aaa', 'aa', 'a']:
-        schedule = sheet.gsheet2df(sheet.get_google_sheet("1C10LolATTti0oDuW64pxDhYRLkdUxrXP0fHYBk3ZwmU", f'{league} Schedule!N4:V'))
-    elif league.casefold() in ['independent', 'maverick']:
-        schedule = sheet.gsheet2df(sheet.get_google_sheet("1NXTt5IKwwT7ui4njt0DPPr03YUc_HYcV-rqW6hqrFjY", f'{league} Schedule!N4:V'))
-    for row in schedule.index:
-        if schedule.loc[row, "Winner"] == '':
-            game = f'{schedule.iloc[row, 2]} - {schedule.iloc[row, 4]}'
-            games.append(game)
-    return games
-
-def recall_data():
-    global major_elo
-    global aaa_elo
-    global aa_elo
-    global a_elo
-    global indy_elo
-    global mav_elo
-    major_elo = elo.recall_data("Major")
-    aaa_elo = elo.recall_data("AAA")
-    aa_elo = elo.recall_data("AA")
-    a_elo = elo.recall_data("A")
-    indy_elo = elo.recall_data("indy")
-    mav_elo = elo.recall_data("mav")
-
-recall_data()
-
-def update_elo(league,team1,team2,winner,score):
-    loser = team1
-    if winner == team1:
-        loser = team2
-    score = list(score)
-    score = f"{score[0]} - {score[-1]}"
-    team1 = team1.title()
-    team2 = team2.title()
-    Qa = 0
-    Qb = 0
-    if league.casefold() == "major":
-        Qa = 10**(int(major_elo.loc[major_elo['teams']==team1,'ELO'])/600)
-        Qb = 10**(int(major_elo.loc[major_elo['teams']==team2,'ELO'])/600)
-    elif league.casefold() == "aaa":
-        Qa = 10**(int(aaa_elo.loc[aaa_elo['teams']==team1,'ELO'])/600)
-        Qb = 10**(int(aaa_elo.loc[aaa_elo['teams']==team2,'ELO'])/600)
-    elif league.casefold() == "aa":
-        Qa = 10**(int(aa_elo.loc[aa_elo['teams']==team1,'ELO'])/600)
-        Qb = 10**(int(aa_elo.loc[aa_elo['teams']==team2,'ELO'])/600)
-    elif league.casefold() == "a":
-        Qa = 10**(int(a_elo.loc[a_elo['teams']==team1,'ELO'])/600)
-        Qb = 10**(int(a_elo.loc[a_elo['teams']==team2,'ELO'])/600)
-    elif league.casefold() in ['indy', 'independent']:
-        Qa = 10**(int(indy_elo.loc[indy_elo['teams']==team1,'ELO'])/600)
-        Qb = 10**(int(indy_elo.loc[indy_elo['teams']==team2,'ELO'])/600)
-    elif league.casefold() in ['mav', 'maverick']:
-        Qa = 10**(int(mav_elo.loc[mav_elo['teams']==team1,'ELO'])/600)
-        Qb = 10**(int(mav_elo.loc[mav_elo['teams']==team2,'ELO'])/600)
-    Ea = Qa/(Qa+Qb)
-    Eb = Qb/(Qa+Qb)
-    Sa = 0
-    Sb = 0
-    scparts = score.split()
-    score1 = int(scparts[0])
-    score2 = int(scparts[2])
-    if winner == team1 and score1 > score2:
-        Sa = score1/(score1+score2)
-        Sb = score2/(score1+score2)
-    elif winner == team1 and score2 > score1:
-        Sb = score1/(score1+score2)
-        Sa = score2/(score1+score2)
-    elif winner == team2 and score1 > score2:
-        Sa = score1/(score1+score2)
-        Sb = score2/(score1+score2)
-    elif winner == team2 and score2 > score1:
-        Sb = score1/(score1+score2)
-        Sa = score2/(score1+score2)
-    if league.casefold() == "major":
-        major_elo.loc[major_elo['teams']==team1,'ELO'] = round(int(major_elo.loc[major_elo['teams']==team1,'ELO']) + 100*(Sa - Ea))
-        major_elo.loc[major_elo['teams']==team2,'ELO'] = round(int(major_elo.loc[major_elo['teams']==team2,'ELO']) + 100*(Sb - Eb))
-        major_records.loc[winner][0] = major_records.loc[winner][0] + 1
-        major_records.loc[loser][1] = major_records.loc[loser][1] + 1
-    if league.casefold() == "aaa":
-        aaa_elo.loc[aaa_elo['teams']==team1,'ELO'] = round(int(aaa_elo.loc[aaa_elo['teams']==team1,'ELO']) + 100*(Sa - Ea))
-        aaa_elo.loc[aaa_elo['teams']==team2,'ELO'] = round(int(aaa_elo.loc[aaa_elo['teams']==team2,'ELO']) + 100*(Sb - Eb))
-        aaa_records.loc[winner][0] = aaa_records.loc[winner][0] + 1
-        aaa_records.loc[loser][1] = aaa_records.loc[loser][1] + 1
-    if league.casefold() == "aa":
-        aa_elo.loc[aa_elo['teams']==team1,'ELO'] = round(int(aa_elo.loc[aa_elo['teams']==team1,'ELO']) + 100*(Sa - Ea))
-        aa_elo.loc[aa_elo['teams']==team2,'ELO'] = round(int(aa_elo.loc[aa_elo['teams']==team2,'ELO']) + 100*(Sb - Eb))
-        aa_records.loc[winner][0] = aa_records.loc[winner][0] + 1
-        aa_records.loc[loser][1] = aa_records.loc[loser][1] + 1
-    if league.casefold() == "a":
-        a_elo.loc[a_elo['teams']==team1,'ELO'] = round(int(a_elo.loc[a_elo['teams']==team1,'ELO']) + 100*(Sa - Ea))
-        a_elo.loc[a_elo['teams']==team2,'ELO'] = round(int(a_elo.loc[a_elo['teams']==team2,'ELO']) + 100*(Sb - Eb))
-        a_records.loc[winner][0] = a_records.loc[winner][0] + 1
-        a_records.loc[loser][1] = a_records.loc[loser][1] + 1
-    if league.casefold() == "independent":
-        indy_elo.loc[indy_elo['teams']==team1,'ELO'] = round(int(indy_elo.loc[indy_elo['teams']==team1,'ELO']) + 100*(Sa - Ea))
-        indy_elo.loc[indy_elo['teams']==team2,'ELO'] = round(int(indy_elo.loc[indy_elo['teams']==team2,'ELO']) + 100*(Sb - Eb))
-        indy_records.loc[winner][0] = indy_records.loc[winner][0] + 1
-        indy_records.loc[loser][1] = indy_records.loc[loser][1] + 1
-    if league.casefold() == "maverick":
-        mav_elo.loc[mav_elo['teams']==team1,'ELO'] = round(int(mav_elo.loc[mav_elo['teams']==team1,'ELO']) + 100*(Sa - Ea))
-        mav_elo.loc[mav_elo['teams']==team2,'ELO'] = round(int(mav_elo.loc[mav_elo['teams']==team2,'ELO']) + 100*(Sb - Eb))
-        mav_records.loc[winner][0] = mav_records.loc[winner][0] + 1
-        mav_records.loc[loser][1] = mav_records.loc[loser][1] + 1
-        
-def play_game(league, game):
-    game = game.split(' ')
-    
-    # Find the probability of either team winning based on ELO
-    team1 = game[0].title()
-    team2 = game[2].title()
-    if league.casefold() == "major":
-        team1elo = int(major_elo.loc[major_elo['teams']==team1,'ELO'].values[0])
-        team2elo = int(major_elo.loc[major_elo['teams']==team2,'ELO'].values[0])
-    elif league.casefold() == "aaa":
-        team1elo = int(aaa_elo.loc[aaa_elo['teams']==team1,'ELO'].values[0])
-        team2elo = int(aaa_elo.loc[aaa_elo['teams']==team2,'ELO'].values[0])
-    elif league.casefold() == "aa":
-        team1elo = int(aa_elo.loc[aa_elo['teams']==team1,'ELO'].values[0])
-        team2elo = int(aa_elo.loc[aa_elo['teams']==team2,'ELO'].values[0])
-    elif league.casefold() == "a":
-        team1elo = int(a_elo.loc[a_elo['teams']==team1,'ELO'].values[0])
-        team2elo = int(a_elo.loc[a_elo['teams']==team2,'ELO'].values[0])
-    elif league.casefold() == "indy":
-        team1elo = int(indy_elo.loc[indy_elo['teams']==team1,'ELO'].values[0])
-        team2elo = int(indy_elo.loc[indy_elo['teams']==team2,'ELO'].values[0])
-    elif league.casefold() == "mav":
-        team1elo = int(mav_elo.loc[mav_elo['teams']==team1,'ELO'].values[0])
-        team2elo = int(mav_elo.loc[mav_elo['teams']==team2,'ELO'].values[0])
-    Q1 = 10**(team1elo/400)
-    Q2 = 10**(team2elo/400)
-    team1_win_prob = Q1/(Q1+Q2)
-    team2_win_prob = Q2/(Q1+Q2)
-    
-    # Randomly pick a winner based on the probabilities found just above, then pick a random score
-    winner = np.random.choice([team1, team2], replace = True, p = [team1_win_prob, team2_win_prob])
-    score = f"3 - {random.choice([0,1,2])}"
-    
-    # Update records and ELO
-    update_elo(league, team1, team2, winner, score)
-        
-def sim_schedule(league, schedule):
-    
-    global major_records
-    global aaa_records
-    global aa_records
-    global a_records
-    global indy_records
-    global mav_records
-    if league.casefold() == "major":
-        major_records = {"Team": major_teams, "Wins": major_wins, "Losses": major_losses}
-        major_records = pd.DataFrame.from_dict(major_records).set_index("Team")
-        major_records = major_records.sample(frac=1)
-    elif league.casefold() == "aaa":
-        aaa_records = {"Team": aaa_teams, "Wins": aaa_wins, "Losses": aaa_losses}
-        aaa_records = pd.DataFrame.from_dict(aaa_records).set_index("Team")
-        aaa_records = aaa_records.sample(frac=1)
-    elif league.casefold() == "aa":
-        aa_records = {"Team": aa_teams, "Wins": aa_wins, "Losses": aa_losses}
-        aa_records = pd.DataFrame.from_dict(aa_records).set_index("Team")
-        aa_records = aa_records.sample(frac=1)
-    elif league.casefold() == "a":
-        a_records = {"Team": a_teams, "Wins": a_wins, "Losses": a_losses}
-        a_records = pd.DataFrame.from_dict(a_records).set_index("Team")
-        a_records = a_records.sample(frac=1)    
-    elif league.casefold() == "independent":
-        indy_records = {"Team": indy_teams, "Wins": indy_wins, "Losses": indy_losses}
-        indy_records = pd.DataFrame.from_dict(indy_records).set_index("Team")
-        indy_records = indy_records.sample(frac=1)    
-    elif league.casefold() == "a":
-        mav_records = {"Team": mav_teams, "Wins": mav_wins, "Losses": mav_losses}
-        mav_records = pd.DataFrame.from_dict(mav_records).set_index("Team")
-        mav_records = mav_records.sample(frac=1)    
-        
-    global major_elo
-    global aaa_elo
-    global aa_elo
-    global a_elo
-    global indy_elo
-    global mav_elo
-    tempmajor = major_elo.copy()
-    tempaaa = aaa_elo.copy()
-    tempaa = aa_elo.copy()
-    tempa = a_elo.copy()
-    tempindy = indy_elo.copy()
-    tempmav = mav_elo.copy()
-    
-    if league.casefold() == "major":
-        major_elo = major_elo.sample(frac=1)
-    elif league.casefold() == "aaa":
-        aaa_elo = aaa_elo.sample(frac=1)
-    elif league.casefold() == "aa":
-        aa_elo = aa_elo.sample(frac=1)
-    elif league.casefold() == "a":
-        a_elo = a_elo.sample(frac=1)
-    elif league.casefold() == "indy":
-        indy_elo = indy_elo.sample(frac=1)
-    elif league.casefold() == "mav":
-        mav_elo = mav_elo.sample(frac=1)
-    
-    # Randomize the order of each set of 8 games (each gameday)
-    schedule = []
-    while len(schedule) > 0:
-        gameday = schedule[:8]
-        random.shuffle(gameday)
-        schedule.extend(gameday)
-        schedule = schedule[8:]
-
-    # Start simulating the games    
-    while len(schedule) > 0:
-        # Find the probability of either team winning based on ELO
-        game = schedule[0].split()
-        play_game(league, game)
-        
-        schedule = schedule[1:]
-    
-    # Figure out which teams made the playoffs in this sim, and add them to a list
-    playoffs = []
-    quarter_games = []
-    conf1_teams = {}
-    conf2_teams = {}
-    
-    if league.casefold() == "major":
-        predator = {"Bulls": major_records.loc["Bulls","Wins"], "Lions": major_records.loc["Lions","Wins"], "Panthers": major_records.loc["Panthers","Wins"], "Sharks": major_records.loc["Sharks","Wins"]}
-        predator = randomize_dict(predator)
-        playoffs.append(max(predator, key=predator.get))
-        conf1_teams[max(predator, key=predator.get)] = predator[max(predator, key=predator.get)]
-        predator.pop(max(predator, key=predator.get))
-        wild = {"Cobras": major_records.loc["Cobras","Wins"], "Ducks": major_records.loc["Ducks","Wins"], "Eagles": major_records.loc["Eagles","Wins"], "Hawks": major_records.loc["Hawks","Wins"]}
-        wild = randomize_dict(wild)
-        playoffs.append(max(wild, key=wild.get))
-        conf1_teams[max(wild, key=wild.get)] = wild[max(wild, key=wild.get)]
-        wild.pop(max(wild, key=wild.get))
-        elements = {"Ascension": major_records.loc["Ascension","Wins"], "Flames": major_records.loc["Flames","Wins"], "Storm": major_records.loc["Storm","Wins"], "Whitecaps": major_records.loc["Whitecaps","Wins"]}
-        elements = randomize_dict(elements)
-        playoffs.append(max(elements, key=elements.get))
-        conf2_teams[max(elements, key=elements.get)] = elements[max(elements, key=elements.get)]
-        elements.pop(max(elements, key=elements.get))
-        brawler = {"Kings": major_records.loc["Kings","Wins"], "Lumberjacks": major_records.loc["Lumberjacks","Wins"], "Pirates": major_records.loc["Pirates","Wins"], "Spartans": major_records.loc["Spartans","Wins"]}
-        brawler = randomize_dict(brawler)
-        playoffs.append(max(brawler, key=brawler.get))
-        conf2_teams[max(brawler, key=brawler.get)] = brawler[max(brawler, key=brawler.get)]
-        brawler.pop(max(brawler, key=brawler.get))
-    elif league.casefold() == "aaa":
-        predator = {"Bulldogs": aaa_records.loc["Bulldogs","Wins"], "Tigers": aaa_records.loc["Tigers","Wins"], "Bobcats": aaa_records.loc["Bobcats","Wins"], "Dolphins": aaa_records.loc["Dolphins","Wins"]}
-        predator = randomize_dict(predator)
-        playoffs.append(max(predator, key=predator.get))
-        conf1_teams[max(predator, key=predator.get)] = predator[max(predator, key=predator.get)]
-        predator.pop(max(predator, key=predator.get))
-        wild = {"Vipers": aaa_records.loc["Vipers","Wins"], "Geese": aaa_records.loc["Geese","Wins"], "Osprey": aaa_records.loc["Osprey","Wins"], "Owls": aaa_records.loc["Owls","Wins"]}
-        wild = randomize_dict(wild)
-        playoffs.append(max(wild, key=wild.get))
-        conf1_teams[max(wild, key=wild.get)] = wild[max(wild, key=wild.get)]
-        wild.pop(max(wild, key=wild.get))
-        elements = {"Entropy": aaa_records.loc["Entropy","Wins"], "Heat": aaa_records.loc["Heat","Wins"], "Thunder": aaa_records.loc["Thunder","Wins"], "Tundra": aaa_records.loc["Tundra","Wins"]}
-        elements = randomize_dict(elements)
-        playoffs.append(max(elements, key=elements.get))
-        conf2_teams[max(elements, key=elements.get)] = elements[max(elements, key=elements.get)]
-        elements.pop(max(elements, key=elements.get))
-        brawler = {"Knights": aaa_records.loc["Knights","Wins"], "Pioneers": aaa_records.loc["Pioneers","Wins"], "Raiders": aaa_records.loc["Raiders","Wins"], "Trojans": aaa_records.loc["Trojans","Wins"]}
-        brawler = randomize_dict(brawler)
-        playoffs.append(max(brawler, key=brawler.get))
-        conf2_teams[max(brawler, key=brawler.get)] = brawler[max(brawler, key=brawler.get)]
-        brawler.pop(max(brawler, key=brawler.get))
-    elif league.casefold() == "aa":
-        predator = {"Mustangs": aa_records.loc["Mustangs","Wins"], "Lynx": aa_records.loc["Lynx","Wins"], "Jaguars": aa_records.loc["Jaguars","Wins"], "Barracuda": aa_records.loc["Barracuda","Wins"]}
-        predator = randomize_dict(predator)
-        playoffs.append(max(predator, key=predator.get))
-        conf1_teams[max(predator, key=predator.get)] = predator[max(predator, key=predator.get)]
-        predator.pop(max(predator, key=predator.get))
-        wild = {"Pythons": aa_records.loc["Pythons","Wins"], "Herons": aa_records.loc["Herons","Wins"], "Falcons": aa_records.loc["Falcons","Wins"], "Vultures": aa_records.loc["Vultures","Wins"]}
-        predator = randomize_dict(predator)
-        playoffs.append(max(wild, key=wild.get))
-        conf1_teams[max(wild, key=wild.get)] = wild[max(wild, key=wild.get)]
-        wild.pop(max(wild, key=wild.get))
-        elements = {"Pulsars": aa_records.loc["Pulsars","Wins"], "Inferno": aa_records.loc["Inferno","Wins"], "Lightning": aa_records.loc["Lightning","Wins"], "Avalanche": aa_records.loc["Avalanche","Wins"]}
-        elements = randomize_dict(elements)
-        playoffs.append(max(elements, key=elements.get))
-        conf2_teams[max(elements, key=elements.get)] = elements[max(elements, key=elements.get)]
-        elements.pop(max(elements, key=elements.get))
-        brawler = {"Dukes": aa_records.loc["Dukes","Wins"], "Voyagers": aa_records.loc["Voyagers","Wins"], "Bandits": aa_records.loc["Bandits","Wins"], "Warriors": aa_records.loc["Warriors","Wins"]}
-        brawler = randomize_dict(brawler)
-        playoffs.append(max(brawler, key=brawler.get))
-        conf2_teams[max(brawler, key=brawler.get)] = brawler[max(brawler, key=brawler.get)]
-        brawler.pop(max(brawler, key=brawler.get))
-    elif league.casefold() == "a":
-        predator = {"Stallions": a_records.loc["Stallions","Wins"], "Cougars": a_records.loc["Cougars","Wins"], "Leopards": a_records.loc["Leopards","Wins"], "Gulls": a_records.loc["Gulls","Wins"]}
-        predator = randomize_dict(predator)
-        playoffs.append(max(predator, key=predator.get))
-        conf1_teams[max(predator, key=predator.get)] = predator[max(predator, key=predator.get)]
-        predator.pop(max(predator, key=predator.get))
-        wild = {"Rattlers": a_records.loc["Rattlers","Wins"], "Pelicans": a_records.loc["Pelicans","Wins"], "Ravens": a_records.loc["Ravens","Wins"], "Cardinals": a_records.loc["Cardinals","Wins"]}
-        wild = randomize_dict(wild)
-        playoffs.append(max(wild, key=wild.get))
-        conf1_teams[max(wild, key=wild.get)] = wild[max(wild, key=wild.get)]
-        wild.pop(max(wild, key=wild.get))
-        elements = {"Genesis": a_records.loc["Genesis","Wins"], "Embers": a_records.loc["Embers","Wins"], "Tempest": a_records.loc["Tempest","Wins"], "Eskimos": a_records.loc["Eskimos","Wins"]}
-        elements = randomize_dict(elements)
-        playoffs.append(max(elements, key=elements.get))
-        conf2_teams[max(elements, key=elements.get)] = elements[max(elements, key=elements.get)]
-        elements.pop(max(elements, key=elements.get))
-        brawler = {"Jesters": a_records.loc["Jesters","Wins"], "Miners": a_records.loc["Miners","Wins"], "Wranglers": a_records.loc["Wranglers","Wins"], "Titans": a_records.loc["Titans","Wins"]}
-        brawler = randomize_dict(brawler)
-        playoffs.append(max(brawler, key=brawler.get))
-        conf2_teams[max(brawler, key=brawler.get)] = brawler[max(brawler, key=brawler.get)]
-        brawler.pop(max(brawler, key=brawler.get))
-    elif league.casefold() == "independent":
-        predator = {"Vikings": indy_records.loc["Vikings","Wins"], "Beavers": indy_records.loc["Beavers","Wins"], "Wildcats": indy_records.loc["Wildcats","Wins"], "Coyotes": indy_records.loc["Coyotes","Wins"]}
-        predator = randomize_dict(predator)
-        playoffs.append(max(predator, key=predator.get))
-        conf1_teams[max(predator, key=predator.get)] = predator[max(predator, key=predator.get)]
-        predator.pop(max(predator, key=predator.get))
-        wild = {"Cyclones": indy_records.loc["Cyclones","Wins"], "Pilots": indy_records.loc["Pilots","Wins"], "Dragons": indy_records.loc["Dragons","Wins"], "Rhinos": indy_records.loc["Rhinos","Wins"]}
-        wild = randomize_dict(wild)
-        playoffs.append(max(wild, key=wild.get))
-        conf1_teams[max(wild, key=wild.get)] = wild[max(wild, key=wild.get)]
-        wild.pop(max(wild, key=wild.get))
-        elements = {"Centurions": indy_records.loc["Centurions","Wins"], "Yellow Jackets": indy_records.loc["Yellow Jackets","Wins"], "Toucans": indy_records.loc["Toucans","Wins"], "Bears": indy_records.loc["Bears","Wins"]}
-        elements = randomize_dict(elements)
-        playoffs.append(max(elements, key=elements.get))
-        conf2_teams[max(elements, key=elements.get)] = elements[max(elements, key=elements.get)]
-        elements.pop(max(elements, key=elements.get))
-        brawler = {"Puffins": indy_records.loc["Puffins","Wins"], "Terriers": indy_records.loc["Terriers","Wins"], "Pandas": indy_records.loc["Pandas","Wins"], "Scorpions": indy_records.loc["Scorpions","Wins"]}
-        brawler = randomize_dict(brawler)
-        playoffs.append(max(brawler, key=brawler.get))
-        conf2_teams[max(brawler, key=brawler.get)] = brawler[max(brawler, key=brawler.get)]
-        brawler.pop(max(brawler, key=brawler.get))
-    elif league.casefold() == "maverick":
-        predator = {"Wizards": mav_records.loc["Wizards","Wins"], "Jackrabbits": mav_records.loc["Jackrabbits","Wins"], "Otters": mav_records.loc["Otters","Wins"], "Foxes": mav_records.loc["Foxes","Wins"]}
-        predator = randomize_dict(predator)
-        playoffs.append(max(predator, key=predator.get))
-        conf1_teams[max(predator, key=predator.get)] = predator[max(predator, key=predator.get)]
-        predator.pop(max(predator, key=predator.get))
-        wild = {"Tides": mav_records.loc["Tides","Wins"], "Yetis": mav_records.loc["Yetis","Wins"], "Sailors": mav_records.loc["Sailors","Wins"], "Zebras": mav_records.loc["Zebras","Wins"]}
-        wild = randomize_dict(wild)
-        playoffs.append(max(wild, key=wild.get))
-        conf1_teams[max(wild, key=wild.get)] = wild[max(wild, key=wild.get)]
-        wild.pop(max(wild, key=wild.get))
-        elements = {"Macaws": mav_records.loc["Macaws","Wins"], "Fireflies": mav_records.loc["Fireflies","Wins"], "Cubs": mav_records.loc["Cubs","Wins"], "Samurai": mav_records.loc["Samurai","Wins"]}
-        elements = randomize_dict(elements)
-        playoffs.append(max(elements, key=elements.get))
-        conf2_teams[max(elements, key=elements.get)] = elements[max(elements, key=elements.get)]
-        elements.pop(max(elements, key=elements.get))
-        brawler = {"Gorillas": mav_records.loc["Gorillas","Wins"], "Penguins": mav_records.loc["Penguins","Wins"], "Camels": mav_records.loc["Camels","Wins"], "Hounds": mav_records.loc["Hounds","Wins"]}
-        brawler = randomize_dict(brawler)
-        playoffs.append(max(brawler, key=brawler.get))
-        conf2_teams[max(brawler, key=brawler.get)] = brawler[max(brawler, key=brawler.get)]
-        brawler.pop(max(brawler, key=brawler.get))
-    conf1 = {}
-    conf1.update(predator)
-    conf1.update(wild)
-    conf1 = randomize_dict(conf1)
-    playoffs.append(max(conf1, key=conf1.get))
-    conf1_teams[max(conf1, key=conf1.get)] = conf1[max(conf1, key=conf1.get)]
-    conf1.pop(max(conf1, key=conf1.get))
-    playoffs.append(max(conf1, key=conf1.get))
-    conf1_teams[max(conf1, key=conf1.get)] = conf1[max(conf1, key=conf1.get)]
-    conf1_teams = sorted(conf1_teams, key=conf1_teams.get, reverse=True)
-    quarter_games.append(f"{conf1_teams[0]} - {conf1_teams[3]}")
-    quarter_games.append(f"{conf1_teams[1]} - {conf1_teams[2]}")
-    conf2 = {}
-    conf2.update(elements)
-    conf2.update(brawler)
-    conf2 = randomize_dict(conf2)
-    playoffs.append(max(conf2, key=conf2.get))
-    conf2_teams[max(conf2, key=conf2.get)] = conf2[max(conf2, key=conf2.get)]
-    conf2.pop(max(conf2, key=conf2.get))
-    playoffs.append(max(conf2, key=conf2.get))
-    conf2_teams[max(conf2, key=conf2.get)] = conf2[max(conf2, key=conf2.get)]
-    conf2_teams = sorted(conf2_teams, key=conf2_teams.get, reverse=True)
-    quarter_games.append(f"{conf2_teams[0]} - {conf2_teams[3]}")
-    quarter_games.append(f"{conf2_teams[1]} - {conf2_teams[2]}")
-
-    # Reset the ELO because it's messed up for some reason
-    major_elo = tempmajor.copy()
-    aaa_elo = tempaaa.copy()
-    aa_elo = tempaa.copy()
-    a_elo = tempa.copy()
-    indy_elo = tempindy.copy()
-    mav_elo = tempmav.copy()
-    
-    # Simulate the Quarter-finals of the playoffs, add the winners to the semifinals list
-    semifinals = []
-    for game in quarter_games:
-        game = game.split()
-        team1 = game[0].title()
-        team2 = game[2].title()
-        if league.casefold() == "major":
-            team1elo = int(major_elo.loc[major_elo['teams']==team1,'ELO'].values[0])
-            team2elo = int(major_elo.loc[major_elo['teams']==team2,'ELO'].values[0])
-        elif league.casefold() == "aaa":
-            team1elo = int(aaa_elo.loc[aaa_elo['teams']==team1,'ELO'].values[0])
-            team2elo = int(aaa_elo.loc[aaa_elo['teams']==team2,'ELO'].values[0])
-        elif league.casefold() == "aa" or league.casefold() == "indy":
-            team1elo = int(aa_elo.loc[aa_elo['teams']==team1,'ELO'].values[0])
-            team2elo = int(aa_elo.loc[aa_elo['teams']==team2,'ELO'].values[0])
-        elif league.casefold() == "a" or league.casefold() == "mav":
-            team1elo = int(a_elo.loc[a_elo['teams']==team1,'ELO'].values[0])
-            team2elo = int(a_elo.loc[a_elo['teams']==team2,'ELO'].values[0])
-        elif league.casefold() == "independent":
-            team1elo = int(indy_elo.loc[indy_elo['teams']==team1,'ELO'].values[0])
-            team2elo = int(indy_elo.loc[indy_elo['teams']==team2,'ELO'].values[0])
-        elif league.casefold() == "maverick":
-            team1elo = int(mav_elo.loc[mav_elo['teams']==team1,'ELO'].values[0])
-            team2elo = int(mav_elo.loc[mav_elo['teams']==team2,'ELO'].values[0])
-        Q1 = 10**(team1elo/400)
-        Q2 = 10**(team2elo/400)
-        team1_win_prob = Q1/(Q1+Q2)
-        team2_win_prob = Q2/(Q1+Q2)
-        
-        # Randomly pick a winner based on the probabilities found just above
-        winner = np.random.choice([team1, team2], replace = True, p = [team1_win_prob, team2_win_prob])
-        
-        semifinals.append(winner)
-    
-    # Simulate the Semi-finals of the playoffs, add the winners to the Finals list
-    finals = []
-    semi_games = []
-    semi_games.append(f"{semifinals[0]} - {semifinals[1]}")
-    semi_games.append(f"{semifinals[2]} - {semifinals[3]}")
-    for game in semi_games:
-        game = game.split()
-        team1 = game[0].title()
-        team2 = game[2].title()
-        if league.casefold() == "major":
-            team1elo = int(major_elo.loc[major_elo['teams']==team1,'ELO'].values[0])
-            team2elo = int(major_elo.loc[major_elo['teams']==team2,'ELO'].values[0])
-        elif league.casefold() == "aaa":
-            team1elo = int(aaa_elo.loc[aaa_elo['teams']==team1,'ELO'].values[0])
-            team2elo = int(aaa_elo.loc[aaa_elo['teams']==team2,'ELO'].values[0])
-        elif league.casefold() == "aa" or league.casefold() == "indy":
-            team1elo = int(aa_elo.loc[aa_elo['teams']==team1,'ELO'].values[0])
-            team2elo = int(aa_elo.loc[aa_elo['teams']==team2,'ELO'].values[0])
-        elif league.casefold() == "a" or league.casefold() == "mav":
-            team1elo = int(a_elo.loc[a_elo['teams']==team1,'ELO'].values[0])
-            team2elo = int(a_elo.loc[a_elo['teams']==team2,'ELO'].values[0])
-        elif league.casefold() == "independent":
-            team1elo = int(indy_elo.loc[indy_elo['teams']==team1,'ELO'].values[0])
-            team2elo = int(indy_elo.loc[indy_elo['teams']==team2,'ELO'].values[0])
-        elif league.casefold() == "maverick":
-            team1elo = int(mav_elo.loc[mav_elo['teams']==team1,'ELO'].values[0])
-            team2elo = int(mav_elo.loc[mav_elo['teams']==team2,'ELO'].values[0])
-        Q1 = 10**(team1elo/400)
-        Q2 = 10**(team2elo/400)
-        team1_win_prob = Q1/(Q1+Q2)
-        team2_win_prob = Q2/(Q1+Q2)
-        
-        # Randomly pick a winner based on the probabilities found just above
-        winner = np.random.choice([team1, team2], replace = True, p = [team1_win_prob, team2_win_prob])
-       
-        finals.append(winner)
-        
-    # Simulate the finals, make the champion the winner of this match
-    champion = None
-    game = f"{finals[0]} - {finals[1]}"
-    game = game.split()
-    team1 = game[0].title()
-    team2 = game[2].title()
-    if league.casefold() == "major":
-        team1elo = int(major_elo.loc[major_elo['teams']==team1,'ELO'].values[0])
-        team2elo = int(major_elo.loc[major_elo['teams']==team2,'ELO'].values[0])
-    elif league.casefold() == "aaa":
-        team1elo = int(aaa_elo.loc[aaa_elo['teams']==team1,'ELO'].values[0])
-        team2elo = int(aaa_elo.loc[aaa_elo['teams']==team2,'ELO'].values[0])
-    elif league.casefold() == "aa":
-        team1elo = int(aa_elo.loc[aa_elo['teams']==team1,'ELO'].values[0])
-        team2elo = int(aa_elo.loc[aa_elo['teams']==team2,'ELO'].values[0])
-    elif league.casefold() == "a":
-        team1elo = int(a_elo.loc[a_elo['teams']==team1,'ELO'].values[0])
-        team2elo = int(a_elo.loc[a_elo['teams']==team2,'ELO'].values[0])
-    elif league.casefold() == "independent":
-        team1elo = int(indy_elo.loc[indy_elo['teams']==team1,'ELO'].values[0])
-        team2elo = int(indy_elo.loc[indy_elo['teams']==team2,'ELO'].values[0])
-    elif league.casefold() == "maverick":
-        team1elo = int(mav_elo.loc[mav_elo['teams']==team1,'ELO'].values[0])
-        team2elo = int(mav_elo.loc[mav_elo['teams']==team2,'ELO'].values[0])
-    Q1 = 10**(team1elo/400)
-    Q2 = 10**(team2elo/400)
-    team1_win_prob = Q1/(Q1+Q2)
-    team2_win_prob = Q2/(Q1+Q2)
-    Q1 = 10**(team1elo/400)
-    Q2 = 10**(team2elo/400)
-    team1_win_prob = Q1/(Q1+Q2)
-    team2_win_prob = Q2/(Q1+Q2)
-    
-    winner = np.random.choice([team1, team2], replace = True, p = [team1_win_prob, team2_win_prob])
-    
-    champion = winner
-
-    major_elo = tempmajor.copy()
-    aaa_elo = tempaaa.copy()
-    aa_elo = tempaa.copy()
-    a_elo = tempa.copy()
-    indy_elo = tempindy.copy()
-    mav_elo = tempmav.copy()
-    
-    # Return records for each team
-    if league.casefold() == "major":
-        return(major_records, playoffs, semifinals, finals, champion)
-    elif league.casefold() == "aaa":
-        return(aaa_records, playoffs, semifinals, finals, champion)
-    elif league.casefold() == "aa":
-        return(aa_records, playoffs, semifinals, finals, champion)
-    elif league.casefold() == "a":
-        return(a_records, playoffs, semifinals, finals, champion)
-    elif league.casefold() == "independent":
-        return(indy_records, playoffs, semifinals, finals, champion)
-    elif league.casefold() == "maverick":
-        return(mav_records, playoffs, semifinals, finals, champion)
-        
-        
-def predict_season(league, times, image=False):
+def predict_season(league, times, image=False, official=False):
     
     if league.casefold() not in ['major', 'aaa', 'aa', 'a', 'independent', 'maverick']:
         print('Please use a valid league')
         return
     
-    if league.casefold() == "major":
-        schedule = gen_schedule("major")
-    elif league.casefold() == "aaa":
-        schedule = gen_schedule("aaa")
-    elif league.casefold() == "aa":
-        schedule = gen_schedule("aa")
-    elif league.casefold() == "a":
-        schedule = gen_schedule("a")
-    elif league.casefold() == "independent":
-        schedule = gen_schedule("independent")
-    elif league.casefold() == "maverick":
-        schedule = gen_schedule("maverick")
+    schedule = []
+    if league.casefold() in ['major', 'aaa', 'aa', 'a']:
+        sheet_schedule = sheet.gsheet2df(sheet.get_google_sheet("1C10LolATTti0oDuW64pxDhYRLkdUxrXP0fHYBk3ZwmU", f'{league} Schedule!N4:V'))
+    elif league.casefold() in ['independent', 'maverick']:
+        sheet_schedule = sheet.gsheet2df(sheet.get_google_sheet("1NXTt5IKwwT7ui4njt0DPPr03YUc_HYcV-rqW6hqrFjY", f'{league} Schedule!N4:V'))
+    for row in sheet_schedule.index:
+        if sheet_schedule.loc[row, "Winner"] == '':
+            game = f'{sheet_schedule.iloc[row, 2]} - {sheet_schedule.iloc[row, 4]}'
+            schedule.append(game)
     
-    # Make a copy of the ELO for the league so it can be used repeatedly
-    global major_elo
-    global aaa_elo
-    global aa_elo
-    global a_elo
-    global indy_elo
-    global mav_elo
-    majelo = major_elo.copy()
-    aaaelo = aaa_elo.copy()
-    aaelo = aa_elo.copy()
-    aelo = a_elo.copy()
-    indelo = indy_elo.copy()
-    mavelo = mav_elo.copy()
-    
-    # Make a list of all the teams that make playoffs
+    # Make a series of the ELO for the league so it can be used repeatedly
+    ratings = elo.recall_data(league).set_index('teams')['ELO'].astype(int)
+
+    # Make a list of all the teams that make it to each stage of success
     playoffs_teams = []
     playoff_probabilities = {}
     semi_teams = []
@@ -619,58 +86,214 @@ def predict_season(league, times, image=False):
     champ_teams = []
     champ_probabilities = {}
     
+    if league.casefold() == "major":
+        records = major_records.copy()
+        teams = major_teams.copy()
+    elif league.casefold() == "aaa":
+        records = aaa_records.copy()
+        teams = aaa_teams.copy()
+    elif league.casefold() == "aa":
+        records = aa_records.copy()
+        teams = aa_teams.copy()
+    elif league.casefold() == "a":
+        records = a_records.copy()
+        teams = a_teams.copy()
+    elif league.casefold() == "independent":
+        records = indy_records.copy()
+        teams = indy_teams.copy()
+    elif league.casefold() == "maverick":
+        records = mav_records.copy()
+        teams = mav_teams.copy()
+    
     # Make a dictionary to track all the wins the teams get in the simulations
     predicted_records = {}
-    if league.casefold() == "major":
-        for team in major_teams:
-            predicted_records[team] = 0
-            playoff_probabilities[team] = 0
-    elif league.casefold() == "aaa":
-        for team in aaa_teams:
-            predicted_records[team] = 0
-            playoff_probabilities[team] = 0
-    elif league.casefold() == "aa":
-        for team in aa_teams:
-            predicted_records[team] = 0
-            playoff_probabilities[team] = 0
-    elif league.casefold() == "a":
-        for team in a_teams:
-            predicted_records[team] = 0
-            playoff_probabilities[team] = 0
-    elif league.casefold() == "independent":
-        for team in indy_teams:
-            predicted_records[team] = 0
-            playoff_probabilities[team] = 0
-    elif league.casefold() == "maverick":
-        for team in mav_teams:
-            predicted_records[team] = 0
-            playoff_probabilities[team] = 0
-            
+    for team in records.index:
+        predicted_records[team] = 0
+    
     for i in range(1,times+1):
         print(f"Simulation #{i}")
-        major_elo = majelo.copy()
-        aaa_elo = aaaelo.copy()
-        aa_elo = aaelo.copy()
-        a_elo = aelo.copy()
-        indy_elo = indelo.copy()
-        mav_elo = mavelo.copy()
+        temp_ratings = ratings.copy().sample(frac=1)
+        temp_records = records.copy().sample(frac=1)
+        temp_schedule = schedule.copy()
+        
+        # Start simulating the games    
+        while len(temp_schedule) > 0:
+            # Find the probability of either team winning based on ELO
+            game = temp_schedule[0]
+            game = game.split(' - ')
 
-        output = sim_schedule(league, schedule)
-        sim_results = output[0]
-        playoffs = output[1]
-        semis = output[2]
-        finals = output[3]
-        champ = output[4]
+            # Find the probability of either team winning based on ELO
+            team1 = game[0].title()
+            team2 = game[-1].title()
+            team1elo = temp_ratings[team1]
+            team2elo = temp_ratings[team2]
+            
+            Q1 = 10**(team1elo/400)
+            Q2 = 10**(team2elo/400)
+            team1_win_prob = Q1/(Q1+Q2)
+            team2_win_prob = Q2/(Q1+Q2)
+            
+            # Randomly pick a winner based on the probabilities found just above, then pick a random score
+            winner = np.random.choice([team1, team2], replace = True, p = [team1_win_prob, team2_win_prob])
+            loser = team1 if winner == team2 else team2
+            team1_score = 3 if winner == team1 else np.random.choice([0,1,2])
+            team2_score = 3 if winner == team2 else np.random.choice([0,1,2])
+            
+            # Update temporary records and elo
+            k = 30
+            Qa = 10**(temp_ratings[team1]/600)
+            Qb = 10**(temp_ratings[team2]/600)
+            
+            Ea = Qa/(Qa+Qb)  # Expected Score
+            Eb = Qb/(Qa+Qb)
+            
+            Sa = team1_score/(team1_score + team2_score) # Actual Score
+            Sb = team2_score/(team1_score + team2_score)
+            
+            temp_ratings[team1] += k*(Sa-Ea)
+            temp_ratings[team2] += k*(Sb-Eb)
+            temp_records.loc[winner, 'Wins'] += 1
+            temp_records.loc[loser, 'Losses'] += 1
+                        
+            temp_schedule = temp_schedule[1:]
+            
+        # Figure out which teams made the playoffs in this sim, and add them to a list
+        playoffs = [] # Teams making it to playoffs
+        quarter_games = [] # Games to be played in quarters (based on seeding)
+        conf1_teams = {} # Playoff teams in Conference 1 (for seeding)
+        conf2_teams = {} # Playoff teams in Conference 2 (for seeding)
+        
+        predator = {}
+        wild = {}
+        elements = {}
+        brawler= {}
+        
+        for i in range(4):
+            predator[teams[i]] = temp_records.loc[teams[i], 'Wins']
+            wild[teams[i+4]] = temp_records.loc[teams[i+4], 'Wins']
+            elements[teams[i+8]] = temp_records.loc[teams[i+8], 'Wins']
+            brawler[teams[i+12]] = temp_records.loc[teams[i+12], 'Wins']
+        
+        # Shuffle divisions to "simulate" tiebreakers
+        l = list(predator.items())
+        np.random.shuffle(l)
+        predator = dict(l)
+        l = list(wild.items())
+        np.random.shuffle(l)
+        wild = dict(l)
+        l = list(elements.items())
+        np.random.shuffle(l)
+        elements = dict(l)
+        l = list(brawler.items())
+        np.random.shuffle(l)
+        brawler = dict(l)        
+        
+        # Add playoff teams to their list, and determine games/seeding for quarters
+        playoffs.append(max(predator, key=predator.get))
+        conf1_teams[max(predator, key=predator.get)] = predator[max(predator, key=predator.get)]
+        predator.pop(max(predator, key=predator.get))
+        playoffs.append(max(wild, key=wild.get))
+        conf1_teams[max(wild, key=wild.get)] = wild[max(wild, key=wild.get)]
+        wild.pop(max(wild, key=wild.get))
+        playoffs.append(max(elements, key=elements.get))
+        conf2_teams[max(elements, key=elements.get)] = elements[max(elements, key=elements.get)]
+        elements.pop(max(elements, key=elements.get))
+        playoffs.append(max(brawler, key=brawler.get))
+        conf2_teams[max(brawler, key=brawler.get)] = brawler[max(brawler, key=brawler.get)]
+        brawler.pop(max(brawler, key=brawler.get))        
+        conf1 = {}
+        conf1.update(predator)
+        conf1.update(wild)
+        l = list(conf1.items())
+        np.random.shuffle(l)
+        conf1 = dict(l)  
+        playoffs.append(max(conf1, key=conf1.get))
+        conf1_teams[max(conf1, key=conf1.get)] = conf1[max(conf1, key=conf1.get)]
+        conf1.pop(max(conf1, key=conf1.get))
+        playoffs.append(max(conf1, key=conf1.get))
+        conf1_teams[max(conf1, key=conf1.get)] = conf1[max(conf1, key=conf1.get)]
+        conf1_teams = sorted(conf1_teams, key=conf1_teams.get, reverse=True)
+        quarter_games.append(f"{conf1_teams[0]} - {conf1_teams[3]}")
+        quarter_games.append(f"{conf1_teams[1]} - {conf1_teams[2]}")
+        conf2 = {}
+        conf2.update(elements)
+        conf2.update(brawler)
+        l = list(conf2.items())
+        np.random.shuffle(l)
+        conf2 = dict(l)  
+        playoffs.append(max(conf2, key=conf2.get))
+        conf2_teams[max(conf2, key=conf2.get)] = conf2[max(conf2, key=conf2.get)]
+        conf2.pop(max(conf2, key=conf2.get))
+        playoffs.append(max(conf2, key=conf2.get))
+        conf2_teams[max(conf2, key=conf2.get)] = conf2[max(conf2, key=conf2.get)]
+        conf2_teams = sorted(conf2_teams, key=conf2_teams.get, reverse=True)
+        quarter_games.append(f"{conf2_teams[0]} - {conf2_teams[3]}")
+        quarter_games.append(f"{conf2_teams[1]} - {conf2_teams[2]}")
+        
+        # Simulate the Quarter-finals of the playoffs, add the winners to the semifinals list
+        semifinals = []
+        for game in quarter_games:
+            game = game.split(' - ')
+            team1 = game[0].title()
+            team2 = game[-1].title()
+            team1elo = temp_ratings[team1]
+            team2elo = temp_ratings[team2]
+            Q1 = 10**(team1elo/400)
+            Q2 = 10**(team2elo/400)
+            team1_win_prob = Q1/(Q1+Q2)
+            team2_win_prob = Q2/(Q1+Q2)
+            
+            # Randomly pick a winner based on the probabilities found just above
+            winner = np.random.choice([team1, team2], replace = True, p = [team1_win_prob, team2_win_prob])
+            semifinals.append(winner)
+
+        # Simulate the Semi-finals of the playoffs, add the winners to the Finals list
+        finals = []
+        semi_games = []
+        semi_games.append(f"{semifinals[0]} - {semifinals[1]}")
+        semi_games.append(f"{semifinals[2]} - {semifinals[3]}")
+        for game in semi_games:
+            game = game.split(' - ')
+            team1 = game[0].title()
+            team2 = game[-1].title()
+            team1elo = temp_ratings[team1]
+            team2elo = temp_ratings[team2]
+            Q1 = 10**(team1elo/400)
+            Q2 = 10**(team2elo/400)
+            team1_win_prob = Q1/(Q1+Q2)
+            team2_win_prob = Q2/(Q1+Q2)
+            
+            # Randomly pick a winner based on the probabilities found just above
+            winner = np.random.choice([team1, team2], replace = True, p = [team1_win_prob, team2_win_prob])
+            finals.append(winner)
+        
+        # Simulate the finals, make the champion the winner of this match
+        champion = None
+        game = f"{finals[0]} - {finals[1]}"
+        game = game.split(' - ')
+        team1 = game[0].title()
+        team2 = game[-1].title()
+        team1elo = temp_ratings[team1]
+        team2elo = temp_ratings[team2]
+        Q1 = 10**(team1elo/400)
+        Q2 = 10**(team2elo/400)
+        team1_win_prob = Q1/(Q1+Q2)
+        team2_win_prob = Q2/(Q1+Q2)
+        
+        champion = np.random.choice([team1, team2], replace = True, p = [team1_win_prob, team2_win_prob])
+        
+        # major_records, playoffs, semifinals, finals, champion
+        
         
         # Keep track of all the wins accumulated over the seasons
-        for team in sim_results.index:
-            predicted_records[team] += sim_results.loc[team,'Wins']
+        for team in temp_records.index:
+            predicted_records[team] += temp_records.loc[team,'Wins']
             
         # Keep track of all the playoff teams accumulated over the seasons
         playoffs_teams.extend(playoffs)
-        semi_teams.extend(semis)
+        semi_teams.extend(semifinals)
         finals_teams.extend(finals)
-        champ_teams.append(champ)        
+        champ_teams.append(champion)        
     
     predictions = {}
     for team in predicted_records:
@@ -684,5 +307,20 @@ def predict_season(league, times, image=False):
         
     if image:
         forecast_image(league, forecast)
+        
+    if official:
+        rows = {"major": 3, "aaa": 22, "aa": 41, "a": 60, "independent": 79, "maverick": 98}
+        row = rows[league.casefold()]
+        
+        sheet_id = "1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ"
+        
+        values = []
+        for column in forecast:
+            col_values = list(column.values())
+            values.append(col_values)
+            
+        body = {'majorDimension': "COLUMNS", 'values': values}
+        
+        sheet.append_data(sheet_id, f"Most Recent!B{row}:F{row+15}", body, insertDataOption = 'OVERWRITE')
     
     return forecast

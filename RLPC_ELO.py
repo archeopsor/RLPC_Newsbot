@@ -174,7 +174,7 @@ def add_games_auto(league):
         
 def add_games_manual(league,team1,team2,winner,score):
     recall_data(league)
-    k = 30
+    k = 60
     score = list(score)
     score = f"{score[0]} - {score[-1]}"
     team1 = team1.title()

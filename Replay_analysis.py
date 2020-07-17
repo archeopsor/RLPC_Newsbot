@@ -7,6 +7,7 @@ import time
 import pandas as pd
 from RLPC_Players import download_ids, identify, find_team, find_league, check_players
 import logging
+import RLPC_ELO as elo
 
 def fantasy_formula(row: pd.Series) -> int:
     """
@@ -291,12 +292,17 @@ def rlpc_replay_analysis():
     fantasy_players = select('fantasy_players').set_index('username')
     
     counter = 1
+    failed = []
 
     for series in list(replays): # Repeats this for every series downloaded
         print(f'Analyzing series {counter} of {len(list(replays))} ({round(((counter-1)/len(list(replays)))*100)}%)')
         counter += 1
     
-        indiv_stats, group_stats = get_series_stats(replays[series], players.reset_index())
+        try: indiv_stats, group_stats = get_series_stats(replays[series], players.reset_index())
+        except:
+            failed.append(series)
+            continue
+        
         all_stats = all_stats.append(indiv_stats)
         league = find_league(group_stats.index[0], players.reset_index())
         
@@ -316,8 +322,9 @@ def rlpc_replay_analysis():
             for col in indiv_stats.columns:
                 try: engine.execute(f"""update players set "{col}" = coalesce("{col}", 0) + {indiv_stats.loc[player, col]} where "Username" = '{player}'""")
                 except: continue # Temporary solution for if a player isn't on the sheet
-    
+
     # Calculate fantasy points for each player
+    all_stats = all_stats.groupby(all_stats.index).sum()
     all_stats['Fantasy Points'] = all_stats.apply(lambda row: fantasy_formula(row), axis=1)
     
     # Add fantasy points to accounts
@@ -327,20 +334,10 @@ def rlpc_replay_analysis():
                 slot = fantasy_players.loc[user, 'players'].index(player) + 1
                 engine.execute(f"""update fantasy_players set points[{slot}] = points[{slot}] + {all_stats.loc[player, 'Fantasy Points']} where "username" = '{user}'""")
                 engine.execute(f"""update fantasy_players set "total_points" = coalesce("total_points", 0) + {all_stats.loc[player, 'Fantasy Points']} where "username" = '{user}'""")
+                engine.execute(f"""update players set "Fantasy Points" = coalesce("Fantasy Points", 0) + {all_stats.loc[player, 'Fantasy Points']} where "Username" = '{player}'""")
                 
-    return all_stats
-
-def temp():
-    players = select('players').set_index("Username")
-    players = players.fillna(value=0)
-    players['Fantasy Points'] = players.apply(lambda row: fantasy_formula(row), axis=1)
-    fantasy = select('fantasy_players').set_index('username')
-    
-    for user in fantasy.index:
-        for player in fantasy.loc[user, 'players']:
-            if player == "Not Picked":
-                continue
-            points = players.loc[player, 'Fantasy Points']
-            slot = fantasy.loc[user, 'players'].index(player) + 1
-            engine.execute(f"""update fantasy_players set points[{slot}] = points[{slot}] + {points} where "username" = '{user}'""")
-            engine.execute(f"""update fantasy_players set "total_points" = coalesce("total_points", 0) + {points} where "username" = '{user}'""")
+    return all_stats, failed
+            
+def idk(all_stats):
+    for player in all_stats.index:
+        engine.execute(f"""update players set "Fantasy Points" = coalesce("Fantasy Points", 0) + {all_stats.loc[player, 'Fantasy Points']} where "Username" = '{player}'""")

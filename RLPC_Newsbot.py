@@ -70,7 +70,8 @@ async def alerts(ctx):
 
 @client.event
 async def on_message(message):
-    channels = {598237603254239238: "Major", 598237794762227713: "AAA", 598237830824591490: "AA", 598237861837537304: "A"}
+    channels = {598237603254239238: "Major", 598237794762227713: "AAA", 598237830824591490: "AA", 598237861837537304: "A", 715549072936796180: "Indy", 715551351236722708: "Mav"}
+    
     if message.channel.id in list(channels):
                     
         # Parse messages
@@ -85,7 +86,7 @@ async def on_message(message):
         team2 = game[1].split(": ")[0]
         team2_score = int(game[1][-1])
         
-        records = sheet.gsheet2df(sheet.get_google_sheet("1Tlc_TgGMrY5aClFF-Pb5xvtKrJ1Hn2PJOLy2fUDDdFI","Team Wins!A1:O17"))
+        records = sheet.gsheet2df(sheet.get_google_sheet("1Tlc_TgGMrY5aClFF-Pb5xvtKrJ1Hn2PJOLy2fUDDdFI","Team Wins!A1:W17"))
         if league == "Major":
             records = records.iloc[:,0:3]
         elif league == "AAA":
@@ -94,6 +95,10 @@ async def on_message(message):
             records = records.iloc[:,8:11]
         elif league == "A":
             records = records.iloc[:,12:15]
+        elif league == "Indy":
+            records = records.iloc[:,16:19]
+        elif league == "Mav":
+            records = records.iloc[:,20:23]
         records = records.set_index(f"{league} Teams")
         team1_record = f"({records.loc[team1, 'Wins']}-{records.loc[team1, 'Losses']})"
         team2_record = f"({records.loc[team2, 'Wins']}-{records.loc[team2, 'Losses']})"
@@ -104,17 +109,16 @@ async def on_message(message):
         
         descriptors = ["have taken down","have defeated","beat","were victorious over", "thwarted", "have upset", "have overpowered", "got the better of", "overcame", "triumphed over"]
         
-        if team2_rating - team1_rating > 60:
+        if team2_rating - team1_rating > 50:
             message = f"""**UPSET ALERT**
 {team1} {team1_record} {choice(descriptors)} {team2} {team2_record} with a score of {team1_score} - {team2_score}
             """
-            
             # Send the message out to subscribed channels
             await client.wait_until_ready()
             send_to = select("alerts_channels").values
             for channel in send_to:
-                print(channel)
-                channel = client.get_channel(channel)
+                print(channel[0])
+                channel = client.get_channel(channel[0])
                 await channel.send(message)
                 
     await client.process_commands(message)
