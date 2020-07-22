@@ -374,7 +374,7 @@ def player_lb(league: str = None, sortby: str="Fantasy Points", num: int=10) -> 
     players = select("players").set_index("Username")
     
     if league != None:
-        players = players[players['League'].str.contains(league, case=False)]
+        players = players[players['League'].str.lower() == league.casefold()]
         
     lb = players['Fantasy Points'].sort_values(ascending=False)
         
