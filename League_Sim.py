@@ -140,7 +140,7 @@ def predict_season(league, times, image=False, official=False):
             team2_score = 3 if winner == team2 else np.random.choice([0,1,2])
             
             # Update temporary records and elo
-            k = 30
+            k = 60
             Qa = 10**(temp_ratings[team1]/600)
             Qb = 10**(temp_ratings[team2]/600)
             

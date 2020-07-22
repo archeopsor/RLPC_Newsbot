@@ -122,13 +122,35 @@ class Fantasy(commands.Cog):
             await ctx.send("Please include a player")
             
     @commands.command(aliases=("playerlb", "player_lb", "playerslb",))
-    async def players(self,ctx,league=None):
+    async def players(self,ctx, *, message=None):
         async with ctx.typing():
-            lb = fantasy.player_lb(league)
-            lb = lb.head(20)
-            message = f"**1)** {lb['Username'][0]} ({lb.loc[0, 'Fantasy Points']})"
-            for i in range(1,20):
-                message = message + f"\n**{i+1})** {lb['Username'][i]} ({lb.loc[i, 'Fantasy Points']})"
+            league = None
+            num = 10
+            if message != None:
+                
+                for i in ['Major', 'AAA', 'AA', 'A', 'Indy', 'Independent', 'Mav', 'Maverick']:
+                    if i.casefold() in message.casefold():
+                        league = i
+                        break
+                
+                if league == "Indy":
+                    league = "Independent"
+                elif league == "Mav":
+                    league = "Maverick"
+                    
+                for word in message.split():
+                    try:
+                        int(word)
+                        num = word
+                    except:
+                        pass
+            
+            lb = fantasy.player_lb(league=league, num=num)
+            
+            message = f"**1)** {lb.index[0]} ({lb[lb.index[0]]})"
+            for i in range(1,num):
+                message = message + f"\n**{i+1})** {lb.index[i]} ({lb[lb.index[i]]})"
+            
         await ctx.send(message)
         
     @commands.command(aliases=("fantasy","fhelp","f_help",))

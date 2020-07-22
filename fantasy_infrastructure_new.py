@@ -353,28 +353,33 @@ def search(minsalary: int=0, maxsalary: int=800, league: str="all", team: str="a
         players = players.drop('editdistance',axis=1)
         return(players.head(5))
     
-def player_lb(league: str = None, sortby: str="Fantasy Points") -> pd.DataFrame:
+def player_lb(league: str = None, sortby: str="Fantasy Points", num: int=10) -> pd.DataFrame:
     """
     Sorts the list of rlpc players
 
     Parameters
     ----------
-    league : str
-        Which league to include players from.
+    league : str, optional
+        Which league to include players from. The default is None.
     sortby : str, optional
         Which column to sort by. The default is "Fantasy Points".
+    num : int, optional
+        How many players to return. The default is 10.
 
     Returns
     -------
     Sorted dataframe of RLPC players.
 
     """
-    players = select("players")
+    players = select("players").set_index("Username")
     
     if league != None:
         players = players[players['League'].str.contains(league, case=False)]
         
-    return players.sort_values(by='Fantasy Points', ascending=False)
+    lb = players['Fantasy Points'].sort_values(ascending=False)
+        
+    return lb.head(num)
+
 
 def push_to_sheet():
     players = select('players')
