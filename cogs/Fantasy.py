@@ -141,7 +141,7 @@ class Fantasy(commands.Cog):
                 for word in message.split():
                     try:
                         int(word)
-                        num = word
+                        num = int(word)
                     except:
                         pass
             
