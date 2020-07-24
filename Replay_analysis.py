@@ -326,16 +326,22 @@ def rlpc_replay_analysis():
     # Calculate fantasy points for each player
     all_stats = all_stats.groupby(all_stats.index).sum()
     all_stats['Fantasy Points'] = all_stats.apply(lambda row: fantasy_formula(row), axis=1)
+    all_stats['Old Points'] = players['Fantasy Points']
+    all_stats['New Points'] = all_stats['Old Points'] + all_stats['Fantasy Points']
+    all_stats['League'] = players['League']
     
     # Add fantasy points to accounts
     for player in all_stats.index:
-        for user in fantasy_players.index:
-            if player in fantasy_players.loc[user, 'players']:
-                slot = fantasy_players.loc[user, 'players'].index(player) + 1
-                engine.execute(f"""update fantasy_players set points[{slot}] = points[{slot}] + {all_stats.loc[player, 'Fantasy Points']} where "username" = '{user}'""")
-                engine.execute(f"""update fantasy_players set "total_points" = coalesce("total_points", 0) + {all_stats.loc[player, 'Fantasy Points']} where "username" = '{user}'""")
-                engine.execute(f"""update players set "Fantasy Points" = coalesce("Fantasy Points", 0) + {all_stats.loc[player, 'Fantasy Points']} where "Username" = '{player}'""")
-                
+        try:
+            for user in fantasy_players.index:
+                if player in fantasy_players.loc[user, 'players']:
+                    slot = fantasy_players.loc[user, 'players'].index(player) + 1
+                    engine.execute(f"""update fantasy_players set points[{slot}] = points[{slot}] + {all_stats.loc[player, 'Fantasy Points']} where "username" = '{user}'""")
+                    engine.execute(f"""update fantasy_players set "total_points" = coalesce("total_points", 0) + {all_stats.loc[player, 'Fantasy Points']} where "username" = '{user}'""")
+                engine.execute(f"""update players set "Fantasy Points" = {all_stats.loc[player, "New Points"]} where "Username" = '{player}'""")
+        except:
+            failed.append(player)
+        
     return all_stats, failed
             
 def idk(all_stats):
