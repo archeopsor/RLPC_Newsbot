@@ -70,22 +70,23 @@ async def alerts(ctx):
 
 @client.event
 async def on_message(message):
-    channels = {598237603254239238: "Major", 598237794762227713: "AAA", 598237830824591490: "AA", 598237861837537304: "A", 715549072936796180: "Indy", 715551351236722708: "Mav"}
-    
-    if message.channel.id in list(channels):
-                    
+    channels = {598237603254239238: "Major", 598237794762227713: "AAA", 598237830824591490: "AA", 598237861837537304: "A", 715549072936796180: "Indy", 715551351236722708: "Mav", 501552099373350926: 'test'}
+    if int(message.channel.id) in list(channels):
+        print("Found channel")
         # Parse messages
         league = channels[message.channel.id]
         
         if 'forfeit' in message.content:
             return
         
+        print("Splitting content")
         game = message.content.split("\n")[2:4]
         team1 = game[0].split(": ")[0]
         team1_score = int(game[0][-1])
         team2 = game[1].split(": ")[0]
         team2_score = int(game[1][-1])
         
+        print("Getting records")        
         records = sheet.gsheet2df(sheet.get_google_sheet("1Tlc_TgGMrY5aClFF-Pb5xvtKrJ1Hn2PJOLy2fUDDdFI","Team Wins!A1:W17"))
         if league == "Major":
             records = records.iloc[:,0:3]
@@ -103,25 +104,31 @@ async def on_message(message):
         team1_record = f"({records.loc[team1, 'Wins']}-{records.loc[team1, 'Losses']})"
         team2_record = f"({records.loc[team2, 'Wins']}-{records.loc[team2, 'Losses']})"
         
+        print("Getting ratings")
         ratings = elo.recall_data(league).set_index("teams")
         team1_rating = int(ratings.loc[team1, 'ELO'])
         team2_rating = int(ratings.loc[team2, 'ELO'])
         
         descriptors = ["have taken down","have defeated","beat","were victorious over", "thwarted", "have upset", "have overpowered", "got the better of", "overcame", "triumphed over"]
         
-        if team2_rating - team1_rating > 50:
-            message = f"""**UPSET ALERT**
+        print("Reached if True")
+        if True: #team2_rating - team1_rating > 50
+            message = f""" ***TESTING: THIS MAY NOT BE ACCURATE***
+**UPSET ALERT**
 {team1} {team1_record} {choice(descriptors)} {team2} {team2_record} with a score of {team1_score} - {team2_score}
             """
             # Send the message out to subscribed channels
+            print("Waiting until ready")
             await client.wait_until_ready()
-            send_to = select("alerts_channels").values
+            send_to = [706323820365086780, 501552099373350926] #select("alerts_channels").values
+            print("Sending Messages")
             for channel in send_to:
-                print(channel[0])
+                print(channel)
                 channel = client.get_channel(channel[0])
+                print(channel)
                 await channel.send(message)
                 
-    await client.process_commands(message)
+    #await client.process_commands(message)
 
 @client.command(pass_context = True)
 async def help(ctx,specified="none"):
