@@ -128,7 +128,7 @@ async def on_message(message):
                 print(channel)
                 await channel.send(message)
                 
-    #await client.process_commands(message)
+    await client.process_commands(message)
 
 @client.command(pass_context = True)
 async def help(ctx,specified="none"):

@@ -14,7 +14,7 @@ class Links(commands.Cog):
 
     @commands.command(aliases=('rlpcnews','discord','discordlink',))
     async def rlpcnewslink(self,ctx):
-        await ctx.send('Join RLPC News here: https://discord.gg/Nn64yDJ')
+        await ctx.send('Join RLPC News here: https://discord.gg/YUnSBBM')
         
     @commands.command(aliases=('redditlink',))
     async def reddit(self,ctx):
