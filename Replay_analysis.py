@@ -7,7 +7,6 @@ import time
 import pandas as pd
 from RLPC_Players import download_ids, identify, find_team, find_league, check_players
 import logging
-import RLPC_ELO as elo
 
 def fantasy_formula(row: pd.Series) -> int:
     """
