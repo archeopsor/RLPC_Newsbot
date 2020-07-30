@@ -129,7 +129,7 @@ class Fantasy(commands.Cog):
             if message != None:
                 
                 for i in ['Major', 'AAA', 'AA', 'A', 'Indy', 'Independent', 'Mav', 'Maverick']:
-                    if i.casefold() in message.casefold():
+                    if i.casefold() in message.casefold().split():
                         league = i
                         break
                 

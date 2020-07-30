@@ -53,7 +53,7 @@ async def unload(ctx, extension):
     client.unload_extension(f'cogs.{extension}')
     await ctx.send(f"{extension} unloaded")
     
-@commands.command(aliases=("alert","subscribe",))
+@client.command(aliases=("alert","subscribe",))
 @has_permissions(administrator=True)
 async def alerts(ctx):
     async with ctx.typing():
@@ -113,8 +113,7 @@ async def on_message(message):
         
         print("Reached if True")
         if team2_rating - team1_rating > 50:
-            message = f""" ***TESTING: THIS MAY NOT BE ACCURATE***
-**UPSET ALERT**
+            message = f"""**UPSET ALERT**
 {team1} {team1_record} {choice(descriptors)} {team2} {team2_record} with a score of {team1_score} - {team2_score}
             """
             # Send the message out to subscribed channels
