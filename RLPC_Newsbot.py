@@ -19,6 +19,10 @@ async def on_ready():
     print('---------------------------------')
     await client.change_presence(activity=discord.Game(f'{prefix}help for commands'))
     
+@client.command()
+async def test(ctx):
+    await ctx.send(f'@{ctx.guild.get_role(612730977185300598).mention}')
+
 async def is_bdong(ctx):
     return ctx.author.id == 565629521571741722
     
@@ -74,7 +78,7 @@ async def alerts(ctx):
 
 @alerts.error
 async def alerts_error(ctx, error):
-    if isinstance(error, MissingPermissions):
+    if isinstance(error, commands.CheckFailure):
         await ctx.send("You don't have admin perms for this server.")
 
 @client.event
@@ -131,10 +135,14 @@ async def on_message(message):
             send_to = select("alerts_channels").values
             print("Sending Messages")
             for channel in send_to:
+                new_message = message
                 print(channel)
                 channel = client.get_channel(channel[0])
                 print(channel)
-                await channel.send(message)
+                for role in channel.guild.roles:
+                    if role.name.casefold() == "upset alerts":
+                        new_message += f'\n{message.guild.get_role(role.id).mention}'
+                await channel.send(new_message)
                 
     await client.process_commands(message)
 
