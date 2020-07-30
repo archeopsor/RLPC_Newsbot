@@ -58,6 +58,10 @@ async def unload(ctx, extension):
 async def alerts(ctx):
     async with ctx.typing():
         channels = select("select id from alerts_channels")['id'].to_list()
+        
+        if isinstance(ctx.channel, discord.channel.DMChannel):
+            pass
+        
         if ctx.channel.id in channels:
             engine.execute(f"delete from alerts_channels where id={ctx.channel.id}")
             await ctx.send("This channel will no longer receive alerts.")
@@ -67,6 +71,11 @@ async def alerts(ctx):
             await ctx.send("This channel will now receive alerts!")
             return "finished"
     return "finished"
+
+@alerts.error
+async def alerts_error(ctx, error):
+    if isinstance(error, MissingPermissions):
+        await ctx.send("You don't have admin perms for this server.")
 
 @client.event
 async def on_message(message):
