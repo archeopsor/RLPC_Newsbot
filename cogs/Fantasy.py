@@ -1,6 +1,7 @@
 from discord.ext import commands
 import fantasy_infrastructure_new as fantasy
 import discord
+import mmr
 
 prefix = '$'
 client = commands.Bot(command_prefix = prefix)
@@ -108,7 +109,14 @@ class Fantasy(commands.Cog):
             player_card=discord.Embed(title=f"{player}'s player info", color=0xff0000)
             player_card.add_field(name="Region", value=answer[0], inline=True)
             player_card.add_field(name="Platform", value=answer[1], inline=True)
-            player_card.add_field(name="MMR", value=answer[2], inline=True)
+            
+            try: 
+                standard = int(mmr.playlist('steam', player, 'standard').replace(',', ''))
+                doubles = int(mmr.playlist('steam', player, 'doubles').replace(',', ''))
+                player_card.add_field(name="MMR", value=max(standard, doubles), inline=True)
+            except: 
+                player_card.add_field(name="MMR", value=answer[2], inline=True)
+            
             player_card.add_field(name="Team", value=answer[3], inline=True)
             player_card.add_field(name="League", value=answer[4], inline=True)
             player_card.add_field(name="Fantasy Value", value=answer[5], inline=True)
