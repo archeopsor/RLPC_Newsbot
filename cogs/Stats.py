@@ -2,6 +2,7 @@ from discord.ext import commands
 import discord
 import RLPC_Stats as stats
 import Google_Sheets as sheet
+import mmr
 
 prefix = '$'
 client = commands.Bot(command_prefix = prefix)
@@ -11,6 +12,39 @@ class Stats(commands.Cog):
     def __init__(self,client):
         self.client = client
         
+    @commands.command()
+    async def mmr(self, ctx, *, player):
+        async with ctx.typing():
+            players = sheet.gsheet2df(sheet.get_google_sheet('1C10LolATTti0oDuW64pxDhYRLkdUxrXP0fHYBk3ZwmU', 'Players!A1:R'))
+            
+            # Remove case-sensitivity
+            lower_players = players['Username'].str.lower()
+            if player.casefold() in lower_players.values:
+                pindex = lower_players[lower_players == player.casefold()].index[0]
+                player = players.loc[pindex][0]
+            players = players.reset_index()
+            
+            mmrs = {}
+            try:
+                players.loc[player]
+            except: 
+                await ctx.send(f"Coudn't find player {player}")
+                return
+
+            for url in players.loc[player, 'Tracker'].split(", "):
+                platform, name = url.split('/')[-2:]
+                mmrs[name] = {}
+                mmrs[name]['Duels'] = mmr.playlist(platform, name, '1s')[rating]
+                mmrs[name]['Doubles'] = mmr.playlist(platform, name, '2s')[rating]
+                mmrs[name]['Solo Standard'] = mmr.playlist(platform, name, 'ss')[rating]
+                mmrs[name]['Standard'] = mmr.playlist(platform, name, '3s')[rating]
+            
+                embed = discord.Embed(title=f"{player}'s MMRs", color=0xffffff)
+                for playlist in list(mmrs[name]):
+                    embed.add_field(name=playlist, value=mmrs[name][playlist])
+                
+                await ctx.send(embed)
+    
     @commands.command(aliases=("getstats","stats","get_stats",))
     async def get_player_stats(self, ctx, *, msg):
         async with ctx.typing():

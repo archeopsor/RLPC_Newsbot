@@ -33,8 +33,7 @@ def playlist(platform, username, playlist):
     elif any(playlist.casefold() in x for x in snowday):
         playlist = 7
     else:
-        print("Could not understand playlist")
-        return
+        raise ValueError('Could not understand playlist')
     
     stats = player['games'][playlist]
     return stats
