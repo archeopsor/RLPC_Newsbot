@@ -14,10 +14,14 @@ class Stats(commands.Cog):
     @commands.command(aliases=("getstats","stats","get_stats",))
     async def get_player_stats(self, ctx, *, msg):
         async with ctx.typing():
+            if msg.casefold() == "me":
+                msg = ctx.message.author.name
             first = " ".join(msg.split()[:-1])
             last = msg.split()[-1]
             try: answer = stats.get_player_stats(first, last)
-            except: answer = stats.get_player_stats(msg)
+            except: 
+                try: answer = stats.get_player_stats(msg)
+                except: await ctx.send(f"Cound not find player {msg}")
             embed = discord.Embed(title=f"{answer.values[0][0]}'s Stats", color=0x3333ff)
             for i, col in enumerate(answer.columns[1:]):
                 embed.add_field(name=col, value=answer.values[0][i+1])

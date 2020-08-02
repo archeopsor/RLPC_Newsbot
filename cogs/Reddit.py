@@ -13,6 +13,8 @@ class Reddit(commands.Cog):
     @commands.command(aliases=("top","listtop","listop",))
     async def list_top(self, ctx, limit=5):
         async with ctx.typing():
+            if limit > 10:
+                limit = 10
             posts = reddit.list_top(limit)
             for post in range(len(posts[0])):
                 embed = discord.Embed(title=f'{post+1}. {posts[0][post]}', color=0xff8000)
@@ -27,6 +29,8 @@ class Reddit(commands.Cog):
     @commands.command(aliases=("hot","listhot",))
     async def list_hot(self, ctx, limit=5):
         async with ctx.typing():
+            if limit > 10:
+                limit = 10
             posts = reddit.list_hot(limit)
             for post in range(len(posts[0])):
                 embed = discord.Embed(title=f'{post+1}. {posts[0][post]}', color=0xff8000)
@@ -41,6 +45,8 @@ class Reddit(commands.Cog):
     @commands.command(aliases=("listnew",))
     async def list_new(self, ctx, limit=5):
         async with ctx.typing():
+            if limit > 10:
+                limit = 10
             posts = reddit.list_new(limit)
             for post in range(len(posts[0])):
                 embed = discord.Embed(title=f'{post+1}. {posts[0][post]}', color=0xff8000)
