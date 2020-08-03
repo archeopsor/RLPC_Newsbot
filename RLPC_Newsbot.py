@@ -130,8 +130,8 @@ async def on_message(message):
         descriptors = ["have taken down","have defeated","beat","were victorious over", "thwarted", "have upset", "have overpowered", "got the better of", "overcame", "triumphed over"]
         
         print("Reached if True")
-        if team2_rating - team1_rating > 70:
-            message = f"""**UPSET ALERT**
+        if team2_rating - team1_rating != 0: #> 70:
+            message = f"""**(TESTING, THIS MAY BE INCORRECT) UPSET ALERT**
 {team1} {team1_record} {choice(descriptors)} {team2} {team2_record} with a score of {team1_score} - {team2_score}
             """
             # Send the message out to subscribed channels
@@ -146,7 +146,7 @@ async def on_message(message):
                 print(channel)
                 for role in channel.guild.roles:
                     if role.name.casefold() == "upset alerts":
-                        new_message += f'\n{message.guild.get_role(role.id).mention}'
+                        new_message += f'\n{channel.guild.get_role(role.id).mention}'
                 sent_message = await channel.send(new_message)
                 
     await client.process_commands(message)

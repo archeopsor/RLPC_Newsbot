@@ -34,14 +34,14 @@ class Stats(commands.Cog):
             for url in players.loc[player, 'Tracker'].split(", "):
                 platform, name = url.split('/')[-2:]
                 mmrs[name] = {}
-                mmrs[name]['Duels'] = mmr.playlist(platform, name, '1s')[rating]
-                mmrs[name]['Doubles'] = mmr.playlist(platform, name, '2s')[rating]
-                mmrs[name]['Solo Standard'] = mmr.playlist(platform, name, 'ss')[rating]
-                mmrs[name]['Standard'] = mmr.playlist(platform, name, '3s')[rating]
+                mmrs[name]['Duels'] = mmr.playlist(platform, name, '1s')
+                mmrs[name]['Doubles'] = mmr.playlist(platform, name, '2s')
+                mmrs[name]['Solo Standard'] = mmr.playlist(platform, name, 'ss')
+                mmrs[name]['Standard'] = mmr.playlist(platform, name, '3s')
             
                 embed = discord.Embed(title=f"{player}'s MMRs", color=0xffffff)
                 for playlist in list(mmrs[name]):
-                    embed.add_field(name=playlist, value=mmrs[name][playlist])
+                    embed.add_field(name=playlist, value=f'{mmrs[name][playlist]["rank"]} ({mmrs[name][playlist]["rating"]})')
                 
                 await ctx.send(embed)
     
