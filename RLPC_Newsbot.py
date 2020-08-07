@@ -131,7 +131,7 @@ async def on_message(message):
         
         print("Reached if True")
         if team2_rating - team1_rating > 70:
-            message = f"""**(TESTING, THIS MAY BE INCORRECT) UPSET ALERT**
+            message = f"""**UPSET ALERT**
 {team1} {team1_record} {choice(descriptors)} {team2} {team2_record} with a score of {team1_score} - {team2_score}
             """
             # Send the message out to subscribed channels

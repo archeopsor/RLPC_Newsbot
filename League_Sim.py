@@ -1,5 +1,4 @@
 import RLPC_ELO as elo
-import random
 import numpy as np
 import pandas as pd
 import Google_Sheets as sheet
