@@ -83,8 +83,8 @@ async def test(ctx):
         channel = client.get_channel(channel_id[0])
         print(channel, channel.guild)
         for role in channel.guild.roles:
-                    if role.name.casefold() == "upset alerts":
-                        print("Has role")
+            if role.name.casefold() == "upset alerts":
+                print("Has role")
 
 @client.event
 async def on_message(message):
@@ -147,7 +147,8 @@ async def on_message(message):
                 for role in channel.guild.roles:
                     if role.name.casefold() == "upset alerts":
                         new_message += f'\n{channel.guild.get_role(role.id).mention}'
-                sent_message = await channel.send(new_message)
+                    try: await channel.send(new_message)
+                    except: continue
                 
     await client.process_commands(message)
 
