@@ -303,7 +303,10 @@ def rlpc_replay_analysis():
             continue
         
         all_stats = all_stats.append(indiv_stats)
-        league = find_league(group_stats.index[0], players.reset_index())
+        try: league = find_league(group_stats.index[0], players.reset_index())
+        except: 
+            failed.append(series)
+            continue
         
         # Upload team stats
         for team in group_stats.index:
