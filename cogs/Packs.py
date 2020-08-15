@@ -24,7 +24,7 @@ class Packs(commands.Cog):
         
     @commands.command()
     async def open_pack(self, ctx):
-        await with ctx.typing():
+        async with ctx.typing():
             # Single card pack
             pass
             
