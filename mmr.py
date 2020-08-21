@@ -1,11 +1,16 @@
 from bs4 import BeautifulSoup
 import requests
+import Google_Sheets as sheet
+import time
 
 BASE_URL = 'https://rocketleague.tracker.network'
 PROFILE_URL = BASE_URL + '/profile/{platform}/{username}'
 
-def playlist(platform, username, playlist):
-    player = get_player(platform, username)
+def playlist(playlist, url=None, platform=None, username=None):
+    if url == None:
+        player = get_player(platform, username)
+    else:
+        player = get_player(url)
     
     duels = ['1', '1v1', '1s', 'duels', ]
     doubles = ['2', '2v2', '2s', 'doubles']
@@ -38,8 +43,9 @@ def playlist(platform, username, playlist):
     stats = player['games'][playlist]
     return stats
 
-def get_player(platform, username):
-    url = PROFILE_URL.replace('{platform}', platform).replace('{username}', username)
+def get_player(url = None, platform = None, username = None):
+    if url == None:
+        url = PROFILE_URL.replace('{platform}', platform).replace('{username}', username)
 
     req = requests.get(url)
     soup = BeautifulSoup(req.content, 'html.parser')
@@ -132,3 +138,26 @@ def get_rows(soup):
 	playlist_table = season_table.find_all('table')[1]
 	table_body = playlist_table.find('tbody')
 	return table_body.find_all('tr')
+
+def findmmrs():
+    done = sheet.gsheet2df(sheet.get_google_sheet('1rmJVnfWvVe3tSnFrXpExv4XGbIN3syZO12dGBeoAf-w', 'Player Data!A1:C'))
+    players = sheet.gsheet2df(sheet.get_google_sheet('1C10LolATTti0oDuW64pxDhYRLkdUxrXP0fHYBk3ZwmU', 'Players!A1:R'))
+    players = players[['Username', 'Tracker']]
+    players = players.loc[players['Tracker']!= ""]
+    try: players = players.loc[~players['Username'].isin(done['Username'])]
+    except: pass
+    
+    for i in players.index.values:
+        standard = [0]
+        doubles = [0]
+        
+        for link in players.loc[i, 'Tracker'].split(", "):
+            try:standard.append(int(playlist("3s", url=link)['rating'].replace(',', '')))
+            except: pass
+            try: doubles.append(int(playlist("2s", url=link)['rating'].replace(',', '')))
+            except: pass
+            
+        values = [[players.loc[i, 'Username']], [max(standard)], [max(doubles)]]
+        body = {'majorDimension': "COLUMNS", 'values': values}
+        sheet.append_data('1rmJVnfWvVe3tSnFrXpExv4XGbIN3syZO12dGBeoAf-w', 'Player Data!A1:C', body)
+        time.sleep(60)

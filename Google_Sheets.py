@@ -117,7 +117,6 @@ def append_data(spreadsheet_id, range_name, values, insertDataOption = "INSERT_R
     )
     
     response = request.execute()
-    print(response)
 
 def gsheet2df(gsheet):
     """ Converts Google sheet data to a Pandas DataFrame.

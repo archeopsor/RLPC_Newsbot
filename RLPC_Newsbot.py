@@ -131,7 +131,7 @@ async def on_message(message):
         
         print("Reached if True")
         if team2_rating - team1_rating > 10: #70
-            message = f"""**UPSET ALERT**
+            alert_message = f"""**UPSET ALERT**
 {team1} {team1_record} {choice(descriptors)} {team2} {team2_record} with a score of {team1_score} - {team2_score}
             """
             # Send the message out to subscribed channels
@@ -142,7 +142,7 @@ async def on_message(message):
             for channel in send_to:
                 try: print(channel.guild)
                 except: continue
-                new_message = message
+                new_message = alert_message
                 print(channel)
                 channel = client.get_channel(channel[0])
                 print(channel)

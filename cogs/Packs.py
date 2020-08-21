@@ -4,12 +4,11 @@ import numpy as np
 import os
 import sqlite3
 from sqlalchemy import create_engine
+import pandas as pd
 
 prefix = '$'
 client = commands.Bot(command_prefix = prefix)
 engine = create_engine("sqlite:///cards.db")
-connection = sqlite3.connect("cards.db")
-cursor = connection.cursor()
 path = './Image_templates/Player Cards'
 
 class Packs(commands.Cog):
@@ -22,18 +21,18 @@ class Packs(commands.Cog):
         file = discord.File(path+'/'+np.random.choice(os.listdir(path)))
         await ctx.send(file=file)
         
-    @commands.command()
+    @commands.command(aliases=("open",))
     async def open_pack(self, ctx):
         async with ctx.typing():
             # Single card pack
-            pass
+            with engine.connect() as conn, conn.begin():
+                data = pd.read_sql_table('cards', conn).set_index("player")    
             
 
 def setup(client):
     client.add_cog(Packs(client))
     
     
-# with closing(sqlite3.connect("aquarium.db")) as connection:
-#     with closing(connection.cursor()) as cursor:
-#         rows = cursor.execute("SELECT 1").fetchall()
-#         print(rows)
+# with engine.connect() as conn, conn.begin():
+#     data = pd.read_sql_table('cards', conn).set_index("players")    
+# data.to_sql('cards', engine, if_exists='replace')

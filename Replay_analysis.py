@@ -307,7 +307,7 @@ def rlpc_replay_analysis():
         except: 
             failed.append(series)
             continue
-        
+
         # Upload team stats
         for team in group_stats.index:
             if team not in team_stats['Team'].values: # If there's not already a row for this team
