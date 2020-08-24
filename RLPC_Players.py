@@ -72,7 +72,7 @@ def download_ids():
     sheetdata = sheet.gsheet2df(gsheet) 
     sheetdata['Unique IDs'] = sheetdata['Unique IDs'].map(lambda x: x.split(","))
     sheetdata = sheetdata.drop_duplicates(subset='Username')
-    sheetdata.drop(sheetdata.tail(1).index,inplace=True)
+    sheetdata = sheetdata.loc[sheetdata['Username']!=""]
     
     dbdata = select('players')
     
@@ -189,7 +189,7 @@ def check_players():
     gsheet = sheet.get_google_sheet("1C10LolATTti0oDuW64pxDhYRLkdUxrXP0fHYBk3ZwmU", 'Players!A1:O')
     sheetdata = sheet.gsheet2df(gsheet)
     sheetdata = sheetdata.drop_duplicates(subset='Username')
-    sheetdata.drop(sheetdata.tail(1).index,inplace=True)
+    sheetdata = sheetdata.loc[sheetdata['Username']!=""]
     
     # Replace instances of apostrophe
     sheetdata['Username'] = sheetdata['Username'].map(lambda x: x.replace("'", "''"))
