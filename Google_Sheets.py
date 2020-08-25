@@ -8,25 +8,6 @@ import pandas as pd
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 SPREADSHEET_ID = "1rmJVnfWvVe3tSnFrXpExv4XGbIN3syZO12dGBeoAf-w"
 
-def add_metadata(spreadsheet_id, body):
-    creds = None
-    if os.path.exists("token.pickle"):
-        with open("token.pickle", "rb") as token:
-            creds = pickle.load(token)
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
-            creds = flow.run_local_server()
-        with open("token.pickle", "wb") as token:
-            pickle.dump(creds, token)
-    service = build("sheets", "v4", credentials=creds)
-    
-    batch_update_spreadsheet_request_body = body
-    
-    return(service.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id, body=batch_update_spreadsheet_request_body))
-
 def update_cell(spreadsheet_id, cell, value):
     creds = None
     if os.path.exists("token.pickle"):
@@ -46,23 +27,6 @@ def update_cell(spreadsheet_id, cell, value):
     
     return service.spreadsheets().values().update(spreadsheetId=spreadsheet_id, range=cell, body=body, valueInputOption="USER_ENTERED").execute()
 
-def update_by_datafilter(spreadsheet_id, body):
-    creds = None
-    if os.path.exists("token.pickle"):
-        with open("token.pickle", "rb") as token:
-            creds = pickle.load(token)
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
-            creds = flow.run_local_server()
-        with open("token.pickle", "wb") as token:
-            pickle.dump(creds, token)
-    service = build("sheets", "v4", credentials=creds)
-    
-    return (service.spreadsheets().batchUpdateByDataFilter(spreadsheetId=spreadsheet_id, body=body,valueInputOption="USER_ENTERED"))
-
 def get_google_sheet(spreadsheet_id, range_name):
     """ Retrieve sheet data using OAuth credentials and Google Python API. """
     creds = None
@@ -77,7 +41,7 @@ def get_google_sheet(spreadsheet_id, range_name):
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
-            flow = InstalledAppFlow.from_client_secrets_file("C:/Users/Owner/RLPC News/credentials.json", SCOPES)
+            flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
             creds = flow.run_local_server()
         # Save the credentials for the next run
         with open("token.pickle", "wb") as token:

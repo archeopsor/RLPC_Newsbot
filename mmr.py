@@ -319,3 +319,11 @@ def getMmr(url):
         raise Exception("No MMRs found")
     else:
         return playerMmr
+    
+def randomcode():
+    new = sheet.gsheet2df(sheet.get_google_sheet("1rmJVnfWvVe3tSnFrXpExv4XGbIN3syZO12dGBeoAf-w", "Player Data!A1:B"))
+    season12 = sheet.gsheet2df(sheet.get_google_sheet("1C10LolATTti0oDuW64pxDhYRLkdUxrXP0fHYBk3ZwmU", "Players!A1:H"))
+    new['Team'] = season12['Team']
+    active = new.loc[~new['Team'].isin(['Not Playing','Below MMR','Future Star','Ineligible','Inactive'])]
+    active["MMR"] = active['Peak MMR'].map(lambda x: int(x))
+    active = active.drop(columns=['Peak MMR'])
