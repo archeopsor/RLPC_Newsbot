@@ -130,4 +130,4 @@ dmypy.json
 
 # Github secrets
 passwords.py
-.json
+token.pickle

@@ -336,7 +336,9 @@ for filename in os.listdir('./cogs'):
         client.load_extension(f'cogs.{filename[:-3]}')
 
 
-try: from passwords import BOT_TOKEN
-except: BOT_TOKEN = os.environ.get('BOT_TOKEN')
+try:
+    from passwords import BOT_TOKEN
+except:
+    BOT_TOKEN = os.environ.get('BOT_TOKEN')
 
 client.run(BOT_TOKEN)
