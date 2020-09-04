@@ -39,12 +39,16 @@ class ELO(commands.Cog):
             answer = answer.reset_index()
             if league.casefold() == "major":
                 league = "Major"
+            elif league.casefold() in ["indy", "independent"]:
+                league = "Independent"
+            elif league.casefold() in ['mav', 'maverick']:
+                league = "Maverick"
             else:
                 league = league.upper()
             standings = discord.Embed(title=f"{league} Rankings",color=0x000080,description=f"Computer-generated rankings for the {league} league, based on an internal ELO system")
             teams_elos = []
             for row in answer.index:
-                teams_elos.append(f'{answer.loc[row][0]+1}: {answer.loc[row][1]}')
+                teams_elos.append(f'{answer.loc[row][0]+1}: {answer.loc[row][1]} ({answer.loc[row][2]})')
             value_response = ""
             for i in teams_elos:
                 value_response += f' \n {i}'
