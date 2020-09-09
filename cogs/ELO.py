@@ -1,11 +1,6 @@
 from discord.ext import commands
-import RLPC_ELO
+from RLPC_ELO import exp_score, rank_teams, recall_data
 import discord
-
-recall_data = RLPC_ELO.recall_data
-recall_data()
-exp_score = RLPC_ELO.exp_score
-rank_teams = RLPC_ELO.rank_teams
 
 prefix = '$'
 client = commands.Bot(command_prefix = prefix)
@@ -19,8 +14,7 @@ class ELO(commands.Cog):
     async def scorepredict(self,ctx,league,team1,team2,bestof=100.0):
         async with ctx.typing():
             bestof = float(bestof)
-            print(bestof)
-            answer = RLPC_ELO.exp_score(league,team1,team2,bestof)
+            answer = exp_score(league,team1,team2,bestof)
         await ctx.send(answer)
         
     @scorepredict.error
@@ -35,8 +29,7 @@ class ELO(commands.Cog):
     @commands.command(aliases=("rank",))
     async def rankteams(self,ctx,league):
         async with ctx.typing():
-            answer = RLPC_ELO.rank_teams(league)
-            answer = answer.reset_index()
+            answer = rank_teams(league, previous=True)
             if league.casefold() == "major":
                 league = "Major"
             elif league.casefold() in ["indy", "independent"]:
@@ -46,16 +39,10 @@ class ELO(commands.Cog):
             else:
                 league = league.upper()
             standings = discord.Embed(title=f"{league} Rankings",color=0x000080,description=f"Computer-generated rankings for the {league} league, based on an internal ELO system")
-            teams_elos = []
-            for row in answer.index:
-                teams_elos.append(f'{answer.loc[row][0]+1}: {answer.loc[row][1]} ({answer.loc[row][2]})')
             value_response = ""
-            for i in teams_elos:
-                value_response += f' \n {i}'
-            value_response = value_response[3:]
+            for row in answer.index:
+                value_response += f"{row+1}: {answer.loc[row, 'Team']} ({answer.loc[row, 'elo']}) [{answer.loc[row, 'elo'] - answer.loc[row, 'Previous']}]\n"
             standings.add_field(name="Rankings", value=value_response)
-            # for row in answer.index:
-            #     standings.add_field(name=f'{row+1}. {answer.loc[row][0]}:',value=answer.loc[row][1],inline=False)
         await ctx.send(embed=standings)
         
     @rankteams.error
