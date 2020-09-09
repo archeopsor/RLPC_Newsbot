@@ -134,6 +134,7 @@ class Fantasy(commands.Cog):
         async with ctx.typing():
             league = None
             num = 10
+            pergame = False
             if message != None:
                 
                 for i in ['Major', 'AAA', 'AA', 'A', 'Indy', 'Independent', 'Mav', 'Maverick']:
@@ -152,8 +153,11 @@ class Fantasy(commands.Cog):
                         num = int(word)
                     except:
                         pass
+                    
+                if "pergame" in message or "pg" in message:
+                    pergame = True
             
-            lb = fantasy.player_lb(league=league, num=num)
+            lb = fantasy.player_lb(league=league, num=num, pergame=pergame)
             
             message = f"**1)** {lb.index[0]} ({lb[lb.index[0]]})"
             for i in range(1,num):

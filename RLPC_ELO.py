@@ -1,5 +1,7 @@
 import Google_Sheets as sheet
 from database import engine, select
+import numpy as np
+from RLPC_Players import find_league
 
 def recall_data(league=""):
     leagues = {'major': "Major", 'aaa': 'AAA', 'aa': 'AA', 'a': 'A', 'indy': 'Independent', 'independent': 'Independent', 'mav': 'Maverick', 'maverick': 'Maverick', '': ''}
@@ -71,25 +73,48 @@ def add_games_manual(league,team1,team2,winner,score):
 
 
 # Get the expected score and winner of a matchup
-def exp_score(league,team1,team2,bestof=100):
-    elo = recall_data(league).set_index('Team')
+def exp_score(team1,team2,bestof=5):
+    players = select('players')
     team1 = team1.title()
     team2 = team2.title()
+    try:
+        league = find_league(team1, players)
+    except:
+        return "Could not find that team"
+    if league != find_league(team2, players):
+        return "Teams must be from the same league"
+    elo = recall_data(league).set_index('Team')
     Ra = elo.loc[team1, 'elo'] # Team 1 Ratings
     Rb = elo.loc[team2, 'elo'] # Team 2 Ratings
     Qa = 10**(Ra/400)
     Qb = 10**(Rb/400)
     exp_score_1 = Qa/(Qa+Qb)
     exp_score_2 = Qb/(Qa+Qb)
-    if exp_score_1 > exp_score_2:
-        return(f'''Winner: {team1}
-Score: {str(int(round(exp_score_1*bestof)))} - {str(int(round(exp_score_2*bestof)))}''')
-    elif exp_score_2 > exp_score_1:
-        return(f'''Winner: {team2}
-Score: {str(int(round(exp_score_2*bestof)))} - {str(int(round(exp_score_1*bestof)))}''')
+    firstto = round((bestof/2) + 0.51)
+    wins1 = [0]
+    wins2 = [0]
+    for i in range(1001):
+        while wins1[i] < firstto and wins2[i] < firstto:
+            winner = np.random.choice([team1, team2], replace=True, p=[exp_score_1, exp_score_2])
+            if winner == team1:
+                wins1[i] += 1
+            elif winner == team2:
+                wins2[i] += 1
+            else:
+                return "Something went catastrophically wrong"
+            
+        wins1.append(0)
+        wins2.append(0)
+        
+    wins1 = int(round(np.mean(wins1)))
+    wins2 = int(round(np.mean(wins2)))
+    
+    if wins1 == firstto:
+        return f'Winner: {team1}\nScore: {wins1} - {wins2}'
+    elif wins2 == firstto:
+        return f'Winner: {team2}\nScore: {wins2} - {wins1}'
     else:
-        return('''Winner: Pure toss up
-Score: Pure toss up''')
+        return "Something went catastrophically wrong"
 
         
 def rank_teams(league, previous=False):

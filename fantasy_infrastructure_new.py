@@ -353,7 +353,7 @@ def search(minsalary: int=0, maxsalary: int=800, league: str="all", team: str="a
         players = players.drop('editdistance',axis=1)
         return(players.head(5))
     
-def player_lb(league: str = None, sortby: str="Fantasy Points", num: int=10) -> pd.DataFrame:
+def player_lb(league: str = None, sortby: str="Fantasy Points", num: int=10, pergame: bool=False) -> pd.DataFrame:
     """
     Sorts the list of rlpc players
 
@@ -373,9 +373,12 @@ def player_lb(league: str = None, sortby: str="Fantasy Points", num: int=10) -> 
     """
     players = select("players").set_index("Username")
     
+    if pergame:
+        players['Fantasy Points'] = round(players['Fantasy Points']/players['Series Played'], 1)
+    
     if league != None:
         players = players[players['League'].str.lower() == league.casefold()]
-        
+    
     lb = players['Fantasy Points'].sort_values(ascending=False)
         
     return lb.head(num)
