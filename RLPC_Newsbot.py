@@ -123,9 +123,9 @@ async def on_message(message):
         team2_record = f"({records.loc[team2, 'Wins']}-{records.loc[team2, 'Losses']})"
         
         print("Getting ratings")
-        ratings = elo.recall_data(league).set_index("teams")
-        team1_rating = int(ratings.loc[team1, 'ELO'])
-        team2_rating = int(ratings.loc[team2, 'ELO'])
+        ratings = elo.recall_data(league).set_index("Team")
+        team1_rating = int(ratings.loc[team1, 'elo'])
+        team2_rating = int(ratings.loc[team2, 'elo'])
         
         descriptors = ["have taken down","have defeated","beat","were victorious over", "thwarted", "have upset", "have overpowered", "got the better of", "overcame", "triumphed over"]
         
