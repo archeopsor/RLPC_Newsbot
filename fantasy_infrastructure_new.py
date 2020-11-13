@@ -1,9 +1,9 @@
 import pandas as pd
 from datetime import datetime
-import editdistance
 from database import engine, select
 import Google_Sheets as sheet
 import pytz
+from difflib import SequenceMatcher
 
 prefix = '$'
 
@@ -273,7 +273,7 @@ def info(player: str) -> pd.Series:
     players = players.set_index("Username")
     return(players.loc[player])
 
-def search(minsalary: int=0, maxsalary: int=800, league: str="all", team: str="all", name: str="none", maxdistance: int=5) -> pd.DataFrame:
+def search(minsalary: int=0, maxsalary: int=800, league: str="all", team: str="all", name: str="none", maxdistance: float=0.75) -> pd.DataFrame:
     """
     Searches through all RLPC players to find five that meet the specified parameters
 
@@ -289,8 +289,8 @@ def search(minsalary: int=0, maxsalary: int=800, league: str="all", team: str="a
         Specified desired team. The default is "all".
     name : str, optional
         Approximate name of the player. The default is "none".
-    maxdistance : int, optional
-        How specific the name parameter should be. The default is 5.
+    maxdistance : float, optional
+        How specific the name parameter should be. The default is 0.75.
 
     Returns
     -------
@@ -343,12 +343,12 @@ def search(minsalary: int=0, maxsalary: int=800, league: str="all", team: str="a
         username = players.loc[row,'Username']
         username = username.casefold()
         name = name.casefold()
-        distance = editdistance.eval(name, username)
+        distance = SequenceMatcher(a=name, b=username).ratio()
         length = abs(len(name)-len(username))
         players.loc[row,'editdistance'] = (distance-length)/2
     
     if name != "none":
-        players = players.sort_values(by='editdistance')
+        players = players.sort_values(by='editdistance', ascending=False)
         players = players.loc[players['editdistance'] <= maxdistance]
         players = players.drop('editdistance',axis=1)
         return(players.head(5))

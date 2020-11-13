@@ -1,9 +1,9 @@
 import pandas as pd
 from datetime import datetime
-import editdistance
 from database import engine, select
 import Google_Sheets as sheet
 import pytz
+from difflib import SequenceMatcher
 
 prefix = '$'
 
@@ -59,7 +59,7 @@ def add_fantasy_player(person: str, league: str = "none") -> None:
     if len(player_check)!=0:
         return "You already have an account!"
     
-    command = f"insert into fantasy_players (username, account_league, players, points, transfers_left, salary, total_points)"
+    command = "insert into fantasy_players (username, account_league, players, points, transfers_left, salary, total_points)"
     values = f"""values ('{person}', '{league}', '{{Not Picked, Not Picked, Not Picked, Not Picked, Not Picked}}', '{{0, 0, 0, 0, 0}}', 2, 0, 0)"""
     engine.execute(f"{command} {values}")
     
@@ -106,15 +106,15 @@ def pick_player(person: str , player: str, slot: int=0) -> str:
     except: return(f"You don't currently have an account! Use {prefix}new [league] to make an account")
     
     if slot == 0:
-        if fantasy_players.loc[person, f"players"][0] == "Not Picked":
+        if fantasy_players.loc[person, "players"][0] == "Not Picked":
             slot = 1
-        elif fantasy_players.loc[person, f"players"][1] == "Not Picked":
+        elif fantasy_players.loc[person, "players"][1] == "Not Picked":
             slot = 2
-        elif fantasy_players.loc[person, f"players"][2] == "Not Picked":
+        elif fantasy_players.loc[person, "players"][2] == "Not Picked":
             slot = 3
-        elif fantasy_players.loc[person, f"players"][3] == "Not Picked":
+        elif fantasy_players.loc[person, "players"][3] == "Not Picked":
             slot = 4
-        elif fantasy_players.loc[person, f"players"][4] == "Not Picked":
+        elif fantasy_players.loc[person, "players"][4] == "Not Picked":
             slot = 5
         else: return("Please pick a slot to replace, your team is full")
     
@@ -198,7 +198,7 @@ def pick_player(person: str , player: str, slot: int=0) -> str:
         player_out = current_occupant
     else:
         player_out = current_occupant    
-    command = f"""insert into transfer_log ("Timestamp", "Account", "Player in", "Player out")"""
+    command = """insert into transfer_log ("Timestamp", "Account", "Player in", "Player out")"""
     values = f"values ('{timestamp}', '{person}', '{player_in}', '{player_out}')"
     engine.execute(f"{command} {values}")
     
@@ -273,7 +273,7 @@ def info(player: str) -> pd.Series:
     players = players.set_index("Username")
     return(players.loc[player])
 
-def search(minsalary: int=0, maxsalary: int=800, league: str="all", team: str="all", name: str="none", maxdistance: int=5) -> pd.DataFrame:
+def search(minsalary: int=0, maxsalary: int=800, league: str="all", team: str="all", name: str="none", maxdistance: float=0.75) -> pd.DataFrame:
     """
     Searches through all RLPC players to find five that meet the specified parameters
 
@@ -289,8 +289,8 @@ def search(minsalary: int=0, maxsalary: int=800, league: str="all", team: str="a
         Specified desired team. The default is "all".
     name : str, optional
         Approximate name of the player. The default is "none".
-    maxdistance : int, optional
-        How specific the name parameter should be. The default is 5.
+    maxdistance : float, optional
+        How specific the name parameter should be. The default is 0.75.
 
     Returns
     -------
@@ -343,12 +343,12 @@ def search(minsalary: int=0, maxsalary: int=800, league: str="all", team: str="a
         username = players.loc[row,'Username']
         username = username.casefold()
         name = name.casefold()
-        distance = editdistance.eval(name, username)
+        distance = SequenceMatcher(a=name, b=username).ratio()
         length = abs(len(name)-len(username))
         players.loc[row,'editdistance'] = (distance-length)/2
     
     if name != "none":
-        players = players.sort_values(by='editdistance')
+        players = players.sort_values(by='editdistance', ascending=False)
         players = players.loc[players['editdistance'] <= maxdistance]
         players = players.drop('editdistance',axis=1)
         return(players.head(5))

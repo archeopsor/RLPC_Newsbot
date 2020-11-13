@@ -34,8 +34,14 @@ def flatten(items, seqtypes=(list, tuple)):
             items[i:i+1] = items[i]
     return items
 
+global players
+players = sheet.gsheet2df(sheet.get_google_sheet('1umoAxAcVLkE_XKlpTNNdc42rECU7-GtoDvUhEXja7XA', 'Players!A1:I'))
+
 def add_player(username, region, platform, mmr, team, league, ids=[]):
-    fantasy_value = 100 # TODO: Create new Fantasy Value Formula
+    fantasy_value = players.loc[(players['League']=='Major') & ~(players['Team'].isin(['Not Playing', 'Waitlist', 'Future Star']))].reset_index(drop=True)
+    
+    
+    
     # row = get_database().shape[0]+2
     # fantasy_value_formula = f"=if(isblank(A{row}) = False,round(100+100*PERCENTRANK(FILTER($D$2:$D,$F$2:$F=F{row}),D{row},2)-percentrank(FILTER('Player Info'!D$2:D,'Player Info'!E$2:E=FILTER('Player Info'!E$2:E,'Player Info'!A$2:A=A{row})),FILTER('Player Info'!D$2:D,'Player Info'!A$2:A=A{row}))*10),"")"
 
@@ -68,7 +74,7 @@ def download_ids():
 
     """
     print('Downloading IDs...')
-    gsheet = sheet.get_google_sheet("1C10LolATTti0oDuW64pxDhYRLkdUxrXP0fHYBk3ZwmU", 'Players!A1:O')
+    gsheet = sheet.get_google_sheet("1umoAxAcVLkE_XKlpTNNdc42rECU7-GtoDvUhEXja7XA", 'Players!A1:AE')
     sheetdata = sheet.gsheet2df(gsheet) 
     sheetdata['Unique IDs'] = sheetdata['Unique IDs'].map(lambda x: x.split(","))
     sheetdata = sheetdata.drop_duplicates(subset='Username')
@@ -77,13 +83,9 @@ def download_ids():
     dbdata = select('players')
     
     for player in sheetdata['Username']:
-        if '' in sheetdata.loc[sheetdata['Username']==player, 'Unique IDs'].values[0]:
-            sheetdata.loc[sheetdata['Username']==player, 'Unique IDs'] = None
         if player not in dbdata['Username'].values: # If the player isn't in the database at all
             # Check to make sure there are no similar IDs, indicating a name change
             for id in sheetdata.loc[sheetdata['Username']==player, 'Unique IDs']:
-                if id == None:
-                    break
                 index = len([i for i, s in enumerate(sheetdata['Unique IDs'].values) if id in s])
                 if index > 0: # This will be true if the ID already exists
                     # Update player's name
@@ -186,7 +188,7 @@ def find_league(team: str, players: pd.DataFrame) -> str:
 def check_players():
     print("Checking players...")
     players = select('players')
-    gsheet = sheet.get_google_sheet("1C10LolATTti0oDuW64pxDhYRLkdUxrXP0fHYBk3ZwmU", 'Players!A1:O')
+    gsheet = sheet.get_google_sheet("1umoAxAcVLkE_XKlpTNNdc42rECU7-GtoDvUhEXja7XA", 'Players!A1:O')
     sheetdata = sheet.gsheet2df(gsheet)
     sheetdata = sheetdata.drop_duplicates(subset='Username')
     sheetdata = sheetdata.loc[sheetdata['Username']!=""]

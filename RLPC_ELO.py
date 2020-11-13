@@ -1,10 +1,9 @@
-import Google_Sheets as sheet
 from database import engine, select
 import numpy as np
 from RLPC_Players import find_league
 
 def recall_data(league=""):
-    leagues = {'major': "Major", 'aaa': 'AAA', 'aa': 'AA', 'a': 'A', 'indy': 'Independent', 'independent': 'Independent', 'mav': 'Maverick', 'maverick': 'Maverick', '': ''}
+    leagues = {'major': "Major", 'aaa': 'AAA', 'aa': 'AA', 'a': 'A', 'indy': 'Independent', 'independent': 'Independent', 'mav': 'Maverick', 'maverick': 'Maverick', 'renegade': 'Renegade', 'paladin': 'Paladin', '': ''}
     try:
         league = leagues[league.casefold()]
     except: 

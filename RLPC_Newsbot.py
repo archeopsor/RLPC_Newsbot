@@ -149,7 +149,7 @@ async def on_message(message):
                 for role in channel.guild.roles:
                     if role.name.casefold() == "upset alerts":
                         new_message += f'\n{channel.guild.get_role(role.id).mention}'
-                await channel.send(new_message)
+                #await channel.send(new_message)
                 
     await client.process_commands(message)
 
