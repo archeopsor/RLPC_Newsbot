@@ -13,6 +13,8 @@ class Fantasy(commands.Cog):
         
     @commands.command(aliases=("createaccount","create_account","newplayer", "new_player","newaccount","new_account","add_fantasy_player","new"))
     async def new_fantasy_player(self,ctx,league="none"):
+        await ctx.send("Fantasy is coming in a few days! Make sure you're in the RLPC News server to be ready when it's announced (use $discord for the invite)")
+        return # DELETE THESE TWO LINES ONCE FANTASY IS READY
         async with ctx.typing():
             if league.casefold() not in ["major","aaa","aa","a","independent", "indy", "maverick", "mav", "none"]:
                 await ctx.send(f"{league} could not be understood")
@@ -30,6 +32,8 @@ class Fantasy(commands.Cog):
         
     @commands.command(aliases=("pick", "pickplayer", "addplayer", "add_player",))
     async def pick_player(self,ctx,*,message):
+        await ctx.send("Fantasy is coming in a few days! Make sure you're in the RLPC News server to be ready when it's announced (use $discord for the invite)")
+        return # DELETE THESE TWO LINES ONCE FANTASY IS READY
         async with ctx.typing():
             message = message.split()
             try: slot = int(message[-1])    
@@ -56,6 +60,8 @@ class Fantasy(commands.Cog):
             
     @commands.command(aliases=("drop","dropplayer","removeplayer","remove_player",))
     async def drop_player(self,ctx,slot):
+        await ctx.send("Fantasy is coming in a few days! Make sure you're in the RLPC News server to be ready when it's announced (use $discord for the invite)")
+        return # DELETE THESE TWO LINES ONCE FANTASY IS READY
         async with ctx.typing():
             author = ctx.message.author.name
             try: slot = int(slot)
@@ -72,6 +78,8 @@ class Fantasy(commands.Cog):
             
     @commands.command(aliases=("leaderboard","lb","standings",))
     async def generate_leaderboard(self,ctx):
+        await ctx.send("Fantasy is coming in a few days! Make sure you're in the RLPC News server to be ready when it's announced (use $discord for the invite)")
+        return # DELETE THESE TWO LINES ONCE FANTASY IS READY
         async with ctx.typing():
             answer = fantasy.fantasy_lb()
             leaderboard=discord.Embed(title="Fantasy Leaderboard", color=0xffff00)
@@ -81,6 +89,8 @@ class Fantasy(commands.Cog):
         
     @commands.command(aliases=("show","team","showteam",))
     async def show_team(self,ctx,*,author="none"):
+        await ctx.send("Fantasy is coming in a few days! Make sure you're in the RLPC News server to be ready when it's announced (use $discord for the invite)")
+        return # DELETE THESE TWO LINES ONCE FANTASY IS READY
         async with ctx.typing():
             if author == "none":
                 author = ctx.message.author.name
@@ -104,6 +114,8 @@ class Fantasy(commands.Cog):
     
     @commands.command(aliases=("player","playerinfo","info",))
     async def player_info(self,ctx,*,player):
+        await ctx.send("Fantasy is coming in a few days! Make sure you're in the RLPC News server to be ready when it's announced (use $discord for the invite)")
+        return # DELETE THESE TWO LINES ONCE FANTASY IS READY
         async with ctx.typing():
             answer = fantasy.info(player)
             player_card=discord.Embed(title=f"{player}'s player info", color=0xff0000)
@@ -131,6 +143,8 @@ class Fantasy(commands.Cog):
             
     @commands.command(aliases=("playerlb", "player_lb", "playerslb",))
     async def players(self,ctx, *, message=None):
+        await ctx.send("Fantasy is coming in a few days! Make sure you're in the RLPC News server to be ready when it's announced (use $discord for the invite)")
+        return # DELETE THESE TWO LINES ONCE FANTASY IS READY
         async with ctx.typing():
             league = None
             num = 10
@@ -200,6 +214,8 @@ Welcome to RLPC Fantasy! This is a just-for-fun fantasy league in which people c
         
     @commands.command(aliases=("searchplayers",))
     async def search(self,ctx,arg1="",arg2="",arg3="",arg4="",arg5="",arg6="",arg7="",arg8="",arg9="",arg10="",arg11="",arg12=""):
+        await ctx.send("Fantasy is coming in a few days! Make sure you're in the RLPC News server to be ready when it's announced (use $discord for the invite)")
+        return # DELETE THESE TWO LINES ONCE FANTASY IS READY
         async with ctx.typing():
             name = "none"
             minsalary = 0
