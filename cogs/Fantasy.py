@@ -1,5 +1,5 @@
 from discord.ext import commands
-import fantasy_infrastructure_new as fantasy
+import fantasy_infrastructure as fantasy
 import discord
 import mmr
 
