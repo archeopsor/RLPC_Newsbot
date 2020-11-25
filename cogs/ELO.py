@@ -34,9 +34,13 @@ class ELO(commands.Cog):
                 league = "Independent"
             elif league.casefold() in ['mav', 'maverick']:
                 league = "Maverick"
+            elif league.casefold() in ['ren', 'renegade']:
+                league = "Renegade"
+            elif league.casefold() in ['pal', 'paladin']:
+                league = "Paladin"
             else:
                 league = league.upper()
-            standings = discord.Embed(title=f"{league} Rankings",color=0x000080,description=f"Computer-generated rankings for the {league} league, based on an internal ELO system")
+            standings = discord.Embed(title=f"{league} Rankings",color=0x000080,description=f"Computer-generated rankings for the {league} league, based on an internal ELO system. For the official, human-made rankings, use $pr")
             value_response = ""
             for row in answer.index:
                 value_response += f"{row+1}: {answer.loc[row, 'Team']} ({answer.loc[row, 'elo']}) [{answer.loc[row, 'elo'] - answer.loc[row, 'Previous']}]\n"

@@ -19,20 +19,6 @@ async def on_ready():
     print('---------------------------------')
     await client.change_presence(activity=discord.Game(f'{prefix}help for commands'))
 
-async def is_bdong(ctx):
-    return ctx.author.id == 565629521571741722
-    
-@client.command()
-@commands.check(is_bdong)
-async def bdong(ctx, specified_channel, seconds: int = 1):
-    channel = client.get_channel(int(specified_channel[2:-1]))
-    await channel.send(f'{client.get_user(232305914160349185).mention} i miss you', delete_after=seconds) # @Rumble Truck™#2578 i miss you
-
-@bdong.error
-async def bdong_error(error, ctx):
-    if isinstance(error, commands.CheckFailure):
-        await ctx.send("You're not bdong!")
-
 @client.command()
 async def ping(ctx):
     await ctx.send(f'Pong! {round(client.latency * 1000)}ms')

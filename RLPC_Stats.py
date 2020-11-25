@@ -136,3 +136,27 @@ def forecast_image(league, forecast):
         brawler.pop(team)
         
     template.save(f"{league.casefold()} forecast.png")
+    
+    
+def power_rankings(league):
+    leagues = {'major': "Major", 'aaa': 'AAA', 'aa': 'AA', 'a': 'A', 'indy': 'Independent', 'independent': 'Independent', 'mav': 'Maverick', 'maverick': 'Maverick', 'renegade': 'Renegade', 'ren': 'Renegade', 'paladin': 'Paladin', 'pal': 'Paladin'}
+    try:
+        league = leagues[league.casefold()]
+    except:
+        return "Could not understand league"
+    
+    start_rows = {'Major': 2, 'AAA': 21, 'AA': 40, 'A': 59, 'Independent': 78, 'Maverick': 97, 'Renegade': 116, 'Paladin': 135}
+    data_range = f'Rankings History!A{start_rows[league]}:M{start_rows[league]+16}'
+    #week = sheet.get_google_sheet("1Tlc_TgGMrY5aClFF-Pb5xvtKrJ1Hn2PJOLy2fUDDdFI", 'Sheet Resources!U14')['values'][0][0]
+    data = sheet.gsheet2df(sheet.get_google_sheet('1Tlc_TgGMrY5aClFF-Pb5xvtKrJ1Hn2PJOLy2fUDDdFI', data_range)).set_index('')
+    column = 1
+    for i in range(12):
+        if data.iloc[:, i].values[0] == '':
+            column = i-1
+            break
+        else:
+            continue
+    data[f'Week {column}'] = data[f'Week {column}'].apply(lambda x: int(x))
+    rankings = data.iloc[:,column]
+    rankings = rankings.sort_values(ascending=False)
+    return rankings

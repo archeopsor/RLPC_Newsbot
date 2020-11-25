@@ -114,8 +114,6 @@ class Fantasy(commands.Cog):
     
     @commands.command(aliases=("player","playerinfo","info",))
     async def player_info(self,ctx,*,player):
-        await ctx.send("Fantasy is coming in a few days! Make sure you're in the RLPC News server to be ready when it's announced (use $discord for the invite)")
-        return # DELETE THESE TWO LINES ONCE FANTASY IS READY
         async with ctx.typing():
             answer = fantasy.info(player)
             player_card=discord.Embed(title=f"{player}'s player info", color=0xff0000)

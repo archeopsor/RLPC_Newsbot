@@ -12,6 +12,29 @@ class Stats(commands.Cog):
     def __init__(self,client):
         self.client = client
         
+    @commands.command(aliases = ('power', 'powerrankings', 'power_rankings', 'rankings', 'ranking',))
+    async def pr(self, ctx, league):
+        async with ctx.typing():
+            rankings = stats.power_rankings(league)
+            embed = discord.Embed(title = f'{league} Power Rankings', description = f"Official human-generated Power Rankings for {league}. For computer rankings, use $rank", color=0x000080)
+
+            value_response = ''
+            for row in range(16):
+                value_response += f"{row+1}: {rankings.index[row]}"
+                if rankings.iloc[row] == rankings.iloc[(row+1 if row < 15 else 0)] or rankings.iloc[row] == rankings.iloc[(row-1 if row > 0 else 15)]:
+                    value_response += f"ᵀ ({rankings.iloc[row]})\n"
+                else:
+                    value_response += f" ({rankings.iloc[row]})\n"
+            
+            embed.add_field(name="Rankings", value=value_response)
+
+            await ctx.send(embed=embed)
+            
+    @pr.error
+    async def prerror(self, ctx, error):
+        if isinstance(error,commands.MissingRequiredArgument):
+            await ctx.send("You haven't chosen a league.")
+    
     @commands.command()
     async def mmr(self, ctx, *, player):
         async with ctx.typing():
@@ -43,7 +66,7 @@ class Stats(commands.Cog):
                 for playlist in list(mmrs[name]):
                     embed.add_field(name=playlist, value=f'{mmrs[name][playlist]["rank"]} ({mmrs[name][playlist]["rating"]})')
                 
-                await ctx.send(embed)
+                await ctx.send(embed=embed)
     
     @commands.command(aliases=("getstats","stats","get_stats",))
     async def get_player_stats(self, ctx, *, msg):
@@ -52,11 +75,18 @@ class Stats(commands.Cog):
                 msg = ctx.message.author.name
             first = " ".join(msg.split()[:-1])
             last = msg.split()[-1]
-            try: answer = stats.get_player_stats(first, last)
+            try: 
+                answer = stats.get_player_stats(first, last)
             except: 
-                try: answer = stats.get_player_stats(msg)
-                except: await ctx.send(f"Cound not find player {msg}")
-            embed = discord.Embed(title=f"{answer.values[0][0]}'s Stats", color=0x3333ff)
+                try: 
+                    answer = stats.get_player_stats(msg)
+                except: 
+                    await ctx.send(f"Cound not find player {msg}")
+                    return
+            try:
+                embed = discord.Embed(title=f"{answer.values[0][0]}'s Stats", color=0x3333ff)
+            except:
+                return await ctx.send(f"Could not find {msg}'s stats. Contact arco if you think this is a bug")
             for i, col in enumerate(answer.columns[1:]):
                 embed.add_field(name=col, value=answer.values[0][i+1])
         await ctx.send(embed=embed)

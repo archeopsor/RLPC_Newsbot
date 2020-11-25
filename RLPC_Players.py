@@ -36,28 +36,28 @@ def flatten(items, seqtypes=(list, tuple)):
 
 global players
 players = sheet.gsheet2df(sheet.get_google_sheet('1umoAxAcVLkE_XKlpTNNdc42rECU7-GtoDvUhEXja7XA', 'Players!A1:I'))
+players['Sheet MMR'] = players['Sheet MMR'].apply(lambda x: int(x))
+players['Tracker MMR'] = players['Tracker MMR'].apply(lambda x: int(x))
 
 def add_player(username, region, platform, mmr, team, league, ids=[]):
-    fantasy_value = players.loc[(players['League']=='Major') & ~(players['Team'].isin(['Not Playing', 'Waitlist', 'Future Star']))].reset_index(drop=True)
-    
-    
-    
-    # row = get_database().shape[0]+2
-    # fantasy_value_formula = f"=if(isblank(A{row}) = False,round(100+100*PERCENTRANK(FILTER($D$2:$D,$F$2:$F=F{row}),D{row},2)-percentrank(FILTER('Player Info'!D$2:D,'Player Info'!E$2:E=FILTER('Player Info'!E$2:E,'Player Info'!A$2:A=A{row})),FILTER('Player Info'!D$2:D,'Player Info'!A$2:A=A{row}))*10),"")"
-
-    # values = [[username], [region], [platform], [mmr], [team], [league], [fantasy_value_formula], ["Yes"], [0]]
-    # body = {"majorDimension": "COLUMNS", 'values': values}
-    # sheet.append_data('1rmJVnfWvVe3tSnFrXpExv4XGbIN3syZO12dGBeoAf-w','A1:I', body)
+    data = players.loc[(players['League']==league) & ~(players['Team'].isin(['Not Playing', 'Waitlist', 'Future Star']))].reset_index(drop=True) # Get valid players from correct league
+    mmr = int(mmr)
+    num_greater = data[data['Tracker MMR'] > mmr]['Tracker MMR'].count()
+    num_less = data[data['Tracker MMR'] < mmr]['Tracker MMR'].count()
+    percentile = num_less/(num_greater+num_less)
+    fantasy_value = round(80 + 100*percentile)
     
     # Now update SQL database
     username = username.replace("'", "''")
     command = f'insert into players ("Username", "Region", "Platform", "MMR", "Team", "League", "Fantasy Value", "Allowed?", "Fantasy Points")'
     values = f"""('{username}', '{region}', '{platform}', {mmr}, '{team}', '{league}', {fantasy_value}, 'Yes', 0)"""
-    
+    ids = ids.reset_index(drop=True) # Not really sure why this is needed, but it is
+
     if len(ids) > 0:
         if ids.values[0] != None:
+            ids = "','".join(ids.values[0])
             command = command[:-1] + ', "id")'
-            values = values[:-1] + f', {{{str(ids)[1:-1]}}})'
+            values = values[:-1] + f", array['{ids}'])"
     
     engine.execute(f"{command} values {values}")
     
