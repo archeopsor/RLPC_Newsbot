@@ -376,7 +376,8 @@ def player_lb(league: str = None, sortby: str="Fantasy Points", num: int=10, per
     if league != None:
         players = players[players['League'].str.lower() == league.casefold()]
     
-    players['Fantasy Points'] = players['Fantasy Points']/players['Series Played']
+    if pergame:
+        players['Fantasy Points'] = players['Fantasy Points']/players['Series Played']
     lb = players['Fantasy Points'].sort_values(ascending=False)
         
     return lb.head(num)
