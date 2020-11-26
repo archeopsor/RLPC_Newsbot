@@ -135,7 +135,7 @@ async def on_message(message):
                 for role in channel.guild.roles:
                     if role.name.casefold() == "upset alerts":
                         new_message += f'\n{channel.guild.get_role(role.id).mention}'
-                #await channel.send(new_message)
+                await channel.send(new_message)
                 
     await client.process_commands(message)
 
@@ -145,24 +145,21 @@ async def help(ctx,specified="none"):
     
     specified = specified.casefold()
     
-    fantasy_help_message = f"""
-**Command: fantasy_help**
-*Aliases: fantasy_help, fantasy, fhelp, f_help*
+    fantasy_help_message = """
+**Command: fantasy**
 
 Displays a help message with rules and commands for the RLPC Fantasy League
     """
     new_account_message = """
-**Command: new_fantasy_player**
-*Aliases: createaccount, create_account, newplayer, new_player, newaccount, new_account, add_fantasy_player*
+**Command: new**
 
 Creates a fantasy account linked to your discord username. If you change your username, message arco to regain access to your account.
 In addition to the command, you must also include the league you play in (major, aaa, aa, a, or none) to help prevent match fixing.
 
-Usage: {prefix}createaccount [league]
+Usage: {prefix}new
     """
     team_message = f"""
 **Command: team**
-*Aliases: show, showteam*
 
 Displays a player's current fantasy team. You must also include the discord username (case sensitive, without discriminator) of the player.
 Leave [username] blank if you want to display your own team.
@@ -170,39 +167,34 @@ Leave [username] blank if you want to display your own team.
 Usage: {prefix}team [username]
     """
     info_message = f"""
-**Command: playerinfo**
-*Aliases: info, player, player_info*
+**Command: info**
 
-Display's a player's mmr, team, league, and salary/fantasy value. Make sure the player's name is spelled the same as on the spreadsheet (case sensitive)
+Display's a player's mmr, team, league, and salary/fantasy value. Make sure the player's name is spelled the same as on the spreadsheet
 
 Usage: {prefix}info [player]
     """
     pick_message = f"""
-**Command: pick_player**
-*Aliases: pick, pick_player, pickplayer, addplayer, add_player*
+**Command: pick**
 
-Adds a player to your fantasy team. Include the player's name (as spelled on the sheet, case sensitive) and which of the five slots you'd like to use.
-Use ~team to see which players are already in each slot
+Adds a player to your fantasy team. Include the player's name (as spelled on the sheet) and which of the five slots you'd like to replace if your team is already full.
+Use {prefix}team to see which players are already in each slot
 
-Usage: {prefix}pick [player] [slot]
+Usage: {prefix}pick [player] [slot (optional)]
     """
     drop_message = f"""
-**Command: drop_player**
-*Aliases: drop, dropplayer, drop_player, removeplayer, remove_player*
+**Command: drop**
 
-Drops a player from your team, replacing them with "Not Picked". You must specify which slot you'd like to empty.
+Drops a player from your team, replacing them with "Not Picked". You must specify which slot you'd like to empty. Use $team to show which player is in each slot.
 
 Usage: {prefix}drop [slot]
     """
-    lb_message = f"""
-**Command: leaderboard**
-*Aliases: lb, standings*
+    lb_message = """
+**Command: lb**
 
 Displays the current fantasy leaderboard.
     """
     search_message = f"""
 **Command: search**
-*Aliases: searchplayers*
 
 Finds the five players that best meet the specified requirements. Can specify a minimum salary, maximum salary, team, league, and name. 
 Input the arguments as two words, with one word to specify which argument you're using (ex: min: or team:) and then the desired argument (ex: 100 or Bulls)
@@ -213,19 +205,19 @@ Usage: {prefix}search [type] [argument]
 *[type] can be min, max, team, league, name, or strictness*
 *[argument] is where you put the search parameter*
 *You can use anywhere from 0 to 6 of the type/argument pairs*
+
+Example: {prefix}search name: arco league: Major team: Hawks
     """
     predict_message = f"""
 **Command: predict**
-*Aliases: predict, scorepredict, predictscore, score_predict, predict_score*
 
 Uses an ELO system to give every team a rating, and predicts the score of a hypothetical matchup between two teams.
 Include the league and two teams. You may also include how many games would be played, or leave [# of games] blank for the probability out of 100 that each team wins.
 
-Usage: {prefix}predict [league] [team 1] [team 2] [# of games]
+Usage: {prefix}predict [team 1] [team 2] [# of games (optional)]
     """
     rank_message = f"""
 **Command: rank**
-*Aliases: rankteams*
 
 Uses an ELO system to give every team a rating, and displays a list ranking each team in a league. Include the league you want to rank.
 
@@ -238,6 +230,68 @@ Different links can be found using this bot.
 **{prefix}rlpcnews** shows a link to the RLPC News discord server, with all sorts of news/power rankings and other things
 **{prefix}reddit** shows a link to the RLPC Subreddit, where news articles are posted
 **{prefix}apply** shows a link to apply to become a part of RLPC News!
+**{prefix}invite** shows a link to invite the RLPC Newsbot to your own server!
+    """
+    players_message = f"""
+**Command: players**
+
+Shows a leaderboard of players based on the fantasy points they have earned since the start of the season.
+
+Usage: {prefix}players [league (optional)]
+    """
+    top_message = f"""
+**Command: top**
+
+Displays the top x posts of all time on the RLPC subreddit.
+
+Usage: {prefix}top [# of posts (optional)]
+    """
+    hot_message = f"""
+**Command: hot**
+
+Displays the x most popular recent posts on the RLPC subreddit.
+
+Usage: {prefix}hot [# of posts (optional)]
+    """
+    listnew_message = f"""
+**Command: listnew**
+
+Displays the x newest posts on the RLPC subreddit.
+
+Usage: {prefix}top [# of posts (optional)]
+    """
+    get_message = f"""
+**Command: get**
+
+Gets the text of a reddit post from one of the other three reddit commands. Use the format {prefix}get [type] [#] where type is "top", "hot", or "new" and # is where it is on the list
+
+Usage: {prefix}get [type] [#]
+    """
+    newest_message = """
+**Command: newest**
+
+Displays the newest post on the RLPC subreddit.
+    """
+    pr_message = f"""
+**Command: pr**
+
+Gets the most recent power rankings for any given league. These are made by the power ranking team, rather than a computer.
+
+Usage: {prefix}pr [league]
+    """
+    stats_message = f"""
+**Command: stats**
+
+Displays a player's stats from the RLPC Spreadsheet. You can choose a specific stat, or display all stats.
+
+Usage: {prefix}stats [player] [stat (optional)]
+    """
+    forecast_message = f"""
+**Command: forecast**
+
+Shows an MCMC simulation-based forecast for any given league or team, and links to the forecast spreadsheet.
+
+Usage: {prefix}forecast [league] [team (optional)]
     """
     help_message1 = f"""
 Hello! This is a bot primarily meant to run a fantasy league for RLPC, but it has some other functions as well!
@@ -245,47 +299,52 @@ If you have any questions, notice any issues or bugs, or have any suggestions, p
 
 **__FANTASY COMMANDS__**
 
-**{prefix}fantasy_help** - Repeats much of this information, also includes important information about the fantasy league such as rules
-**{prefix}new_fantasy_player** - Creates a fantasy team linked to your discord account. Please include the league you play in, or 'none'.
-    *Example: {prefix}new_fantasy_player major*
+**{prefix}fantasy** - Repeats much of this information, also includes important information about the fantasy league such as rules
+**{prefix}new** - Creates a fantasy team linked to your discord account.
+    *Example: {prefix}new*
 **{prefix}team** - Shows the current fantasy team of any fantasy player. "{prefix}team" will display your own team, although you can include any discord account name (Don't use nicknames')
     *Example: {prefix}team arco
 **{prefix}info** - Gives important information about a player, such as their salary and a variety of stats.
     *Example: {prefix}info arco*
-**{prefix}pick_player** - Adds a player to your fantasy team, in one of 5 player slots. Please specify which player you want, as well as which slot.
-    *Example: {prefix}pick_player arco 4*
-**{prefix}drop_player** - Can also be done with '{prefix}pick_player drop [slot]', drops the player in the specified slot, replacing them with 'Not Picked'.
-**{prefix}leaderboard** - Displays the current leaderboard of points
+**{prefix}pick** - Adds a player to your fantasy team, in one of 5 player slots. Please specify which player you want, as well as which slot.
+    *Example: {prefix}pick arco 4*
+**{prefix}drop** - Can also be done with '{prefix}pick drop [slot]', drops the player in the specified slot, replacing them with 'Not Picked'.
+**{prefix}lb** - Displays the current leaderboard of points
 **{prefix}search** - Finds the five players that best meet the specified requirements. Can specify a minimum salary, maximum salary, team, league, and name, although you can use as many or as few of these parameters as you want.
     *Example: {prefix}search name: arco min: 100 max: 200 team: FA league: AA*
+**{prefix}players** - Shows a leaderboard of players based on the fantasy points they have earned since the start of the season.
     """
     help_message2 = f"""
 **__NEWS/STATS COMMANDS__**
 
 *Note: RLPC News tracks an ELO ranking of each team based on each team's wins and losses and the strength of the opposing team. This is used for predicting scores and generating rankings*
 
-**{prefix}predict** - Predicts the score of a hypothetical match between two teams, based on the teams' current ELO. Include the league (major, AAA, etc), two teams, and number of games.
-    *Example: {prefix}predict major allusion evolution 5*
+**{prefix}predict** - Predicts the score of a hypothetical match between two teams, based on the teams' current ELO. Include two teams and an optional number of games.
+    *Example: {prefix}predict hawks eagles 5*
 **{prefix}rank** - Ranks all the teams in a league based on their current ELO.
     *Example: {prefix}rank major*
+**{prefix}pr** - Gets the most recent power rankings for any given league. These are made by the power ranking team, rather than a computer.
 **{prefix}stats** - Displays a player's stats. You can choose a specific stat, or display all stats.
     *Example: {prefix}stats arco ppg
+**{prefix}forecast** - Shows an MCMC simulation-based forecast for any given league or team, and links to the forecast spreadsheet.
+    *Example: {prefix}forecast major Hawks*
     
 **__REDDIT COMMANDS__**
 
 **{prefix}top** - Displays the top x posts of all time on the RLPC subreddit. Use {prefix}top [#] to return a specified number of posts.
 **{prefix}hot** - Displays the x most popular recent posts on the RLPC subreddit. Use {prefix}hot [#] to return a specified number of posts.
-**{prefix}list_new** - Displays the x newest posts on the RLPC subreddit. Use {prefix}list_new [#] to return a specified number of posts.
+**{prefix}listnew** - Displays the x newest posts on the RLPC subreddit. Use {prefix}list_new [#] to return a specified number of posts.
 **{prefix}get** - Gets the text of a reddit post from one of the previous three commands. Use the format {prefix}get [type] [#] where type is "top", "hot", or "new" and # is where it is on the list
-    *Example: {prefix}get top 3
+    *Example: {prefix}get top 3*
 **{prefix}newest** - Same function as {prefix}get new 1, displays the most recent post.
     
 **__LINKS__**
 
-**{prefix}rlpclink** - Shows an invite link for the RLPC Server
-**{prefix}rlpcnewslink** - Shows an invite link for the RLPC News Server
+**{prefix}rlpc** - Shows an invite link for the RLPC Server
+**{prefix}rlpcnews** - Shows an invite link for the RLPC News Server
 **{prefix}reddit** - Links to the RLPC Reddit Page, where RLPC News articles are posted
 **{prefix}apply** - Shows a link to apply to become a part of RLPC News
+**{prefix}invite** - Shows a link to invite the RLPC Newsbot to a server
     """
     if specified == "none":
         await message_author.send(help_message1)
@@ -312,6 +371,24 @@ If you have any questions, notice any issues or bugs, or have any suggestions, p
         await message_author.send(rank_message)
     elif specified in ["links","rlpc","rlpclink","rlpcnews","rlpcnewslink","reddit","redditlink","apply","applylink"]:
         await message_author.send(links_message)
+    elif specified in ["players", 'playerlb']:
+        await message_author.send(players_message)
+    elif specified in ['top', 'listtop', 'list_top']:
+        await message_author.send(top_message)
+    elif specified in ['hot', 'listhot', 'list_hot']:
+        await message_author.send(hot_message)
+    elif specified in ['listnew', 'list_new']:
+        await message_author.send(listnew_message)
+    elif specified in ['get', 'getpost']:
+        await message_author.send(get_message)
+    elif specified in ['newest']:
+        await message_author.send(newest_message)
+    elif specified in ['pr', 'powerrankings', 'power_rankings']:
+        await message_author.send(pr_message)
+    elif specified in ['stats', 'getstats', 'stat']:
+        await message_author.send(stats_message)
+    elif specified in ['forecast']:
+        await message_author.send(forecast_message)
     else:
         await ctx.send(f"'{specified} doesn't seem to be a valid command'")
         
@@ -320,7 +397,6 @@ If you have any questions, notice any issues or bugs, or have any suggestions, p
 for filename in os.listdir('./cogs'):
     if filename.endswith('.py'):
         client.load_extension(f'cogs.{filename[:-3]}')
-
 
 try:
     from passwords import BOT_TOKEN

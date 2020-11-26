@@ -15,6 +15,18 @@ class Stats(commands.Cog):
     @commands.command(aliases = ('power', 'powerrankings', 'power_rankings', 'rankings', 'ranking',))
     async def pr(self, ctx, league):
         async with ctx.typing():
+            if league.casefold() == "major":
+                league = "Major"
+            elif league.casefold() in ["indy", "independent"]:
+                league = "Independent"
+            elif league.casefold() in ['mav', 'maverick']:
+                league = "Maverick"
+            elif league.casefold() in ['ren', 'renegade']:
+                league = "Renegade"
+            elif league.casefold() in ['pal', 'paladin']:
+                league = "Paladin"
+            else:
+                league = league.upper()
             rankings = stats.power_rankings(league)
             embed = discord.Embed(title = f'{league} Power Rankings', description = f"Official human-generated Power Rankings for {league}. For computer rankings, use $rank", color=0x000080)
 

@@ -313,11 +313,11 @@ def rlpc_replay_analysis():
             if team not in team_stats['Team'].values: # If there's not already a row for this team
                 command = '''insert into team_stats ("League", "Team")'''
                 values = f'''values ('{league}', '{team}')'''
-                engine.execute(f'{command} {values}')
+                #engine.execute(f'{command} {values}')
             for col in group_stats.columns:
                 try: current_value = team_stats.loc[team_stats['Team']==team, col].values[0]
                 except: current_value = 0
-                engine.execute(f"""update team_stats set "{col}" = {group_stats.loc[team, col] + current_value} where "Team" = '{team}'""")
+                #engine.execute(f"""update team_stats set "{col}" = {group_stats.loc[team, col] + current_value} where "Team" = '{team}'""")
                 
         # Upload player stats
         for player in indiv_stats.index:

@@ -83,6 +83,8 @@ def download_ids():
     dbdata = select('players')
     
     for player in sheetdata['Username']:
+        if sheetdata.loc[sheetdata['Username']==player, 'Team'].values[0] in ['Not Playing', 'Ineligible', 'Future Star', 'Departed', 'Banned', 'Waitlist']:
+            continue
         if player not in dbdata['Username'].values: # If the player isn't in the database at all
             # Check to make sure there are no similar IDs, indicating a name change
             for id in sheetdata.loc[sheetdata['Username']==player, 'Unique IDs']:
@@ -200,6 +202,8 @@ def check_players():
     players = players.set_index('Username')
     
     for player in sheetdata.index:
+        if sheetdata.loc[player, 'Team'] in ['Not Playing', 'Ineligible', 'Future Star', 'Departed', 'Banned', 'Waitlist']:
+            continue
         if player not in players.index: # If they don't appear in the database
             # Check if players IDs are in the database
             sheetdata.loc[player, 'Unique IDs'] = sheetdata.loc[player, 'Unique IDs'].split(',') # Format IDs correctly

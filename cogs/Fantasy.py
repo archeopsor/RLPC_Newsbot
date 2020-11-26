@@ -13,8 +13,6 @@ class Fantasy(commands.Cog):
         
     @commands.command(aliases=("createaccount","create_account","newplayer", "new_player","newaccount","new_account","add_fantasy_player","new"))
     async def new_fantasy_player(self,ctx,league="none"):
-        await ctx.send("Fantasy is coming in a few days! Make sure you're in the RLPC News server to be ready when it's announced (use $discord for the invite)")
-        return # DELETE THESE TWO LINES ONCE FANTASY IS READY
         async with ctx.typing():
             if league.casefold() not in ["major","aaa","aa","a","independent", "indy", "maverick", "mav", "none"]:
                 await ctx.send(f"{league} could not be understood")
@@ -32,8 +30,6 @@ class Fantasy(commands.Cog):
         
     @commands.command(aliases=("pick", "pickplayer", "addplayer", "add_player",))
     async def pick_player(self,ctx,*,message):
-        await ctx.send("Fantasy is coming in a few days! Make sure you're in the RLPC News server to be ready when it's announced (use $discord for the invite)")
-        return # DELETE THESE TWO LINES ONCE FANTASY IS READY
         async with ctx.typing():
             message = message.split()
             try: slot = int(message[-1])    
@@ -60,8 +56,6 @@ class Fantasy(commands.Cog):
             
     @commands.command(aliases=("drop","dropplayer","removeplayer","remove_player",))
     async def drop_player(self,ctx,slot):
-        await ctx.send("Fantasy is coming in a few days! Make sure you're in the RLPC News server to be ready when it's announced (use $discord for the invite)")
-        return # DELETE THESE TWO LINES ONCE FANTASY IS READY
         async with ctx.typing():
             author = ctx.message.author.name
             try: slot = int(slot)
@@ -78,8 +72,6 @@ class Fantasy(commands.Cog):
             
     @commands.command(aliases=("leaderboard","lb","standings",))
     async def generate_leaderboard(self,ctx):
-        await ctx.send("Fantasy is coming in a few days! Make sure you're in the RLPC News server to be ready when it's announced (use $discord for the invite)")
-        return # DELETE THESE TWO LINES ONCE FANTASY IS READY
         async with ctx.typing():
             answer = fantasy.fantasy_lb()
             leaderboard=discord.Embed(title="Fantasy Leaderboard", color=0xffff00)
@@ -89,8 +81,6 @@ class Fantasy(commands.Cog):
         
     @commands.command(aliases=("show","team","showteam",))
     async def show_team(self,ctx,*,author="none"):
-        await ctx.send("Fantasy is coming in a few days! Make sure you're in the RLPC News server to be ready when it's announced (use $discord for the invite)")
-        return # DELETE THESE TWO LINES ONCE FANTASY IS READY
         async with ctx.typing():
             if author == "none":
                 author = ctx.message.author.name
@@ -141,8 +131,6 @@ class Fantasy(commands.Cog):
             
     @commands.command(aliases=("playerlb", "player_lb", "playerslb",))
     async def players(self,ctx, *, message=None):
-        await ctx.send("Fantasy is coming in a few days! Make sure you're in the RLPC News server to be ready when it's announced (use $discord for the invite)")
-        return # DELETE THESE TWO LINES ONCE FANTASY IS READY
         async with ctx.typing():
             league = None
             num = 10
@@ -181,39 +169,39 @@ class Fantasy(commands.Cog):
     async def fantasy_help(self,ctx):
         answer = f"""
 Welcome to RLPC Fantasy! This is a just-for-fun fantasy league in which people can build a team of RLPC players and compete against other fantasy teams.
-**To get started, type {prefix}newplayer to create a new fantasy account.**
+**To get started, type {prefix}new to create a new fantasy account.**
 
 **__RULES/STRUCTURE__**
  - Each fantasy team has 5 players
  - You can pick up players at any time EXCEPT for Tuesdays and Thursdays (Gamedays)
+     - You may also be prevented from picking players on Wednesday or Friday morning if points haven't been calculated yet
  - Points are calculated after every gameday (Wednesday/Friday)
- - Each team can do 2 transfers (replacing one player with another player) every week. Filling an empty slot doesn't add to this counter
+ - Each team can do 2 transfers (replacing one player with another player) every week. Filling an empty slot doesn't add to this counter, but dropping a player does.
  - Each player is given a specific "salary" based on their mmr and team. The total salary value of a fantasy team must be below 800 at all times.
- - More detailed player info can be found here: <https://docs.google.com/spreadsheets/d/1rmJVnfWvVe3tSnFrXpExv4XGbIN3syZO12dGBeoAf-w/edit?usp=sharing>
 
 **__FANTASY COMMANDS__**
 
 **{prefix}fantasy** - Shows this message
-**{prefix}new** - Creates a fantasy team linked to your discord account. Please include the league you play in, or 'none'.
-    *Example: {prefix}new_fantasy_player major*
-**{prefix}team** - Shows the current fantasy team of any fantasy player. "{prefix}team" will display your own team, although you can include any discord account name (Don't use nicknames')
+**{prefix}new** - Creates a fantasy team linked to your discord account.
+    *Example: {prefix}new*
+**{prefix}team** - Shows the current fantasy team of any fantasy player. Not specifying a player will show your own team
     *Example: {prefix}team arco*
 **{prefix}info** - Gives important information about a player, such as their salary and a variety of stats.
     *Example: {prefix}info arco*
 **{prefix}pick** - Adds a player to your fantasy team, in one of 5 player slots. Please specify which player you want, as well as which slot.
     *Example: {prefix}pick arco 4*
-**{prefix}drop** - Can also be done with '{prefix}pick_player drop [slot]', drops the player in the specified slot, replacing them with 'Not Picked'.
+**{prefix}drop** - Drops the player in the specified slot, replacing them with 'Not Picked'.
     *Example: {prefix}drop 4*
 **{prefix}lb** - Displays the current leaderboard of points
 **{prefix}search**- Searches for the top 5 players fiting specified parameters
-    *Example: {prefix}search name: arco min: 100 max: 160 league: AA team: all strictness: 3*
+    *Example: {prefix}search name: arco min: 100 max: 160 league: AA team: all strictness: 0.8*
+**{prefix}players** - Shows a leaderboard of players based on the fantasy points they have earned since the start of the season.
+    *Example: {prefix}players major*
         """
         await ctx.send(answer)
         
     @commands.command(aliases=("searchplayers",))
     async def search(self,ctx,arg1="",arg2="",arg3="",arg4="",arg5="",arg6="",arg7="",arg8="",arg9="",arg10="",arg11="",arg12=""):
-        await ctx.send("Fantasy is coming in a few days! Make sure you're in the RLPC News server to be ready when it's announced (use $discord for the invite)")
-        return # DELETE THESE TWO LINES ONCE FANTASY IS READY
         async with ctx.typing():
             name = "none"
             minsalary = 0
@@ -296,7 +284,7 @@ Welcome to RLPC Fantasy! This is a just-for-fun fantasy league in which people c
             await ctx.send("There were no players matching those parameters")
             return
         elif len(embeds) == 1:
-            await ctx.send(f"Here's the only player matching those parameters")
+            await ctx.send("Here's the only player matching those parameters")
         else: 
             await ctx.send(f"Here are {len(answer.index)} players matching those parameters:")
         for i in embeds:

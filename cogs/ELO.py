@@ -11,21 +11,21 @@ class ELO(commands.Cog):
         self.client = client
         
     @commands.command(aliases=("predict","predictscore","score_predict","predict_score",))
-    async def scorepredict(self,ctx,team1: str,team2: str,bestof: float=5.0):
+    async def scorepredict(self, ctx, team1: str, team2: str, bestof: float=5.0):
         async with ctx.typing():
             bestof = float(bestof)
             answer = exp_score(team1,team2,bestof)
         await ctx.send(answer)
         
     @scorepredict.error
-    async def scorepredict_error(self,ctx,error):
+    async def scorepredict_error(self, ctx, error):
         if isinstance(error,commands.MissingRequiredArgument):
             if error.param.name in ['team1','team2']:
                 await ctx.send('Please include two teams')
             await ctx.send(f'The format for this command is {prefix}predict [team 1] [team 2] [# of games *(optional)*]')
         
     @commands.command(aliases=("rank",))
-    async def rankteams(self,ctx,league):
+    async def rankteams(self, ctx, league):
         async with ctx.typing():
             answer = rank_teams(league, previous=True)
             if league.casefold() == "major":
