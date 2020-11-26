@@ -137,7 +137,7 @@ class Fantasy(commands.Cog):
             pergame = False
             if message != None:
                 
-                for i in ['Major', 'AAA', 'AA', 'A', 'Indy', 'Independent', 'Mav', 'Maverick']:
+                for i in ['Major', 'AAA', 'AA', 'A', 'Indy', 'Independent', 'Mav', 'Maverick', 'Ren', 'Renegade', 'Pal', 'Paladin']:
                     if i.casefold() in message.casefold().split():
                         league = i
                         break
@@ -146,6 +146,10 @@ class Fantasy(commands.Cog):
                     league = "Independent"
                 elif league == "Mav":
                     league = "Maverick"
+                elif league == "Ren":
+                    league = "Renegade"
+                elif league == "Pal":
+                    league = "Paladin"
                     
                 for word in message.split():
                     try:
