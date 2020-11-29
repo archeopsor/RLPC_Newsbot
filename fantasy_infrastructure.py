@@ -103,7 +103,7 @@ def pick_player(person: str , player: str, slot: int=0) -> str:
     lower_players = rlpc_players['Username'].str.lower()
     
     try: fantasy_players.loc[person,"players"][0]
-    except: return(f"You don't currently have an account! Use {prefix}new [league] to make an account")
+    except: return(f"You don't currently have an account! Use {prefix}new to make an account")
     
     if slot == 0:
         if fantasy_players.loc[person, "players"][0] == "Not Picked":

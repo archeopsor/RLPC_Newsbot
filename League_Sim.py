@@ -18,15 +18,21 @@ aa_losses = []
 a_teams = ['Stallions', 'Cougars', 'Leopards', 'Gulls', 'Rattlers', 'Pelicans', 'Ravens', 'Cardinals', 'Genesis', 'Embers', 'Tempest', 'Eskimos', 'Jesters', 'Miners', 'Wranglers', 'Titans']
 a_wins = []
 a_losses = []
-indy_teams = ['Vikings','Wildcats', 'Beavers', 'Coyotes', 'Cyclones', 'Dragons', 'Pilots', 'Rhinos', 'Toucans', 'Yellow Jackets', 'Bears', 'Centurions', 'Pandas', 'Puffins', 'Scorpions', 'Terriers']
+indy_teams = ['Admirals', 'Dragons', 'Beavers', 'Cyclones', 'Grizzlies', 'Centurions', 'Yellow Jackets', 'Galaxy', 'Sockeyes', 'Wolves', 'Wildcats', 'Rhinos', 'Scorpions', 'Thrashers', 'Toucans', 'Wizards']
 indy_wins = []
 indy_losses = []
-mav_teams = ['Wizards', 'Jackrabbits', 'Otters', 'Foxes', 'Tides', 'Yetis', 'Sailors', 'Zebras', 'Macaws', 'Fireflies', 'Cubs', 'Samurai', 'Gorillas', 'Penguins', 'Camels', 'Hounds']
+mav_teams = ['Captains', 'Yetis', 'Otters', 'Tides', 'Pandas', 'Samurai', 'Hornets', 'Solar', 'Piranhas', 'Terriers', 'Jackrabbits', 'Zebras', 'Camels', 'Raptors', 'Macaws', 'Mages']
 mav_wins = []
 mav_losses = []
+ren_teams = ['Pilots', 'Werewolves', 'Wolverines', 'Hurricanes', 'Koalas', 'Vikings', 'Fireflies', 'Comets', 'Stingrays', 'Hounds', 'Warthogs', 'Gorillas', 'Coyotes', 'Harriers', 'Puffins', 'Witches']
+ren_wins = []
+ren_losses = []
+pal_teams = ['Sailors', 'Griffins', 'Badgers', 'Quakes', 'Cubs', 'Ninjas', 'Dragonflies', 'Cosmos', 'Hammerheads', 'Foxes', 'Jackals', 'Wildebeests', 'Roadrunners', 'Buzzards', 'Penguins', 'Sorcerers']
+pal_wins = []
+pal_losses = []
 
 # Get the wins and losses of all the teams in a dataframe from the sheet
-gsheet = sheet.get_google_sheet("1Tlc_TgGMrY5aClFF-Pb5xvtKrJ1Hn2PJOLy2fUDDdFI","Team Wins!A1:W17")
+gsheet = sheet.get_google_sheet("1Tlc_TgGMrY5aClFF-Pb5xvtKrJ1Hn2PJOLy2fUDDdFI","Team Wins!A1:AE17")
 winloss = sheet.gsheet2df(gsheet)
 for i in range(0,16):
     major_wins.append(int(winloss.iloc[i,1]))
@@ -41,6 +47,10 @@ for i in range(0,16):
     indy_losses.append(int(winloss.iloc[i,18]))
     mav_wins.append(int(winloss.iloc[i,21]))
     mav_losses.append(int(winloss.iloc[i,22]))
+    ren_wins.append(int(winloss.iloc[i,25]))
+    ren_losses.append(int(winloss.iloc[i,26]))
+    pal_wins.append(int(winloss.iloc[i,29]))
+    pal_losses.append(int(winloss.iloc[i,30]))
 
 # Current record for each team
 major_records = {"Team": major_teams, "Wins": major_wins, "Losses": major_losses}
@@ -55,25 +65,30 @@ indy_records = {"Team": indy_teams, "Wins": indy_wins, "Losses": indy_losses}
 indy_records = pd.DataFrame.from_dict(indy_records).set_index("Team")
 mav_records = {"Team": mav_teams, "Wins": mav_wins, "Losses": mav_losses}
 mav_records = pd.DataFrame.from_dict(mav_records).set_index("Team")
+ren_records = {"Team": ren_teams, 'Wins': ren_wins, 'Losses': ren_losses}
+ren_records = pd.DataFrame.from_dict(ren_records).set_index("Team")
+pal_records = {"Team": pal_teams, 'Wins': pal_wins, 'Losses': pal_losses}
+pal_records = pd.DataFrame.from_dict(pal_records).set_index("Team")
+
 
 def predict_season(league, times, image=False, official=False):
     
-    if league.casefold() not in ['major', 'aaa', 'aa', 'a', 'independent', 'maverick']:
+    if league.casefold() not in ['major', 'aaa', 'aa', 'a', 'independent', 'maverick', 'renegade', 'paladin']:
         print('Please use a valid league')
         return
     
     schedule = []
     if league.casefold() in ['major', 'aaa', 'aa', 'a']:
-        sheet_schedule = sheet.gsheet2df(sheet.get_google_sheet("1C10LolATTti0oDuW64pxDhYRLkdUxrXP0fHYBk3ZwmU", f'{league} Schedule!N4:V'))
-    elif league.casefold() in ['independent', 'maverick']:
-        sheet_schedule = sheet.gsheet2df(sheet.get_google_sheet("1NXTt5IKwwT7ui4njt0DPPr03YUc_HYcV-rqW6hqrFjY", f'{league} Schedule!N4:V'))
+        sheet_schedule = sheet.gsheet2df(sheet.get_google_sheet("1umoAxAcVLkE_XKlpTNNdc42rECU7-GtoDvUhEXja7XA", f'{league} Schedule!N4:V'))
+    elif league.casefold() in ['independent', 'maverick', 'renegade', 'paladin']:
+        sheet_schedule = sheet.gsheet2df(sheet.get_google_sheet("10cLowvKoG5tAtLNS9NEk808vROULHl5KMU0LduBNqbI", f'{league} Schedule!N4:V'))
     for row in sheet_schedule.index:
         if sheet_schedule.loc[row, "Winner"] == '':
             game = f'{sheet_schedule.iloc[row, 2]} - {sheet_schedule.iloc[row, 4]}'
             schedule.append(game)
     
     # Make a series of the ELO for the league so it can be used repeatedly
-    ratings = elo.recall_data(league).set_index('teams')['ELO'].astype(int)
+    ratings = elo.recall_data(league).set_index('Team')['elo'].astype(int)
 
     # Make a list of all the teams that make it to each stage of success
     playoffs_teams = []
@@ -103,6 +118,12 @@ def predict_season(league, times, image=False, official=False):
     elif league.casefold() == "maverick":
         records = mav_records.copy()
         teams = mav_teams.copy()
+    elif league.casefold() == "renegade":
+        records = ren_records.copy()
+        teams = ren_teams.copy()
+    elif league.casefold() == "paladin":
+        records = pal_records.copy()
+        teams = pal_teams.copy()        
     
     # Make a dictionary to track all the wins the teams get in the simulations
     predicted_records = {}
@@ -281,9 +302,6 @@ def predict_season(league, times, image=False, official=False):
         
         champion = np.random.choice([team1, team2], replace = True, p = [team1_win_prob, team2_win_prob])
         
-        # major_records, playoffs, semifinals, finals, champion
-        
-        
         # Keep track of all the wins accumulated over the seasons
         for team in temp_records.index:
             predicted_records[team] += temp_records.loc[team,'Wins']
@@ -308,7 +326,7 @@ def predict_season(league, times, image=False, official=False):
         forecast_image(league, forecast)
         
     if official:
-        rows = {"major": 3, "aaa": 22, "aa": 41, "a": 60, "independent": 79, "maverick": 98}
+        rows = {"major": 3, "aaa": 22, "aa": 41, "a": 60, "independent": 79, "maverick": 98, "renegade": 117, "paladin": 136}
         row = rows[league.casefold()]
         
         sheet_id = "1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ"
@@ -323,3 +341,21 @@ def predict_season(league, times, image=False, official=False):
         sheet.append_data(sheet_id, f"Most Recent!B{row}:F{row+15}", body, insertDataOption = 'OVERWRITE')
     
     return forecast
+
+def full_forecast(times=10000, images=False):
+    print("STARTING MAJOR")
+    predict_season("major", times, official=True, image=images)
+    print("STARTING AAA")
+    predict_season("aaa", times, official=True, image=images)
+    print("STARTING AA")
+    predict_season("aa", times, official=True, image=images)
+    print("STARTING A")
+    predict_season("a", times, official=True, image=images)
+    print("STARTING INDEPENDENT")
+    predict_season("independent", times, official=True, image=images)
+    print("STARTING MAVERICK")
+    predict_season("maverick", times, official=True, image=images)
+    print("STARTING RENEGADE")
+    predict_season("renegade", times, official=True, image=images)
+    print("STARTING PALADIN")
+    predict_season("paladin", times, official=True, image=images)

@@ -112,12 +112,28 @@ class Stats(commands.Cog):
             part = "none"
             
             for word in msg:
-                if word.casefold() in ["major","aaa","aa","a"]:
+                if word.casefold() in ["major","aaa","aa","a","independent", "indy", "mav",'maverick', 'renegade','ren','paladin','pal']:
                     league = word.casefold()
-                elif word.casefold() in ['ascension', 'bulls', 'cobras', 'ducks', 'eagles', 'flames', 'hawks', 'kings', 'lions', 'lumberjacks', 'panthers', 'pirates', 'sharks', 'spartans', 'storm', 'whitecaps', 'bobcats', 'bulldogs', 'dolphins', 'entropy', 'geese', 'heat', 'knights', 'osprey', 'owls', 'pioneers', 'raiders', 'thunder', 'tigers', 'trojans', 'tundra', 'vipers', 'bobcats', 'bulldogs', 'dolphins', 'entropy', 'geese', 'heat', 'knights', 'osprey', 'owls', 'pioneers', 'raiders', 'thunder', 'tigers', 'trojans', 'tundra', 'vipers', 'avalanche', 'bandits', 'barracuda', 'dukes', 'falcons', 'herons', 'inferno', 'jaguars', 'lightning', 'lynx', 'mustangs', 'pulsars', 'pythons', 'voyagers', 'vultures', 'warriors', 'cardinals', 'cougars', 'embers', 'eskimos', 'genesis', 'gulls', 'jesters', 'leopards', 'miners', 'pelicans', 'rattlers', 'ravens', 'stallions', 'tempest', 'titans', 'wranglers']:
+                    if league == "indy":
+                        league = "independent"
+                    elif league == 'mav':
+                        league = 'maverick'
+                    elif league == 'ren':
+                        league = 'renegade'
+                    elif league == 'pal':
+                        league = 'paladin'
+                elif word.casefold() in ['bulls', 'lions', 'panthers', 'sharks', 'cobras', 'ducks', 'eagles', 'hawks', 'ascension', 'flames', 'storm', 'whitecaps', 'kings', 'lumberjacks', 'pirates', 'spartans', 'bulldogs', 'tigers', 'bobcats', 'dolphins', 'vipers', 'geese', 'osprey', 'owls', 'entropy', 'heat', 'thunder', 'tundra', 'knights', 'pioneers', 'raiders', 'trojans', 'mustangs', 'lynx', 'jaguars', 'barracuda', 'pythons', 'herons', 'falcons', 'vultures', 'pulsars', 'inferno', 'lightning', 'avalanche', 'dukes', 'voyagers', 'bandits', 'warriors', 'stallions', 'cougars', 'leopards', 'gulls', 'rattlers', 'pelicans', 'ravens', 'cardinals', 'genesis', 'embers', 'tempest', 'eskimos', 'jesters', 'miners', 'wranglers', 'titans', 'admirals', 'dragons', 'beavers', 'cyclones', 'grizzlies', 'centurions', 'yellow jackets', 'galaxy', 'sockeyes', 'wolves', 'wildcats', 'rhinos', 'scorpions', 'thrashers', 'toucans', 'wizards', 'captains', 'yetis', 'otters', 'tides', 'pandas', 'samurai', 'hornets', 'solar', 'piranhas', 'terriers', 'jackrabbits', 'zebras', 'camels', 'raptors', 'macaws', 'mages', 'pilots', 'werewolves', 'wolverines', 'hurricanes', 'koalas', 'vikings', 'fireflies', 'comets', 'stingrays', 'hounds', 'warthogs', 'gorillas', 'coyotes', 'harriers', 'puffins', 'witches', 'sailors', 'griffins', 'badgers', 'quakes', 'cubs', 'ninjas', 'dragonflies', 'cosmos', 'hammerheads', 'foxes', 'jackals', 'wildebeests', 'roadrunners', 'buzzards', 'penguins', 'sorcerers']:
                     team = word
-                elif word.casefold() in ["wins","record","playoffs","playoff","semifinals","semifinal","finals","final","finalist","champions","champion","winners","winner"]:
+                elif word.casefold() in ["wins","expected wins","record","playoffs","playoff","semifinals","semifinal","finals","final","finalist","champions","champion","winners","winner"]:
                     part = word
+                    if part in ['playoff', 'semifinal', 'final', 'champion']:
+                        part += 's'
+                    elif part in ['wins', 'record']:
+                        part = 'expected wins'
+                    elif part == 'finalist':
+                        part = 'finals'
+                    elif part in ['winners', 'winner']:
+                        part = 'champions'
             if league == "none":
                 await ctx.send("You haven't chosen a league. You can also see all of the data here: <https://docs.google.com/spreadsheets/d/1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ/edit?usp=sharing>")
                 return
@@ -129,6 +145,15 @@ class Stats(commands.Cog):
                 gsheet = sheet.get_google_sheet("1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ", "Most Recent!A40:F56")
             elif league == "a":
                 gsheet = sheet.get_google_sheet("1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ", "Most Recent!A59:F75")
+            elif league == "independent":
+                gsheet = sheet.get_google_sheet("1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ", "Most Recent!A78:F94")
+            elif league == "maverick":
+                gsheet = sheet.get_google_sheet("1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ", "Most Recent!A97:F113")
+            elif league == "renegade":
+                gsheet = sheet.get_google_sheet("1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ", "Most Recent!A116:F132")
+            elif league == "paladin":
+                gsheet = sheet.get_google_sheet("1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ", "Most Recent!A135:F151")
+            
             data = sheet.gsheet2df(gsheet).set_index('Teams')
             
             if team == "none" and part == "none": 
