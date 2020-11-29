@@ -45,7 +45,7 @@ def get_player_stats(player,stat="all"):
         player = players.loc[pindex][0]
     players = players.set_index("Username")
     league = players.loc[player, "League"]
-    if len(league) > 1:
+    if type(league) == pd.core.series.Series:
         league = league[0]
     statsheet = sheet.get_google_sheet(sheet_id, f"{league} League Stat Database!C3:R")    
     stats = sheet.gsheet2df(statsheet)
