@@ -1,7 +1,6 @@
 from database import engine, select
 import Google_Sheets as sheet
 import pandas as pd
-from random import choice
 
 def get_fantasy():
     gsheet = sheet.get_google_sheet('1rmJVnfWvVe3tSnFrXpExv4XGbIN3syZO12dGBeoAf-w','Player Info!A1:I')
@@ -32,12 +31,13 @@ def flatten(items, seqtypes=(list, tuple)):
     for i, x in enumerate(items):
         while i < len(items) and isinstance(items[i], seqtypes):
             items[i:i+1] = items[i]
+    items = [i for i in items if i != '']
     return items
 
 global players
-players = sheet.gsheet2df(sheet.get_google_sheet('1umoAxAcVLkE_XKlpTNNdc42rECU7-GtoDvUhEXja7XA', 'Players!A1:I'))
-players['Sheet MMR'] = players['Sheet MMR'].apply(lambda x: int(x))
-players['Tracker MMR'] = players['Tracker MMR'].apply(lambda x: int(x))
+players = sheet.gsheet2df(sheet.get_google_sheet('1umoAxAcVLkE_XKlpTNNdc42rECU7-GtoDvUhEXja7XA', 'Players!A1:W'))
+players['Sheet MMR'] = players['Sheet MMR'].apply(lambda x: int(x) if x != '' else x)
+players['Tracker MMR'] = players['Tracker MMR'].apply(lambda x: int(x) if x != '' else x)
 
 def add_player(username, region, platform, mmr, team, league, ids=[]):
     data = players.loc[(players['League']==league) & ~(players['Team'].isin(['Not Playing', 'Waitlist', 'Future Star']))].reset_index(drop=True) # Get valid players from correct league
@@ -49,9 +49,12 @@ def add_player(username, region, platform, mmr, team, league, ids=[]):
     
     # Now update SQL database
     username = username.replace("'", "''")
-    command = f'insert into players ("Username", "Region", "Platform", "MMR", "Team", "League", "Fantasy Value", "Allowed?", "Fantasy Points")'
+    command = 'insert into players ("Username", "Region", "Platform", "MMR", "Team", "League", "Fantasy Value", "Allowed?", "Fantasy Points")'
     values = f"""('{username}', '{region}', '{platform}', {mmr}, '{team}', '{league}', {fantasy_value}, 'Yes', 0)"""
-    ids = ids.reset_index(drop=True) # Not really sure why this is needed, but it is
+    try:
+        ids = ids.reset_index(drop=True) # Not really sure why this is needed, but it is
+    except:
+        pass
 
     if len(ids) > 0:
         if ids.values[0] != None:
@@ -86,16 +89,20 @@ def download_ids():
         if sheetdata.loc[sheetdata['Username']==player, 'Team'].values[0] in ['Not Playing', 'Ineligible', 'Future Star', 'Departed', 'Banned', 'Waitlist']:
             continue
         if player not in dbdata['Username'].values: # If the player isn't in the database at all
+            fixed = False
             # Check to make sure there are no similar IDs, indicating a name change
-            for id in sheetdata.loc[sheetdata['Username']==player, 'Unique IDs']:
-                index = len([i for i, s in enumerate(sheetdata['Unique IDs'].values) if id in s])
-                if index > 0: # This will be true if the ID already exists
-                    # Update player's name
-                    engine.execute(f'''update players set "id" = {sheetdata.loc[index, 'Unique IDs']} where "Username" = {sheetdata.loc[index, 'Username']}''')
-                    break
-            playerinfo = sheetdata.loc[sheetdata['Username']==player]
-            add_player(player, playerinfo['Region'].values[0], playerinfo['Platform'].values[0], playerinfo['Sheet MMR'].values[0], playerinfo['Team'].values[0], playerinfo['League'].values[0], ids = playerinfo['Unique IDs'])
-            print(f'{player} added')
+            sheetdata.loc[player, 'Unique IDs'] = sheetdata.loc[player, 'Unique IDs'].split(',') # Format IDs correctly
+            for playerid in sheetdata.loc[player, 'Unique IDs']:
+                if playerid in flatten([dbdata.loc[x, 'id'] for x in dbdata.index if dbdata.loc[x, 'id'] != None]):
+                    for index in dbdata.index:
+                        if playerid in dbdata.loc[index, 'id']: # Change player's name in database if true
+                            username = dbdata.loc[index, 'Username']
+                            engine.execute(f"""update players set "Username" = '{username}' where '{playerid}' = any("id")""")
+                            print(f'{player} has changed their name to {username}')
+            if not fixed:
+                playerinfo = sheetdata.loc[sheetdata['Username']==player]
+                add_player(player, playerinfo['Region'].values[0], playerinfo['Platform'].values[0], playerinfo['Sheet MMR'].values[0], playerinfo['Team'].values[0], playerinfo['League'].values[0], ids = playerinfo['Unique IDs'])
+                print(f'{player} added')
         elif sheetdata.loc[sheetdata['Username']==player, 'Unique IDs'].values != dbdata.loc[dbdata['Username']==player, 'id'].values:
             try: engine.execute(f"""update players set "id" = array[{str(sheetdata.loc[sheetdata['Username']==player, 'Unique IDs'].values[0])[1:-1]}] where "Username" = '{player}'""")
             except: pass
@@ -186,11 +193,12 @@ def find_league(team: str, players: pd.DataFrame) -> str:
     """
     
     return players.loc[players['Team']==team, 'League'].values[0]
+    
 
 def check_players():
     print("Checking players...")
     players = select('players')
-    gsheet = sheet.get_google_sheet("1umoAxAcVLkE_XKlpTNNdc42rECU7-GtoDvUhEXja7XA", 'Players!A1:O')
+    gsheet = sheet.get_google_sheet("1umoAxAcVLkE_XKlpTNNdc42rECU7-GtoDvUhEXja7XA", 'Players!A1:W')
     sheetdata = sheet.gsheet2df(gsheet)
     sheetdata = sheetdata.drop_duplicates(subset='Username')
     sheetdata = sheetdata.loc[sheetdata['Username']!=""]
@@ -205,14 +213,19 @@ def check_players():
         if sheetdata.loc[player, 'Team'] in ['Not Playing', 'Ineligible', 'Future Star', 'Departed', 'Banned', 'Waitlist']:
             continue
         if player not in players.index: # If they don't appear in the database
+            fixed = False
             # Check if players IDs are in the database
             sheetdata.loc[player, 'Unique IDs'] = sheetdata.loc[player, 'Unique IDs'].split(',') # Format IDs correctly
             for playerid in sheetdata.loc[player, 'Unique IDs']:
                 if playerid in flatten([players.loc[x, 'id'] for x in players.index if players.loc[x, 'id'] != None]):
-                    # TODO: Update this in the database
+                    for username in players.index:
+                        if playerid in players.loc[username, 'id']: # Change player's name in database
+                            engine.execute(f"""update players set "Username" = '{username}' where '{playerid}' = any("id")""")
+                            print(f'{player} has changed their name to {username}')
                     break
-            add_player(player, sheetdata.loc[player, 'Region'], sheetdata.loc[player, 'Platform'], sheetdata.loc[player, 'Sheet MMR'], sheetdata.loc[player, 'Team'], sheetdata.loc[player, 'League'])            
-            print(f'{player} added')
+            if not fixed:
+                add_player(player, sheetdata.loc[player, 'Region'], sheetdata.loc[player, 'Platform'], sheetdata.loc[player, 'Sheet MMR'], sheetdata.loc[player, 'Team'], sheetdata.loc[player, 'League'])            
+                print(f'{player} added')
         
         else: # If they do appear in the database, check Region, Platform, MMR, Team, and League
             if sheetdata.loc[player, 'Region'] != players.loc[player, 'Region']:
