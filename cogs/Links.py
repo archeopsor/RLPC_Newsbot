@@ -10,7 +10,7 @@ class Links(commands.Cog):
         
     @commands.command(aliases=('rlpc','leaguelink',))
     async def rlpclink(self,ctx):
-        await ctx.send('Join the RLPC at: https://discord.gg/YfYaZCR')
+        await ctx.send('Join the RLPC invite server at: https://discord.gg/BUDpvq7egk')
 
     @commands.command(aliases=('rlpcnews','discord','discordlink',))
     async def rlpcnewslink(self,ctx):

@@ -80,6 +80,8 @@ def download_ids():
     gsheet = sheet.get_google_sheet("1umoAxAcVLkE_XKlpTNNdc42rECU7-GtoDvUhEXja7XA", 'Players!A1:AE')
     sheetdata = sheet.gsheet2df(gsheet) 
     sheetdata['Unique IDs'] = sheetdata['Unique IDs'].map(lambda x: x.split(","))
+    sheetdata['Epic Accounts'] = sheetdata['Epic Accounts'].map(lambda x: x.split(","))
+    sheetdata['Unique IDs'] += sheetdata['Epic Accounts']
     sheetdata = sheetdata.drop_duplicates(subset='Username')
     sheetdata = sheetdata.loc[sheetdata['Username']!=""]
     
@@ -91,8 +93,9 @@ def download_ids():
         if player not in dbdata['Username'].values: # If the player isn't in the database at all
             fixed = False
             # Check to make sure there are no similar IDs, indicating a name change
-            sheetdata.loc[player, 'Unique IDs'] = sheetdata.loc[player, 'Unique IDs'].split(',') # Format IDs correctly
             for playerid in sheetdata.loc[player, 'Unique IDs']:
+                if playerid == '':
+                    continue
                 if playerid in flatten([dbdata.loc[x, 'id'] for x in dbdata.index if dbdata.loc[x, 'id'] != None]):
                     for index in dbdata.index:
                         if playerid in dbdata.loc[index, 'id']: # Change player's name in database if true
@@ -200,6 +203,9 @@ def check_players():
     players = select('players')
     gsheet = sheet.get_google_sheet("1umoAxAcVLkE_XKlpTNNdc42rECU7-GtoDvUhEXja7XA", 'Players!A1:W')
     sheetdata = sheet.gsheet2df(gsheet)
+    sheetdata['Unique IDs'] = sheetdata['Unique IDs'].map(lambda x: x.split(","))
+    sheetdata['Epic Accounts'] = sheetdata['Epic Accounts'].map(lambda x: x.split(","))
+    sheetdata['Unique IDs'] += sheetdata['Epic Accounts']
     sheetdata = sheetdata.drop_duplicates(subset='Username')
     sheetdata = sheetdata.loc[sheetdata['Username']!=""]
     
@@ -215,13 +221,16 @@ def check_players():
         if player not in players.index: # If they don't appear in the database
             fixed = False
             # Check if players IDs are in the database
-            sheetdata.loc[player, 'Unique IDs'] = sheetdata.loc[player, 'Unique IDs'].split(',') # Format IDs correctly
             for playerid in sheetdata.loc[player, 'Unique IDs']:
+                if playerid == '':
+                    continue
                 if playerid in flatten([players.loc[x, 'id'] for x in players.index if players.loc[x, 'id'] != None]):
                     for username in players.index:
                         if playerid in players.loc[username, 'id']: # Change player's name in database
-                            engine.execute(f"""update players set "Username" = '{username}' where '{playerid}' = any("id")""")
-                            print(f'{player} has changed their name to {username}')
+                            engine.execute(f"""update players set "Username" = '{player}' where '{playerid}' = any("id")""")
+                            print(f'{username} has changed their name to {player}')
+                            fixed = True
+                            break
                     break
             if not fixed:
                 add_player(player, sheetdata.loc[player, 'Region'], sheetdata.loc[player, 'Platform'], sheetdata.loc[player, 'Sheet MMR'], sheetdata.loc[player, 'Team'], sheetdata.loc[player, 'League'])            
