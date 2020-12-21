@@ -4,72 +4,60 @@ import pandas as pd
 import Google_Sheets as sheet
 from RLPC_Stats import forecast_image
 
-
-# All the teams
-major_teams = ['Bulls', 'Lions', 'Panthers', 'Sharks', 'Cobras', 'Ducks', 'Eagles', 'Hawks', 'Ascension', 'Flames', 'Storm', 'Whitecaps', 'Kings', 'Lumberjacks', 'Pirates', 'Spartans']
-major_wins = []
-major_losses = []
-aaa_teams = ['Bulldogs', 'Tigers', 'Bobcats', 'Dolphins', 'Vipers', 'Geese', 'Osprey', 'Owls', 'Entropy', 'Heat', 'Thunder', 'Tundra', 'Knights', 'Pioneers', 'Raiders', 'Trojans']
-aaa_wins = []
-aaa_losses = []
-aa_teams = ['Mustangs', 'Lynx', 'Jaguars', 'Barracuda', 'Pythons', 'Herons', 'Falcons', 'Vultures', 'Pulsars', 'Inferno', 'Lightning', 'Avalanche', 'Dukes', 'Voyagers', 'Bandits', 'Warriors']
-aa_wins = []
-aa_losses = []
-a_teams = ['Stallions', 'Cougars', 'Leopards', 'Gulls', 'Rattlers', 'Pelicans', 'Ravens', 'Cardinals', 'Genesis', 'Embers', 'Tempest', 'Eskimos', 'Jesters', 'Miners', 'Wranglers', 'Titans']
-a_wins = []
-a_losses = []
-indy_teams = ['Admirals', 'Dragons', 'Beavers', 'Cyclones', 'Grizzlies', 'Centurions', 'Yellow Jackets', 'Galaxy', 'Sockeyes', 'Wolves', 'Wildcats', 'Rhinos', 'Scorpions', 'Thrashers', 'Toucans', 'Wizards']
-indy_wins = []
-indy_losses = []
-mav_teams = ['Captains', 'Yetis', 'Otters', 'Tides', 'Pandas', 'Samurai', 'Hornets', 'Solar', 'Piranhas', 'Terriers', 'Jackrabbits', 'Zebras', 'Camels', 'Raptors', 'Macaws', 'Mages']
-mav_wins = []
-mav_losses = []
-ren_teams = ['Pilots', 'Werewolves', 'Wolverines', 'Hurricanes', 'Koalas', 'Vikings', 'Fireflies', 'Comets', 'Stingrays', 'Hounds', 'Warthogs', 'Gorillas', 'Coyotes', 'Harriers', 'Puffins', 'Witches']
-ren_wins = []
-ren_losses = []
-pal_teams = ['Sailors', 'Griffins', 'Badgers', 'Quakes', 'Cubs', 'Ninjas', 'Dragonflies', 'Cosmos', 'Hammerheads', 'Foxes', 'Jackals', 'Wildebeests', 'Roadrunners', 'Buzzards', 'Penguins', 'Sorcerers']
-pal_wins = []
-pal_losses = []
-
 # Get the wins and losses of all the teams in a dataframe from the sheet
 gsheet = sheet.get_google_sheet("1Tlc_TgGMrY5aClFF-Pb5xvtKrJ1Hn2PJOLy2fUDDdFI","Team Wins!A1:AE17")
 winloss = sheet.gsheet2df(gsheet)
-for i in range(0,16):
-    major_wins.append(int(winloss.iloc[i,1]))
-    major_losses.append(int(winloss.iloc[i,2]))
-    aaa_wins.append(int(winloss.iloc[i,5]))
-    aaa_losses.append(int(winloss.iloc[i,6]))
-    aa_wins.append(int(winloss.iloc[i,9]))
-    aa_losses.append(int(winloss.iloc[i,10]))
-    a_wins.append(int(winloss.iloc[i,13]))
-    a_losses.append(int(winloss.iloc[i,14]))
-    indy_wins.append(int(winloss.iloc[i,17]))
-    indy_losses.append(int(winloss.iloc[i,18]))
-    mav_wins.append(int(winloss.iloc[i,21]))
-    mav_losses.append(int(winloss.iloc[i,22]))
-    ren_wins.append(int(winloss.iloc[i,25]))
-    ren_losses.append(int(winloss.iloc[i,26]))
-    pal_wins.append(int(winloss.iloc[i,29]))
-    pal_losses.append(int(winloss.iloc[i,30]))
 
-# Current record for each team
-major_records = {"Team": major_teams, "Wins": major_wins, "Losses": major_losses}
-major_records = pd.DataFrame.from_dict(major_records).set_index("Team")
-aaa_records = {"Team": aaa_teams, "Wins": aaa_wins, "Losses": aaa_losses}
-aaa_records = pd.DataFrame.from_dict(aaa_records).set_index("Team")
-aa_records = {"Team": aa_teams, "Wins": aa_wins, "Losses": aa_losses}
-aa_records = pd.DataFrame.from_dict(aa_records).set_index("Team")
-a_records = {"Team": a_teams, "Wins": a_wins, "Losses": a_losses}
-a_records = pd.DataFrame.from_dict(a_records).set_index("Team")
-indy_records = {"Team": indy_teams, "Wins": indy_wins, "Losses": indy_losses}
-indy_records = pd.DataFrame.from_dict(indy_records).set_index("Team")
-mav_records = {"Team": mav_teams, "Wins": mav_wins, "Losses": mav_losses}
-mav_records = pd.DataFrame.from_dict(mav_records).set_index("Team")
-ren_records = {"Team": ren_teams, 'Wins': ren_wins, 'Losses': ren_losses}
-ren_records = pd.DataFrame.from_dict(ren_records).set_index("Team")
-pal_records = {"Team": pal_teams, 'Wins': pal_wins, 'Losses': pal_losses}
-pal_records = pd.DataFrame.from_dict(pal_records).set_index("Team")
+major_records = winloss.iloc[:, 0:3].set_index("Major Teams").astype('int')
+aaa_records = winloss.iloc[:, 4:7].set_index("AAA Teams").astype('int')
+aa_records = winloss.iloc[:, 8:11].set_index("AA Teams").astype('int')
+a_records = winloss.iloc[:, 12:15].set_index("A Teams").astype('int')
+indy_records = winloss.iloc[:, 16:19].set_index("Indy Teams").astype('int')
+mav_records = winloss.iloc[:, 20:23].set_index("Mav Teams").astype('int')
+ren_records = winloss.iloc[:, 24:27].set_index("Renegade Teams").astype('int')
+pal_records = winloss.iloc[:, 28:31].set_index("Paladin Teams").astype('int')
 
+major_teams = list(major_records.index)
+aaa_teams = list(aaa_records.index)
+aa_teams = list(aa_records.index)
+a_teams = list(a_records.index)
+indy_teams = list(indy_records.index)
+mav_teams = list(mav_records.index)
+ren_teams = list(ren_records.index)
+pal_teams = list(pal_records.index)
+
+divisions = {'Sharks': 'Predator', 'Bulls': 'Predator', 'Panthers': 'Predator', 'Lions': 'Predator', 
+             'Whitecaps': 'Elements', 'Storm': 'Elements', 'Flames': 'Elements', 'Ascension': 'Elements',
+             'Eagles': 'Wild', 'Hawks': 'Wild', 'Ducks': 'Wild', 'Cobras': 'Wild',
+             'Lumberjacks': 'Brawler', 'Kings': 'Brawler', 'Pirates': 'Brawler', 'Spartans': 'Brawler',
+             'Bobcats': 'Predator', 'Bulldogs': 'Predator', 'Dolphins': 'Predator', 'Tigers': 'Predator',
+             'Heat': 'Elements', 'Tundra': 'Elements', 'Entropy': 'Elements', 'Thunder': 'Elements',
+             'Osprey': 'Wild', 'Vipers': 'Wild', 'Geese': 'Wild', 'Owls': 'Wild',
+             'Knights': 'Brawler', 'Trojans': 'Brawler', 'Pioneers': 'Brawler', 'Raiders': 'Brawler',
+             'Mustangs': 'Predator', 'Jaguars': 'Predator', 'Lynx': 'Predator', 'Barracuda': 'Predator',
+             'Avalanche': 'Elements', 'Inferno': 'Elements', 'Lightning': 'Elements', 'Pulsars': 'Elements',
+             'Herons': 'Wild', 'Pythons': 'Wild', 'Falcons': 'Wild', 'Vultures': 'Wild',
+             'Warriors': 'Brawler', 'Voyagers': 'Brawler', 'Bandits': 'Brawler', 'Dukes': 'Brawler',
+             'Stallions': 'Predator', 'Cougars': 'Predator', 'Leopards': 'Predator', 'Gulls': 'Predator',
+             'Tempest': 'Elements', 'Embers': 'Elements', 'Eskimos': 'Elements', 'Genesis': 'Elements',
+             'Ravens': 'Wild', 'Pelicans': 'Wild', 'Rattlers': 'Wild', 'Cardinals': 'Wild',
+             'Titans': 'Brawler', 'Miners': 'Brawler', 'Jesters': 'Brawler', 'Wranglers': 'Brawler',
+             'Beavers': 'Predator', 'Dragons': 'Predator', 'Cyclones': 'Predator', 'Admirals': 'Predator', 
+             'Wolves': 'Elements', 'Wildcats': 'Elements', 'Rhinos': 'Elements', 'Sockeyes': 'Elements',
+             'Galaxy': 'Wild', 'Centurions': 'Wild', 'Grizzlies': 'Wild', 'Yellow Jackets': 'Wild',
+             'Scorpions': 'Brawler', 'Toucans': 'Brawler', 'Thrashers': 'Brawler', 'Wizards': 'Brawler',
+             'Tides': 'Predator', 'Yetis': 'Predator', 'Otters': 'Predator', 'Captains': 'Predator',
+             'Terriers': 'Elements', 'Jackrabbits': 'Elements', 'Zebras': 'Elements', 'Piranhas': 'Elements',
+             'Samurai': 'Wild', 'Hornets': 'Wild', 'Solar': 'Wild', 'Pandas': 'Wild', 
+             'Macaws': 'Brawler', 'Camels': 'Brawler', 'Raptors': 'Brawler', 'Mages': 'Brawler',
+             'Pilots': 'Predator', 'Wolverines': 'Predator', 'Werewolves': 'Predator', 'Hurricanes': 'Predator',
+             'Gorillas': 'Elements', 'Stingrays': 'Elements', 'Warthogs': 'Elements', 'Hounds': 'Elements',
+             'Vikings': 'Wild', 'Koalas': 'Wild', 'Comets': 'Wild', 'Fireflies': 'Wild',
+             'Harriers': 'Brawler', 'Coyotes': 'Brawler', 'Puffins': 'Brawler', 'Witches': 'Brawler',
+             'Griffins': 'Predator', 'Quakes': 'Predator', 'Sailors': 'Predator', 'Badgers': 'Predator',
+             'Wildebeests': 'Elements', 'Hammerheads': 'Elements', 'Jackals': 'Elements', 'Foxes': 'Elements',
+             'Dragonflies': 'Wild', 'Cosmos': 'Wild', 'Ninjas': 'Wild', 'Cubs': 'Wild',
+             'Roadrunners': 'Brawler', 'Penguins': 'Brawler', 'Buzzards': 'Brawler', 'Sorcerers': 'Brawler'}
 
 def predict_season(league, times, image=False, official=False):
     
@@ -188,11 +176,15 @@ def predict_season(league, times, image=False, official=False):
         elements = {}
         brawler= {}
         
-        for i in range(4):
-            predator[teams[i]] = temp_records.loc[teams[i], 'Wins']
-            wild[teams[i+4]] = temp_records.loc[teams[i+4], 'Wins']
-            elements[teams[i+8]] = temp_records.loc[teams[i+8], 'Wins']
-            brawler[teams[i+12]] = temp_records.loc[teams[i+12], 'Wins']
+        for team in teams:
+            if divisions[team] == 'Predator':
+                predator[team] = temp_records.loc[team, 'Wins']
+            elif divisions[team] == 'Elements':
+                elements[team] = temp_records.loc[team, 'Wins']
+            elif divisions[team] == 'Wild':
+                wild[team] = temp_records.loc[team, 'Wins']
+            elif divisions[team] == 'Brawler':
+                brawler[team] = temp_records.loc[team, 'Wins']
         
         # Shuffle divisions to "simulate" tiebreakers
         l = list(predator.items())

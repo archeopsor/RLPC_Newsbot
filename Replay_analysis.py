@@ -7,6 +7,7 @@ import time
 import pandas as pd
 from RLPC_Players import download_ids, identify, find_team, find_league, check_players
 import logging
+import Google_Sheets as sheet
 
 def fantasy_formula(row: pd.Series) -> int:
     """
@@ -111,7 +112,7 @@ def get_rlpc_replays(path='C:/Users/Simi/Downloads', download_files = True) -> l
     
     files = {}
     for download in os.listdir(path):
-        new = os.path.getmtime(f"{path}/{download}") > time.time()-(5*80000) # Make sure to only include files newer than 1 day
+        new = os.path.getmtime(f"{path}/{download}") > time.time()-(1*80000) # Make sure to only include files newer than 1 day
         if download.endswith('.zip') and new:
             replays = []
             teams = download.split(" - ")[0].split(" vs. ")
@@ -174,7 +175,9 @@ def get_series_stats(replays: list, players: pd.DataFrame) -> pd.DataFrame:
         for player in stats['players']: 
             name = identify(player['id']['id'], players)
             if name == None:
-                name = player['name']
+                name = identify(player['name'], players) # Try matching names
+                if name == None:
+                    name = player['name']
             if name not in temp_player_stats.index.values:
                 temp_player_stats = temp_player_stats.append(pd.Series(name=name, dtype=object)).fillna(0) # Create an empty row for each player's stats
             
@@ -278,6 +281,52 @@ def get_series_stats(replays: list, players: pd.DataFrame) -> pd.DataFrame:
         
     return(player_stats, team_stats)
 
+
+def positions(stats: dict, players: pd.DataFrame):
+    team1 = {}
+    team2 = {}
+    players = []
+    
+    # Get positional tendencies for each team as a whole
+    team1['oHalf'] = stats['teams'][0]['stats']['centerOfMass']['positionalTendencies']['timeInAttackingHalf']
+    team1['dHalf'] = stats['teams'][0]['stats']['centerOfMass']['positionalTendencies']['timeInDefendingHalf']
+    team1['dThird'] = stats['teams'][0]['stats']['centerOfMass']['positionalTendencies']['timeInDefendingThird']
+    team1['nThird'] = stats['teams'][0]['stats']['centerOfMass']['positionalTendencies']['timeInNeutralThird']
+    team1['oThird'] = stats['teams'][0]['stats']['centerOfMass']['positionalTendencies']['timeInAttackingThird']
+    team2['oHalf'] = stats['teams'][1]['stats']['centerOfMass']['positionalTendencies']['timeInAttackingHalf']
+    team2['dHalf'] = stats['teams'][1]['stats']['centerOfMass']['positionalTendencies']['timeInDefendingHalf']
+    team2['dThird'] = stats['teams'][1]['stats']['centerOfMass']['positionalTendencies']['timeInDefendingThird']
+    team2['nThird'] = stats['teams'][1]['stats']['centerOfMass']['positionalTendencies']['timeInNeutralThird']
+    team2['oThird'] = stats['teams'][1]['stats']['centerOfMass']['positionalTendencies']['timeInAttackingThird']
+    
+    for player in stats['players']:
+        
+        # Get name of player on RLPC Sheet
+        name = identify(player['id']['id'], players)
+        if name == None:
+            name = identify(player['name'], players) # Try matching names
+            if name == None:
+                name = player['name']
+        
+        # Get all the player's positional stats and append them to list of players
+        playerinfo = {}
+        playerinfo['name'] = name
+        playerinfo['team'] = team1.copy() if player['isOrange'] == 0 else team2.copy()
+        playerinfo['oHalf'] = player['stats']['positionalTendencies']['timeInAttackingHalf']
+        playerinfo['dHalf'] = player['stats']['positionalTendencies']['timeInDefendingHalf']
+        playerinfo['dThird'] = player['stats']['positionalTendencies']['timeInDefendingThird']
+        playerinfo['nThird'] = player['stats']['positionalTendencies']['timeInNeutralThird']
+        playerinfo['oThird'] = player['stats']['positionalTendencies']['timeInAttackingThird']
+        playerinfo['aggression'] = player['stats']['relativePositioning']['timeInFrontOfCenterOfMass']
+        playerinfo['defense'] = player['stats']['relativePositioning']['timeBehindCenterOfMass']
+        players.append(playerinfo)
+        
+    for player in players:
+        pass
+    
+    return team1, team2
+
+
 def rlpc_replay_analysis():
     # Get player names, teams, leagues, and IDs in a dataframe for reference
     check_players() # Ensure that players database is up to date
@@ -323,10 +372,12 @@ def rlpc_replay_analysis():
         # Upload player stats
         for player in indiv_stats.index:
             for col in indiv_stats.columns:
+                pass
                 try: engine.execute(f"""update players set "{col}" = coalesce("{col}", 0) + {indiv_stats.loc[player, col]} where "Username" = '{player}'""")
                 except: continue # Temporary solution for if a player isn't on the sheet
 
     # Calculate fantasy points for each player
+    print("Calculating fantasy points and adding them to teams")
     all_stats = all_stats.groupby(all_stats.index).sum()
     all_stats['Fantasy Points'] = all_stats.apply(lambda row: fantasy_formula(row), axis=1)
     all_stats['Old Points'] = players['Fantasy Points']
@@ -341,12 +392,27 @@ def rlpc_replay_analysis():
                     slot = fantasy_players.loc[user, 'players'].index(player) + 1
                     engine.execute(f"""update fantasy_players set points[{slot}] = points[{slot}] + {all_stats.loc[player, 'Fantasy Points']} where "username" = '{user}'""")
                     engine.execute(f"""update fantasy_players set "total_points" = coalesce("total_points", 0) + {all_stats.loc[player, 'Fantasy Points']} where "username" = '{user}'""")
-                engine.execute(f"""update players set "Fantasy Points" = {all_stats.loc[player, "New Points"]} where "Username" = '{player}'""")
+            engine.execute(f"""update players set "Fantasy Points" = {all_stats.loc[player, "New Points"]} where "Username" = '{player}'""")
         except:
             failed.append(player)
         
     return all_stats, failed
             
-def idk(all_stats):
-    for player in all_stats.index:
-        engine.execute(f"""update players set "Fantasy Points" = coalesce("Fantasy Points", 0) + {all_stats.loc[player, 'Fantasy Points']} where "Username" = '{player}'""")
+def log_data(data, sheet_range: str):
+    """
+    For use after running rlpc_replay_analysis(). Pushes the all_stats dataframe generated after parsing all replays 
+    to a sheet to keep a backup of all stats and fantasy points per gameday
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        all_stats dataframe from rlpc_replay_analysis().
+    sheet_range : str
+        Range to put data in. Should be similar to '[date] Data!A2:AM'.
+
+    Returns
+    -------
+    None.
+
+    """
+    sheet.df_to_sheet('10A6vbXHHptEUC6L6-1Scb1tTOvigC-Uw6MIXGsTv3yA', sheet_range, data.reset_index().fillna(value=0).drop(columns=['id', 'Flicks']))
