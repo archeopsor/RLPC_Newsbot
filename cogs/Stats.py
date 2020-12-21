@@ -89,12 +89,15 @@ class Stats(commands.Cog):
             last = msg.split()[-1]
             try: 
                 answer = stats.get_player_stats(first, last)
+                if answer == 'That stat could not be understood.':
+                    raise Exception
             except: 
                 try: 
                     answer = stats.get_player_stats(msg)
                 except: 
                     await ctx.send(f"Cound not find player {msg}")
                     return
+            print(answer)
             try:
                 embed = discord.Embed(title=f"{answer.values[0][0]}'s Stats", color=0x3333ff)
             except:
