@@ -1,8 +1,6 @@
 import RLPC_ELO as elo
 import numpy as np
-import pandas as pd
 import Google_Sheets as sheet
-from RLPC_Stats import forecast_image
 
 # Get the wins and losses of all the teams in a dataframe from the sheet
 gsheet = sheet.get_google_sheet("1Tlc_TgGMrY5aClFF-Pb5xvtKrJ1Hn2PJOLy2fUDDdFI","Team Wins!A1:AE17")
@@ -58,6 +56,8 @@ divisions = {'Sharks': 'Predator', 'Bulls': 'Predator', 'Panthers': 'Predator', 
              'Wildebeests': 'Elements', 'Hammerheads': 'Elements', 'Jackals': 'Elements', 'Foxes': 'Elements',
              'Dragonflies': 'Wild', 'Cosmos': 'Wild', 'Ninjas': 'Wild', 'Cubs': 'Wild',
              'Roadrunners': 'Brawler', 'Penguins': 'Brawler', 'Buzzards': 'Brawler', 'Sorcerers': 'Brawler'}
+
+from RLPC_Stats import forecast_image
 
 def predict_season(league, times, image=False, official=False):
     

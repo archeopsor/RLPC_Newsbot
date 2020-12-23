@@ -57,6 +57,7 @@ def get_player_stats(player,stat="all"):
     return(stats)
 
 def forecast_image(league, forecast):
+    from League_Sim import divisions
     
     template = Image.open(f"./Image_templates/{league.casefold()}_template.png")
     img = ImageDraw.Draw(template)
@@ -68,14 +69,15 @@ def forecast_image(league, forecast):
     wild = {}
     elements = {}
     brawler = {}
-    for team in list(results)[0:4]:
-        predator[team] = results[team]
-    for team in list(results)[4:8]:
-        wild[team] = results[team]
-    for team in list(results)[8:12]:
-        elements[team] = results[team]
-    for team in list(results)[12:]:
-        brawler[team] = results[team]
+    for team in list(results):
+        if divisions[team] == 'Predator':
+            predator[team] = results[team]
+        elif divisions[team] == 'Elements':
+            elements[team] = results[team]
+        elif divisions[team] == 'Wild':
+            wild[team] = results[team]
+        elif divisions[team] == 'Brawler':
+            brawler[team] = results[team]
      
     for i in range(4):
         team = max(predator, key=predator.get)
