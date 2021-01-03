@@ -121,8 +121,30 @@ def append_data(spreadsheet_id, range_name, values, insertDataOption = "INSERT_R
         .append(spreadsheetId=spreadsheet_id, range=range_name, valueInputOption="USER_ENTERED", insertDataOption=insertDataOption, body=values)
     )
     
-    response = request.execute()
-
+    return request.execute()
+    
+def clear(spreadsheet_id, range_name):
+    creds = None
+    
+    if os.path.exists("token.pickle"):
+        with open("token.pickle", "rb") as token:
+            creds = pickle.load(token)
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_config(json.loads(CREDS), SCOPES)
+            creds = flow.run_local_server()
+        with open("token.pickle", "wb") as token:
+            pickle.dump(creds, token)
+    service = build("sheets", "v4", credentials=creds)
+    
+    body = {}
+    
+    request = service.spreadsheets().values().clear(spreadsheetId=spreadsheet_id, range=range_name, body=body)
+    
+    return request.execute()
+    
 def gsheet2df(gsheet):
     """ Converts Google sheet data to a Pandas DataFrame.
     Note: This script assumes that your data contains a header file on the first row!

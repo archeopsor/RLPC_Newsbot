@@ -1,6 +1,7 @@
 import carball
 from google.protobuf.json_format import MessageToDict
 import os
+import shutil
 from database import engine, select
 from zipfile import ZipFile
 import time
@@ -124,6 +125,12 @@ def get_rlpc_replays(path='C:/Users/Simi/Downloads', download_files = True) -> l
                 replays.append(f"C:/Users/Simi/Desktop/Replay Files/{name}/{folder}/{filename}")
             files[name] = replays
     return files
+
+def clear_replays():
+    path = r'C:\Users\Simi\Desktop\Replay Files'
+    for file in os.listdir(path):
+        filepath = os.path.join(path, file)
+        shutil.rmtree(filepath)
 
 def get_series_stats(replays: list, players: pd.DataFrame) -> pd.DataFrame:
     """

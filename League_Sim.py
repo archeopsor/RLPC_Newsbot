@@ -329,8 +329,10 @@ def predict_season(league, times, image=False, official=False):
             values.append(col_values)
             
         body = {'majorDimension': "COLUMNS", 'values': values}
+        range_name = f"Most Recent!B{row}:F{row+15}"
         
-        sheet.append_data(sheet_id, f"Most Recent!B{row}:F{row+15}", body, insertDataOption = 'OVERWRITE')
+        sheet.clear(sheet_id, range_name)
+        sheet.append_data(sheet_id, range_name, body, insertDataOption = 'OVERWRITE')
     
     return forecast
 
