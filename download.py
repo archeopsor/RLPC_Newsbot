@@ -26,6 +26,8 @@ browser.find_element_by_xpath('/html/body/app-root/div/app-main/div/app-logs-sta
 time.sleep(3)
 leagues = browser.find_elements_by_xpath('/html/body/app-root/div/app-main/div/app-logs-status/div/div[2]/p-dropdown[2]/div/div[4]/div/ul/li')
 
+scores = ""
+
 for i in range(1, len(leagues)+1): # Does the below for every league that shows up on the website
     browser.find_element_by_xpath('/html/body/app-root/div/app-main/div/app-logs-status/div/div[2]/p-dropdown[2]/div/label').click() # Click "League" tab
     time.sleep(3)
@@ -52,7 +54,9 @@ for i in range(1, len(leagues)+1): # Does the below for every league that shows 
             pass # If no logs are available
         
         score = f'{winner} {winnerScore}-{loserScore} {loser}'
-        print(score)
+        if scores != '': # Add new line if this isn't the first score being added
+            scores += '\n'
+        scores += score
         
     time.sleep(13)
         

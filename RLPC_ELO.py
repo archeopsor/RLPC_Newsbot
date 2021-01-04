@@ -90,38 +90,43 @@ def exp_score(team1,team2,bestof=5):
     exp_score_1 = Qa/(Qa+Qb)
     exp_score_2 = Qb/(Qa+Qb)
     firstto = round((bestof/2) + 0.51)
-    wins1 = [0]
-    wins2 = [0]
-    for i in range(1000):
-        while wins1[i] < firstto and wins2[i] < firstto:
-            winner = np.random.choice([team1, team2], replace=True, p=[exp_score_1, exp_score_2])
-            if winner == team1:
-                wins1[i] += 1
-            elif winner == team2:
-                wins2[i] += 1
-            else:
-                return f"Something went catastrophically wrong, game {wins1+wins2+1} didn't have a winner."
+
+    wins1 = round(exp_score_1*bestof)
+    wins2 = round(exp_score_2*bestof)
+    
+    
+    
+    # wins1 = [0]
+    # wins2 = [0]
+    # for i in range(1000):
+    #     while wins1[i] < firstto and wins2[i] < firstto:
+    #         winner = np.random.choice([team1, team2], replace=True, p=[exp_score_1, exp_score_2])
+    #         if winner == team1:
+    #             wins1[i] += 1
+    #         elif winner == team2:
+    #             wins2[i] += 1
+    #         else:
+    #             return f"Something went catastrophically wrong, game {wins1+wins2+1} didn't have a winner."
       
-        wins1.append(0)
-        wins2.append(0)
+    #     wins1.append(0)
+    #     wins2.append(0)
         
-    wins1 = wins1[:-1]
-    wins2 = wins2[:-1]
-    print(np.mean(wins1), np.mean(wins2))
-    wins1 = np.mean(wins1)
-    wins2 = np.mean(wins2)
+    # wins1 = wins1[:-1]
+    # wins2 = wins2[:-1]
+    # wins1 = np.mean(wins1)
+    # wins2 = np.mean(wins2)
     
-    residual = (bestof-(wins1+wins2))
+    # residual = (bestof-(wins1+wins2))
     
-    wins1 = int(round(wins1+(residual*exp_score_1)))
-    wins2 = int(round(wins2+(residual*exp_score_2)))
+    # wins1 = int(round(wins1+(residual*exp_score_1)))
+    # wins2 = int(round(wins2+(residual*exp_score_2)))
     
     if wins1 >= firstto:
         wins1 = firstto
-        return f'Winner: {team1}\nScore: {wins1} - {wins2}'
+        return f'Winner: {team1}\nScore: {wins1} - {int(wins2)}'
     elif wins2 >= firstto:
         wins2 = firstto
-        return f'Winner: {team2}\nScore: {wins2} - {wins1}'
+        return f'Winner: {team2}\nScore: {wins2} - {int(wins1)}'
     elif wins1 == wins2:
         winner = np.random.choice([team1, team2], replace=True, p=[exp_score_1, exp_score_2])
         if winner == team1:
@@ -131,9 +136,9 @@ def exp_score(team1,team2,bestof=5):
         else:
             return "Something went catastrophically wrong with the tiebreaker game."
         if wins1 == firstto:
-            return f'Winner: {team1}\nScore: {wins1} - {wins2}'
+            return f'Winner: {team1}\nScore: {wins1} - {int(wins2)}'
         elif wins2 == firstto:
-            return f'Winner: {team2}\nScore: {wins2} - {wins1}'
+            return f'Winner: {team2}\nScore: {wins2} - {int(wins1)}'
     else:
         print(wins1, wins2, firstto)
         return "Something went catastrophically wrong, nothing seems to exist."
