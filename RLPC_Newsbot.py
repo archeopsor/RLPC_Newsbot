@@ -1,11 +1,14 @@
-import discord
 import os
-from discord.ext import commands
-from database import engine, select
-import RLPC_ELO as elo
-import Google_Sheets as sheet
 from random import choice
+
+import discord
+from discord.ext import commands
 from discord.ext.commands import has_permissions
+
+from rlpc import elo
+
+from tools.database import engine, select
+from tools import sheet
 
 prefix = '$'
 client = commands.Bot(command_prefix = prefix)

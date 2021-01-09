@@ -1,10 +1,17 @@
+import os
 import praw
 
-client_id = 'jKqb2WXuUC6E4A'
-client_secret = 'Ys8ybGqrxAaAM3oVTLdxvWWPywE'
-username = "Archeopsor"
-password = "An1Morphs!"
-user_agent = "RLPC Newsbot"
+try:
+    from passwords import REDDIT
+except:
+    import ast
+    REDDIT = ast.literal_eval(os.environ.get('REDDIT'))
+
+client_id = REDDIT['client_id']
+client_secret = REDDIT['client_secret']
+username = REDDIT['username']
+password = REDDIT['password']
+user_agent = REDDIT['user_agent']
 
 reddit = praw.Reddit(client_id=client_id, client_secret=client_secret, username=username, password=password, user_agent=user_agent)
 subreddit = reddit.subreddit('RLPC')

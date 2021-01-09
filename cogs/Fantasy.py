@@ -1,7 +1,7 @@
 from discord.ext import commands
 import fantasy_infrastructure as fantasy
 import discord
-import mmr
+from rlpc import mmr
 
 prefix = '$'
 client = commands.Bot(command_prefix = prefix)

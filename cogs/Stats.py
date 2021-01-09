@@ -1,8 +1,9 @@
-from discord.ext import commands
 import discord
-import RLPC_Stats as stats
-import Google_Sheets as sheet
-import mmr
+from discord.ext import commands
+
+from rlpc import stats, mmr
+
+from tools import sheet
 
 prefix = '$'
 client = commands.Bot(command_prefix = prefix)

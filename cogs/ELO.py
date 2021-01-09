@@ -1,5 +1,5 @@
 from discord.ext import commands
-from RLPC_ELO import exp_score, rank_teams, recall_data
+from rlpc.elo import exp_score, rank_teams, recall_data
 import discord
 
 prefix = '$'

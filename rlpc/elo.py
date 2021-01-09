@@ -1,6 +1,8 @@
-from database import engine, select
 import numpy as np
-from RLPC_Players import find_league
+
+from rlpc.players import find_league
+
+from tools.database import engine, select
 
 def recall_data(league=""):
     leagues = {'major': "Major", 'aaa': 'AAA', 'aa': 'AA', 'a': 'A', 'indy': 'Independent', 'independent': 'Independent', 'mav': 'Maverick', 'maverick': 'Maverick', 'renegade': 'Renegade', 'ren': 'Renegade', 'paladin': 'Paladin', 'pal': 'Paladin', '': ''}

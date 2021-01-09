@@ -1,5 +1,6 @@
 from selenium import webdriver
 import time
+import RLPC_ELO as elo
 
 # To prevent download dialog
 profile = webdriver.FirefoxProfile()
@@ -39,6 +40,9 @@ for i in range(1, len(leagues)+1): # Does the below for every league that shows 
     
     table = browser.find_elements_by_xpath('/html/body/app-root/div/app-main/div/app-logs-status/div/div[3]/table/tbody/tr')
     for row in table:
+        if row.text == 'Team Team Deadline Passed': # Logs not submitted table
+            continue
+        
         winner = row.find_element_by_xpath('td[1]').text
         
         if winner == 'Winning Team': # First row of the table
@@ -46,7 +50,13 @@ for i in range(1, len(leagues)+1): # Does the below for every league that shows 
         
         winnerScore = row.find_element_by_xpath('td[2]').text
         loser = row.find_element_by_xpath('td[3]').text
-        loserScore = row.find_element_by_xpath('td[4]').text
+        try: 
+            loserScore = row.find_element_by_xpath('td[4]').text
+        except:
+            continue
+        
+        if winnerScore == 'FF' or loserScore == 'FF':
+            continue
         
         try:
             row.find_element_by_xpath('td[7]/div').click() # Download logs
@@ -59,5 +69,7 @@ for i in range(1, len(leagues)+1): # Does the below for every league that shows 
         scores += score
         
     time.sleep(13)
-        
+
+elo.autoparse(scores)
+
 browser.quit()

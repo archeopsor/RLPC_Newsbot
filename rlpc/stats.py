@@ -139,7 +139,7 @@ def forecast_image(league, forecast):
         
         brawler.pop(team)
         
-    template.save(f"{league.casefold()} forecast.png")
+    template.save(f"C:/Users/Simi/Pictures/RLPC Forecasts/{league.casefold()} forecast.png")
     
     
 def power_rankings(league):

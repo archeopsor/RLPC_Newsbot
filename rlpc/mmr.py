@@ -1,9 +1,10 @@
 from bs4 import BeautifulSoup
 import requests
-import Google_Sheets as sheet
 import time
 import urllib
 import re
+
+from tools import sheet
 
 BASE_URL = 'https://rocketleague.tracker.network'
 PROFILE_URL = BASE_URL + '/profile/{platform}/{username}'

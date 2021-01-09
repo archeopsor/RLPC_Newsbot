@@ -1,6 +1,8 @@
-import RLPC_ELO as elo
 import numpy as np
-import Google_Sheets as sheet
+
+from rlpc import elo
+
+from tools import sheet
 
 # Get the wins and losses of all the teams in a dataframe from the sheet
 gsheet = sheet.get_google_sheet("1Tlc_TgGMrY5aClFF-Pb5xvtKrJ1Hn2PJOLy2fUDDdFI","Team Wins!A1:AE17")
@@ -57,7 +59,7 @@ divisions = {'Sharks': 'Predator', 'Bulls': 'Predator', 'Panthers': 'Predator', 
              'Dragonflies': 'Wild', 'Cosmos': 'Wild', 'Ninjas': 'Wild', 'Cubs': 'Wild',
              'Roadrunners': 'Brawler', 'Penguins': 'Brawler', 'Buzzards': 'Brawler', 'Sorcerers': 'Brawler'}
 
-from RLPC_Stats import forecast_image
+from rlpc.stats import forecast_image
 
 def predict_season(league, times, image=False, official=False):
     
@@ -119,7 +121,7 @@ def predict_season(league, times, image=False, official=False):
         predicted_records[team] = 0
     
     for i in range(1,times+1):
-        print(f"Simulation #{i}")
+        print(f"Simulation #{i}     {league}")
         temp_ratings = ratings.copy().sample(frac=1)
         temp_records = records.copy().sample(frac=1)
         temp_schedule = schedule.copy()
