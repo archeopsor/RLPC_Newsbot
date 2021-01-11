@@ -85,7 +85,14 @@ class Stats(commands.Cog):
     async def get_player_stats(self, ctx, *, msg):
         async with ctx.typing():
             if msg.casefold() == "me":
-                msg = ctx.message.author.name
+                waitingMsg = await ctx.send("One second, retreiving discord ID and stats")
+                msg = str(ctx.author.id)
+                ids = sheet.gsheet2df(sheet.get_google_sheet('1umoAxAcVLkE_XKlpTNNdc42rECU7-GtoDvUhEXja7XA', 'PlayerIDs!A1:B')).set_index('Discord ID')
+                try:
+                    msg = ids.loc[msg, 'Username']
+                except:
+                    return await ctx.send("You don't appear to have an up-to-date discord id on record. Try using the name that shows up on the RLPC spreadsheet.")
+                await waitingMsg.delete(delay=5)
             first = " ".join(msg.split()[:-1])
             last = msg.split()[-1]
             try: 
@@ -98,7 +105,7 @@ class Stats(commands.Cog):
                 except: 
                     await ctx.send(f"Cound not find player {msg}")
                     return
-            print(answer)
+
             try:
                 embed = discord.Embed(title=f"{answer.values[0][0]}'s Stats", color=0x3333ff)
             except:

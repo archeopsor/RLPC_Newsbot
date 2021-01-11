@@ -1,6 +1,6 @@
 from selenium import webdriver
 import time
-import RLPC_ELO as elo
+from rlpc import elo
 
 # To prevent download dialog
 profile = webdriver.FirefoxProfile()

@@ -1,6 +1,7 @@
 from discord.ext import commands
 import discord
-import reddit
+
+from tools import reddit
 
 prefix = '$'
 client = commands.Bot(command_prefix = prefix)

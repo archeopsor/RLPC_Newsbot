@@ -114,6 +114,7 @@ def get_rlpc_replays(path='C:/Users/Simi/Downloads', download_files = True) -> l
     # if download_files:
     #     import download
     
+    clear_replays()
     files = {}
     for download in os.listdir(path):
         new = os.path.getmtime(f"{path}/{download}") > time.time()-(1*80000) # Make sure to only include files newer than 1 day
@@ -254,6 +255,8 @@ def get_series_stats(replays: list, players: pd.DataFrame) -> pd.DataFrame:
             try: temp_player_stats.loc[name, 'Demos Taken'] += [x['victimId']['id'] for x in stats['gameMetadata']['demos']].count(player['id']['id'])
             except: pass
             try: temp_player_stats.loc[name, 'Clears'] += player['stats']['hitCounts']['totalClears']
+            except: pass
+            try: temp_player_stats.loc[name, 'Flicks'] += player['stats']['ballCarries']['totalFlicks']
             except: pass
             
             if str(player['id']['id']) in [x['id'] for x in stats['teams'][0]['playerIds']]:
