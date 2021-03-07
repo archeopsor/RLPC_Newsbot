@@ -183,7 +183,7 @@ Welcome to RLPC Fantasy! This is a just-for-fun fantasy league in which people c
      - You may also be prevented from picking players on Wednesday or Friday morning if points haven't been calculated yet
  - Points are calculated after every gameday (Wednesday/Friday)
  - Each team can do 2 transfers (replacing one player with another player) every week. Filling an empty slot doesn't add to this counter, but dropping a player does.
- - Each player is given a specific "salary" based on their mmr and team. The total salary value of a fantasy team must be below 800 at all times.
+ - Each player is given a specific "salary" based on their mmr and team. The total salary value of a fantasy team must be below 700 at all times.
 
 **__FANTASY COMMANDS__**
 
