@@ -5,7 +5,7 @@ from rlpc import stats, mmr
 
 from tools import sheet
 
-prefix = '$'
+from settings import prefix
 client = commands.Bot(command_prefix = prefix)
 
 class Stats(commands.Cog):

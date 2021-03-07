@@ -1,13 +1,16 @@
 import carball
-from google.protobuf.json_format import MessageToDict
+import logging
+import matplotlib.pyplot as plt
 
 import pandas as pd
 import numpy as np
 
-import tensorflow as tf
-from tensorflow import keras
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense
+from sklearn.neural_network import MLPClassifier
+from sklearn.neural_network import MLPRegressor
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
+from math import sqrt
+from sklearn.metrics import r2_score
 
 NORMALISATION_FACTORS = {
     'pos_x': 4096,
@@ -54,14 +57,14 @@ def normalise_df(df: pd.DataFrame, inplace: bool = False) -> pd.DataFrame:
     
     
 def decompile_replay(replay_path: str):
-    analysis_manager = carball.analyze_replay_file(replay_path)
+    analysis_manager = carball.analyze_replay_file(replay_path, logging_level=logging.CRITICAL)
     frames = analysis_manager.get_data_frame().fillna(value=0)
-    stats = MessageToDict(analysis_manager.get_protobuf_data())
+    stats = dict(analysis_manager.get_json_data())
     return frames, stats
 
 
 def get_input_data(frames: pd.DataFrame, stats: pd.DataFrame) -> np.ndarray:
-    labels = [[],[]]
+    labels = []
     
     hits = stats['gameStats']['hits'] # List of each hit in the game
     hits = [hit for hit in hits if not hit['isKickoff']] # Don't include kickoff hits
@@ -124,20 +127,10 @@ def get_input_data(frames: pd.DataFrame, stats: pd.DataFrame) -> np.ndarray:
         
         datapoints.append(np.array(values))
         
-        labels[0].append(player)
+        # Add label for if it was a goal or not
         try:
             labels[1].append(1 if hit['goal'] else 0)
         except:
             labels[1].append(0)
     
     return np.array(datapoints)
-    
-def build_model():
-    model = Sequential([
-    Dense(64, activation='relu', input_shape=(98,)), # 98-value input, 15 values per player plus 6 for the ball and 2 for the distance to goal/if passed
-    Dense(64, activation='relu'),
-    Dense(64, activation='relu'),
-    Dense(1, activation='softmax'),
-    ])
-    
-    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])

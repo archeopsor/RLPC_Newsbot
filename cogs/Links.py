@@ -1,6 +1,6 @@
 from discord.ext import commands
 
-prefix = '$'
+from settings import prefix
 client = commands.Bot(command_prefix = prefix)
 
 class Links(commands.Cog):

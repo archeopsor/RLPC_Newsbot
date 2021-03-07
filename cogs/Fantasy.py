@@ -1,9 +1,11 @@
 from discord.ext import commands
 import fantasy_infrastructure as fantasy
 import discord
-from rlpc import mmr
 
-prefix = '$'
+from rlpc import mmr
+from tools import accounts
+
+from settings import prefix
 client = commands.Bot(command_prefix = prefix)
 
 class Fantasy(commands.Cog):
@@ -11,7 +13,7 @@ class Fantasy(commands.Cog):
     def __init__(self,client):
         self.client = client
         
-    @commands.command(aliases=("createaccount","create_account","newplayer", "new_player","newaccount","new_account","add_fantasy_player","new"))
+    @commands.command(aliases=("createaccount","create_account","newplayer", "new_player","newaccount","new_account","add_fantasy_player","new", "signup"))
     async def new_fantasy_player(self,ctx,league="none"):
         async with ctx.typing():
             if league.casefold() not in ["major","aaa","aa","a","independent", "indy", "maverick", "mav", "none"]:
@@ -20,7 +22,7 @@ class Fantasy(commands.Cog):
             else:
                 pass
             author = ctx.message.author.name
-            answer = fantasy.add_fantasy_player(author,league)
+            answer = accounts.create_account(author,league)
         await ctx.send(answer)
         
     @new_fantasy_player.error

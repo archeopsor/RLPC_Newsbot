@@ -5,7 +5,6 @@ import pandas as pd
 import logging
 
 from zipfile import ZipFile
-from google.protobuf.json_format import MessageToDict
 import carball
 
 from tools.database import engine, select
@@ -65,13 +64,10 @@ def get_replay_stats(replay: str) -> dict:
 
     analysis_manager = carball.analyze_replay_file(replay, logging_level=logging.CRITICAL)
         
-    # return the proto object in python
-    proto_object = analysis_manager.get_protobuf_data()
-    
     # return the pandas data frame in python
     #dataframe = analysis_manager.get_data_frame()
     
-    stats = MessageToDict(proto_object)
+    stats = dict(analysis_manager.get_json_data())
     
     return stats
 
@@ -428,4 +424,4 @@ def log_data(data, sheet_range: str):
     None.
 
     """
-    sheet.df_to_sheet('10A6vbXHHptEUC6L6-1Scb1tTOvigC-Uw6MIXGsTv3yA', sheet_range, data.reset_index().fillna(value=0).drop(columns=['id', 'Flicks']))
+    sheet.df_to_sheet('10A6vbXHHptEUC6L6-1Scb1tTOvigC-Uw6MIXGsTv3yA', sheet_range, data.reset_index().fillna(value=0).drop(columns=['id', 'price', 'price_history', 'stock_float']))

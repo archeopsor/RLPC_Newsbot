@@ -36,7 +36,7 @@ def flatten(items, seqtypes=(list, tuple)):
     return items
 
 global players
-players = sheet.gsheet2df(sheet.get_google_sheet('1umoAxAcVLkE_XKlpTNNdc42rECU7-GtoDvUhEXja7XA', 'Players!A1:W'))
+players = sheet.gsheet2df(sheet.get_google_sheet('1AJoBYkYGMIrpe8HkkJcB25DbLP2Z-eV7P6Tk9R6265I', 'Players!A1:W'))
 players['Sheet MMR'] = players['Sheet MMR'].apply(lambda x: int(x) if x != '' else x)
 players['Tracker MMR'] = players['Tracker MMR'].apply(lambda x: int(x) if x != '' else x)
 
@@ -78,11 +78,9 @@ def download_ids():
 
     """
     print('Downloading IDs...')
-    gsheet = sheet.get_google_sheet("1umoAxAcVLkE_XKlpTNNdc42rECU7-GtoDvUhEXja7XA", 'Players!A1:AE')
+    gsheet = sheet.get_google_sheet("1AJoBYkYGMIrpe8HkkJcB25DbLP2Z-eV7P6Tk9R6265I", 'Players!A1:AE')
     sheetdata = sheet.gsheet2df(gsheet) 
     sheetdata['Unique IDs'] = sheetdata['Unique IDs'].map(lambda x: x.split(","))
-    sheetdata['Epic Accounts'] = sheetdata['Epic Accounts'].map(lambda x: x.split(","))
-    sheetdata['Unique IDs'] += sheetdata['Epic Accounts']
     sheetdata = sheetdata.drop_duplicates(subset='Username')
     sheetdata = sheetdata.loc[sheetdata['Username']!=""]
     
@@ -202,11 +200,9 @@ def find_league(team: str, players: pd.DataFrame) -> str:
 def check_players():
     print("Checking players...")
     players = select('players')
-    gsheet = sheet.get_google_sheet("1umoAxAcVLkE_XKlpTNNdc42rECU7-GtoDvUhEXja7XA", 'Players!A1:W')
+    gsheet = sheet.get_google_sheet("1AJoBYkYGMIrpe8HkkJcB25DbLP2Z-eV7P6Tk9R6265I", 'Players!A1:W')
     sheetdata = sheet.gsheet2df(gsheet)
     sheetdata['Unique IDs'] = sheetdata['Unique IDs'].map(lambda x: x.split(","))
-    sheetdata['Epic Accounts'] = sheetdata['Epic Accounts'].map(lambda x: x.split(","))
-    sheetdata['Unique IDs'] += sheetdata['Epic Accounts']
     sheetdata = sheetdata.drop_duplicates(subset='Username')
     sheetdata = sheetdata.loc[sheetdata['Username']!=""]
     

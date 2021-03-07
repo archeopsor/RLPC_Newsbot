@@ -10,7 +10,7 @@ from rlpc import elo
 from tools.database import engine, select
 from tools import sheet
 
-prefix = '$'
+from settings import prefix
 client = commands.Bot(command_prefix = prefix)
 client.remove_command('help')
 

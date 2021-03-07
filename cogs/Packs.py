@@ -6,7 +6,7 @@ import sqlite3
 from sqlalchemy import create_engine
 import pandas as pd
 
-prefix = '$'
+from settings import prefix
 client = commands.Bot(command_prefix = prefix)
 engine = create_engine("sqlite:///cards.db")
 path = './Image_templates/Player Cards'

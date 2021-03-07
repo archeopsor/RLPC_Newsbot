@@ -4,9 +4,9 @@ import pytz
 from difflib import SequenceMatcher
 
 from tools.database import engine, select
-from tools import sheet
+from tools import sheet, accounts
 
-prefix = '$'
+from settings import prefix
 
 def fantasy_lb() -> pd.DataFrame:
     """
@@ -21,50 +21,8 @@ def fantasy_lb() -> pd.DataFrame:
     fantasy_players['total_points'] = fantasy_players['total_points'].map(lambda a: int(a))
     lb = fantasy_players.sort_values(by=['total_points'],ascending=False).rename(columns={"total_points": "Total Points", "username": "Username"})
     lb = lb.reset_index(drop=True)
+    lb = lb.loc[lb['Total Points'] != 0]
     return(lb)
-
-def add_fantasy_player(person: str, league: str = "none") -> None:
-    """
-
-    Parameters
-    ----------
-    person : str
-        Name of the account being created (discord username).
-    league : str
-        Which league the account will be registered under.
-
-    Returns
-    -------
-    None
-        Creates an account for someone who wants to play, and sets their team of 5 all 
-        to "Not Picked".
-
-    """
-    if league.casefold() not in ["major","aaa","aa","a","independent", "indy", "maverick", "mav", "none"]:
-        return f"{league} could not be understood"
-    
-    if league.casefold() == "indy":
-        league = "independent"
-    elif league.casefold() == "mav":
-        league = "maverick"
-    
-    if league.casefold() in ["major", "independent", "maverick", "none"]:
-        league = league.title()
-    else:
-        league = league.upper()
-    
-    players = select("fantasy_players")
-    
-    player_check = players[players['username']==person].index.values
-    
-    if len(player_check)!=0:
-        return "You already have an account!"
-    
-    command = "insert into fantasy_players (username, account_league, players, points, transfers_left, salary, total_points)"
-    values = f"""values ('{person}', '{league}', '{{Not Picked, Not Picked, Not Picked, Not Picked, Not Picked}}', '{{0, 0, 0, 0, 0}}', 2, 0, 0)"""
-    engine.execute(f"{command} {values}")
-    
-    return f"Success! Your account has been created, with an ID of {person}. To add players, use {prefix}pick" 
  
 def pick_player(person: str , player: str, slot: int=0) -> str:
     """
