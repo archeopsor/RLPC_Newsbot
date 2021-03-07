@@ -51,7 +51,7 @@ class Stats(commands.Cog):
     @commands.command()
     async def mmr(self, ctx, *, player):
         async with ctx.typing():
-            players = sheet.gsheet2df(sheet.get_google_sheet('1C10LolATTti0oDuW64pxDhYRLkdUxrXP0fHYBk3ZwmU', 'Players!A1:R'))
+            players = sheet.gsheet2df(sheet.get_google_sheet('1AJoBYkYGMIrpe8HkkJcB25DbLP2Z-eV7P6Tk9R6265I', 'Players!A1:R'))
             
             # Remove case-sensitivity
             lower_players = players['Username'].str.lower()
@@ -87,7 +87,7 @@ class Stats(commands.Cog):
             if msg.casefold() == "me":
                 waitingMsg = await ctx.send("One second, retreiving discord ID and stats")
                 msg = str(ctx.author.id)
-                ids = sheet.gsheet2df(sheet.get_google_sheet('1umoAxAcVLkE_XKlpTNNdc42rECU7-GtoDvUhEXja7XA', 'PlayerIDs!A1:B')).set_index('Discord ID')
+                ids = sheet.gsheet2df(sheet.get_google_sheet('1AJoBYkYGMIrpe8HkkJcB25DbLP2Z-eV7P6Tk9R6265I', 'PlayerIDs!A1:B')).set_index('Discord ID')
                 try:
                     msg = ids.loc[msg, 'Username']
                 except:
