@@ -140,7 +140,7 @@ def pick_player(person: str , player: str, slot: int=0) -> str:
         pass
     
     # Check to make sure it doesn't break the salary cap
-    salary_cap = 800
+    salary_cap = 700
     if cap_check > salary_cap and transfer == False:
         return(f"This player would cause you to exceed the salary cap of {salary_cap}. Please choose a different player, or drop a player by picking 'None' in the desired slot")
     elif transfer == True:
