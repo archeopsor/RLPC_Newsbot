@@ -2,7 +2,7 @@ import pandas as pd
 
 from tools import sheet
 
-sheet_id = "1umoAxAcVLkE_XKlpTNNdc42rECU7-GtoDvUhEXja7XA"
+sheet_id = "1AJoBYkYGMIrpe8HkkJcB25DbLP2Z-eV7P6Tk9R6265I"
 
 def get_player_stats(player,stat="all"):
     # Make sure the program understands the specified stat if it's mis-capitalized or whatever
