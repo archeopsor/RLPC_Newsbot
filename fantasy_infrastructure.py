@@ -285,9 +285,9 @@ def search(minsalary: int=0, maxsalary: int=800, league: str="all", team: str="a
     players = players.loc[players['Fantasy Value'] >= minsalary]
     players = players.loc[players['Fantasy Value'] <= maxsalary]
     if league != "all":
-        players = players.loc[players['League'] == league]
+        players = players.loc[players['League'].str.lower() == league.casefold()]
     if team != "all":
-        players = players.loc[players['Team'] == team]
+        players = players.loc[players['Team'].str.lower() == team.casefold()]
         
     if len(players.index) == 0:
         return("There were no players that matched those parameters")
