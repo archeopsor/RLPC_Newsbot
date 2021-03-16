@@ -52,12 +52,12 @@ def pick_player(person: str , player: str, slot: int=0) -> str:
     # if admin.loc[1, 'allow_transfers'] == False:
     #     return "You're not allowed to make transfers right now, probably because there are games currently happening or the previous games have not yet been entered into the database. Please contact arco if you think this is an error."
     
-    # if datetime.now(tz=pytz.timezone("US/Eastern")).weekday() in [1, 3, 6]:
-    #     if datetime.now(tz=pytz.timezone("US/Eastern")).time().hour > 16:
-    #         return "You're not allowed to make transfers right now, probably because there are games currently happening or the previous games have not yet been entered into the database. Please contact arco if you think this is an error."
-    # elif datetime.now(tz=pytz.timezone("US/Eastern")).weekday() in [2, 4, 0]:
-    #     if datetime.now(tz=pytz.timezone("US/Eastern")).time().hour < 10:
-    #         return "You're not allowed to make transfers right now, probably because there are games currently happening or the previous games have not yet been entered into the database. Please contact arco if you think this is an error."
+    if datetime.now(tz=pytz.timezone("US/Eastern")).weekday() in [1, 3, 6]:
+        if datetime.now(tz=pytz.timezone("US/Eastern")).time().hour > 16:
+            return "You're not allowed to make transfers right now, probably because there are games currently happening or the previous games have not yet been entered into the database. Please contact arco if you think this is an error."
+    elif datetime.now(tz=pytz.timezone("US/Eastern")).weekday() in [2, 4, 0]:
+        if datetime.now(tz=pytz.timezone("US/Eastern")).time().hour < 10:
+            return "You're not allowed to make transfers right now, probably because there are games currently happening or the previous games have not yet been entered into the database. Please contact arco if you think this is an error."
     
     # Get dataframes with all the player and fantasy data in them
     fantasy_players = select("fantasy_players").set_index('username')

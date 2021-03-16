@@ -40,6 +40,9 @@ players = sheet.gsheet2df(sheet.get_google_sheet('1AJoBYkYGMIrpe8HkkJcB25DbLP2Z-
 players['Sheet MMR'] = players['Sheet MMR'].apply(lambda x: int(x) if x != '' else x)
 players['Tracker MMR'] = players['Tracker MMR'].apply(lambda x: int(x) if x != '' else x)
 
+global teams
+teams = sheet.gsheet2df(sheet.get_google_sheet('1AJoBYkYGMIrpe8HkkJcB25DbLP2Z-eV7P6Tk9R6265I', 'Teams!F1:P129'))
+
 def add_player(username, region, platform, mmr, team, league, ids=[]):
     data = players.loc[(players['League']==league) & ~(players['Team'].isin(['Not Playing', 'Waitlist', 'Future Star']))].reset_index(drop=True) # Get valid players from correct league
     mmr = int(mmr)
@@ -136,7 +139,7 @@ def identify(id: str, players: pd.DataFrame) -> str:
                 return player
         except: pass
         
-def find_team(names: list, players: pd.DataFrame, id_players: bool = False) -> str:
+def find_team(names: list, players: pd.DataFrame, id_players: bool = False, choices: list = None) -> str:
     """
     Determines which team most likely matches a given set of three players
 
@@ -148,6 +151,8 @@ def find_team(names: list, players: pd.DataFrame, id_players: bool = False) -> s
         Dataframe with all players and IDs, retrieved using select('players').
     id_players : bool
         Whether or not this function should identify players first (if given a list of ids rather than names)
+    choices : list
+        A list of possible teams that this can be. This is used to find the correct team in case of subs or call downs
 
     Returns
     -------
@@ -168,10 +173,20 @@ def find_team(names: list, players: pd.DataFrame, id_players: bool = False) -> s
     teams = []
     players = players.set_index('Username')
     for player in names:
-        teams.append(players.loc[player, 'Team'])
+        
+        team = players.loc[player, 'Team']
+        
+        if choices != None:
+            choice_league = find_league(choices[0], players.reset_index())
+            team_league = find_league(team, players.reset_index())
+            affiliate_columns = {'Major': 'Major Affiliate', 'AAA': 'AAA Affiliate', 'AA': 'AA Affiliate', 'A': 'A Affiliate', 'Independent': 'Major Affiliate', 'Maverick': 'AAA Affiliate', 'Renegade': 'AA Affiliate', 'Paladin': 'A Affiliate'}
+            team = teams.loc[teams["Team"]==team_league, affiliate_columns[choice_league]]
+        
+        teams.append(team)
     
     for team in teams:
         if teams.count(team) > 1:
+            
             return team # This will return if any two players are on the same team
     
     return "Undetermined" # If every player belongs to a different team

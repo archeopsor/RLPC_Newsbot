@@ -157,6 +157,8 @@ def get_series_stats(replays: list, players: pd.DataFrame) -> pd.DataFrame:
     player_stats = player_stats.iloc[:,9:]
     columns = list(player_stats.columns)
     team_stats = pd.DataFrame(columns = columns)
+    teams = replays[0].split('/')[5].split(' - ')
+    
     for replay in replays:
         stats = get_replay_stats(replay)
         
@@ -171,8 +173,8 @@ def get_series_stats(replays: list, players: pd.DataFrame) -> pd.DataFrame:
             print(f"Error {replay}: replay does not appear to be the right playlist")
             continue # I don't even know why I included this, but it makes sure it's a private match
         
-        team1_name = find_team([x['id'] for x in stats['teams'][0]['playerIds']], players, id_players = True)
-        team2_name = find_team([x['id'] for x in stats['teams'][1]['playerIds']], players, id_players = True)
+        team1_name = find_team([x['id'] for x in stats['teams'][0]['playerIds']], players, id_players = True, choices = [teams])
+        team2_name = find_team([x['id'] for x in stats['teams'][1]['playerIds']], players, id_players = True, choices = [teams])
             
         team1_stats = pd.Series(index = columns, name=team1_name, dtype=object).fillna(0)
         team2_stats = pd.Series(index = columns, name=team2_name, dtype=object).fillna(0)
@@ -181,6 +183,11 @@ def get_series_stats(replays: list, players: pd.DataFrame) -> pd.DataFrame:
         
         for player in stats['players']: 
             name = identify(player['id']['id'], players)
+            
+            if players.loc[players['Username']==name, 'League'].values[0] != players.loc[players['Team']==teams[0], 'League'].values[0]:
+                # This should only be true if the player is not actually on the team, ie a sub or call down
+                continue
+            
             if name == None:
                 name = identify(player['name'], players) # Try matching names
                 if name == None:
@@ -354,18 +361,19 @@ def rlpc_replay_analysis():
     for series in list(replays): # Repeats this for every series downloaded
         print(f'Analyzing series {counter} of {len(list(replays))} ({round(((counter-1)/len(list(replays)))*100)}%)')
         counter += 1
-    
-        try: indiv_stats, group_stats = get_series_stats(replays[series], players.reset_index())
+        
+        try: 
+            indiv_stats, group_stats = get_series_stats(replays[series], players.reset_index())
         except:
             failed.append(series)
             continue
         
         all_stats = all_stats.append(indiv_stats)
-        try: 
-            league = find_league(group_stats.index[0], players.reset_index())
-        except: 
-            failed.append(series)
-            continue
+        # try: 
+        #     league = find_league(group_stats.index[0], players.reset_index())
+        # except: 
+        #     failed.append(series)
+        #     continue
 
         # Upload team stats #
         # for team in group_stats.index:
