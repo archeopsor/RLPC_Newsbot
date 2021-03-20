@@ -165,11 +165,17 @@ class Fantasy(commands.Cog):
             
             lb = fantasy.player_lb(league=league, num=num, pergame=pergame)
             
-            message = f"**Player Leaderboard for fantasy points**\n*add 'pg' to the end of the command to divide points by the # of series played*\n**1)** {lb.index[0]} ({lb[lb.index[0]]})"
+            
+            
+            message = f"**1)** {lb.index[0]} ({lb[lb.index[0]]})"
             for i in range(1,num):
                 message = message + f"\n**{i+1})** {lb.index[i]} ({lb[lb.index[i]]})"
-            
-        await ctx.send(message)
+        
+        await ctx.send(f"**Player Leaderboard for fantasy points**\n*Add 'pg' to the end of the command to divide points by the # of series played*") 
+        try:
+            await ctx.send(message)
+        except:
+            await ctx.send("That exceeds discord's 2000 character limit. Please try again with fewer players.")
         
     @commands.command(aliases=("fantasy","fhelp","f_help",))
     async def fantasy_help(self,ctx):
