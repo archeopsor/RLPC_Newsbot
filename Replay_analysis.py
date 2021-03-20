@@ -10,7 +10,7 @@ import carball
 from tools.database import engine, select
 from tools import sheet
 
-from rlpc.players import download_ids, identify, find_team, find_league, check_players
+from rlpc.players import download_ids, identify, find_team, find_league, check_players, tracker_identify
 
 def fantasy_formula(row: pd.Series) -> int:
     """
@@ -160,7 +160,10 @@ def get_series_stats(replays: list, players: pd.DataFrame) -> pd.DataFrame:
     teams = replays[0].split('/')[5].split(' - ')
     
     for replay in replays:
-        stats = get_replay_stats(replay)
+        try:
+            stats = get_replay_stats(replay)
+        except: 
+            continue
         
         temp_player_stats = player_stats.copy()
         temp_player_stats = temp_player_stats.iloc[0:0]
@@ -173,8 +176,8 @@ def get_series_stats(replays: list, players: pd.DataFrame) -> pd.DataFrame:
             print(f"Error {replay}: replay does not appear to be the right playlist")
             continue # I don't even know why I included this, but it makes sure it's a private match
         
-        team1_name = find_team([x['id'] for x in stats['teams'][0]['playerIds']], players, id_players = True, choices = [teams])
-        team2_name = find_team([x['id'] for x in stats['teams'][1]['playerIds']], players, id_players = True, choices = [teams])
+        team1_name = find_team([x['id'] for x in stats['teams'][0]['playerIds']], players, id_players = True, choices = teams)
+        team2_name = find_team([x['id'] for x in stats['teams'][1]['playerIds']], players, id_players = True, choices = teams)
             
         team1_stats = pd.Series(index = columns, name=team1_name, dtype=object).fillna(0)
         team2_stats = pd.Series(index = columns, name=team2_name, dtype=object).fillna(0)
@@ -184,14 +187,20 @@ def get_series_stats(replays: list, players: pd.DataFrame) -> pd.DataFrame:
         for player in stats['players']: 
             name = identify(player['id']['id'], players)
             
-            if players.loc[players['Username']==name, 'League'].values[0] != players.loc[players['Team']==teams[0], 'League'].values[0]:
-                # This should only be true if the player is not actually on the team, ie a sub or call down
-                continue
-            
             if name == None:
                 name = identify(player['name'], players) # Try matching names
                 if name == None:
-                    name = player['name']
+                    name = tracker_identify(player['name'])
+                    if name == None:
+                        name = player['name']
+            
+            try:
+                if players.loc[players['Username']==name, 'League'].values[0] != players.loc[players['Team']==teams[0], 'League'].values[0]:
+                    # This should only be true if the player is not actually on the team, ie a sub or call down
+                    continue   
+            except:
+                continue
+            
             if name not in temp_player_stats.index.values:
                 temp_player_stats = temp_player_stats.append(pd.Series(name=name, dtype=object)).fillna(0) # Create an empty row for each player's stats
             
@@ -390,10 +399,12 @@ def rlpc_replay_analysis():
         for player in indiv_stats.index:
             for col in indiv_stats.columns:
                 pass
-                try: engine.execute(f"""update players set "{col}" = coalesce("{col}", 0) + {indiv_stats.loc[player, col]} where "Username" = '{player}'""")
-                except: continue # Temporary solution for if a player isn't on the sheet
+                try: 
+                    engine.execute(f"""update players set "{col}" = coalesce("{col}", 0) + {indiv_stats.loc[player, col]} where "Username" = '{player}'""")
+                except: 
+                    continue # Temporary solution for if a player isn't on the sheet
 
-    # Calculate fantasy points for each player
+    # Calculate fantasy points for each player    
     print("Calculating fantasy points and adding them to teams")
     all_stats = all_stats.groupby(all_stats.index).sum()
     all_stats['Fantasy Points'] = all_stats.apply(lambda row: fantasy_formula(row), axis=1)
@@ -432,4 +443,4 @@ def log_data(data, sheet_range: str):
     None.
 
     """
-    sheet.df_to_sheet('10A6vbXHHptEUC6L6-1Scb1tTOvigC-Uw6MIXGsTv3yA', sheet_range, data.reset_index().fillna(value=0).drop(columns=['id', 'price', 'price_history', 'stock_float']))
+    sheet.df_to_sheet('1DU14mG8jHh2AG8ol16iYpUvXDjTHFgt7Kwe7CIoxRxU', sheet_range, data.reset_index().fillna(value=0).drop(columns=['id', 'price', 'price_history', 'stock_float']))

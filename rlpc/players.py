@@ -35,15 +35,15 @@ def flatten(items, seqtypes=(list, tuple)):
     items = [i for i in items if i != '']
     return items
 
-global players
-players = sheet.gsheet2df(sheet.get_google_sheet('1AJoBYkYGMIrpe8HkkJcB25DbLP2Z-eV7P6Tk9R6265I', 'Players!A1:W'))
-players['Sheet MMR'] = players['Sheet MMR'].apply(lambda x: int(x) if x != '' else x)
-players['Tracker MMR'] = players['Tracker MMR'].apply(lambda x: int(x) if x != '' else x)
 
 global teams
 teams = sheet.gsheet2df(sheet.get_google_sheet('1AJoBYkYGMIrpe8HkkJcB25DbLP2Z-eV7P6Tk9R6265I', 'Teams!F1:P129'))
 
+
 def add_player(username, region, platform, mmr, team, league, ids=[]):
+    players = sheet.gsheet2df(sheet.get_google_sheet('1AJoBYkYGMIrpe8HkkJcB25DbLP2Z-eV7P6Tk9R6265I', 'Players!A1:W'))
+    players['Sheet MMR'] = players['Sheet MMR'].apply(lambda x: int(x) if x != '' else x)
+    players['Tracker MMR'] = players['Tracker MMR'].apply(lambda x: int(x) if x != '' else x)
     data = players.loc[(players['League']==league) & ~(players['Team'].isin(['Not Playing', 'Waitlist', 'Future Star']))].reset_index(drop=True) # Get valid players from correct league
     mmr = int(mmr)
     num_greater = data[data['Tracker MMR'] > mmr]['Tracker MMR'].count()
@@ -170,7 +170,7 @@ def find_team(names: list, players: pd.DataFrame, id_players: bool = False, choi
             new_names.append(name)
         names = new_names
     
-    teams = []
+    found_teams = []
     players = players.set_index('Username')
     for player in names:
         
@@ -184,8 +184,8 @@ def find_team(names: list, players: pd.DataFrame, id_players: bool = False, choi
         
         teams.append(team)
     
-    for team in teams:
-        if teams.count(team) > 1:
+    for team in found_teams:
+        if found_teams.count(team) > 1:
             
             return team # This will return if any two players are on the same team
     
@@ -229,6 +229,11 @@ def check_players():
     
     for player in sheetdata.index:
         if sheetdata.loc[player, 'Team'] in ['Not Playing', 'Ineligible', 'Future Star', 'Departed', 'Banned', 'Waitlist']:
+            try:
+                if players.loc[player, 'Team'] != sheetdata.loc[player, 'Team']:
+                    engine.execute(f"""update players set "Team" = '{sheetdata.loc[player, 'Team']}' where "Username" = '{player}'""")
+            except:
+                pass
             continue
         if player not in players.index: # If they don't appear in the database
             fixed = False
@@ -239,7 +244,7 @@ def check_players():
                 if playerid in flatten([players.loc[x, 'id'] for x in players.index if players.loc[x, 'id'] != None]):
                     for username in players.index:
                         if playerid in players.loc[username, 'id']: # Change player's name in database
-                            engine.execute(f"""update players set "Username" = '{player}' where '{playerid}' = any("id")""")
+                            change_name(username, player, playerid)
                             print(f'{username} has changed their name to {player}')
                             fixed = True
                             break
@@ -265,3 +270,19 @@ def check_players():
                 engine.execute(f"""update players set "League" = '{sheetdata.loc[player, 'League']}' where "Username" = '{player}'""")
                 print(f'{player} updated')
     print("Done checking players.")
+    
+def change_name(old, new, playerid):
+    # Change name in players database
+    engine.execute(f"""update players set "Username" = '{new}' where '{playerid}' = any("id")""")
+    
+    # Change name on fantasy teams
+    engine.execute(f"""update fantasy_players set players = array_replace("players", '{old}', '{new}')""")
+    
+def tracker_identify(name):
+    sheetdata = sheet.gsheet2df(sheet.get_google_sheet('1AJoBYkYGMIrpe8HkkJcB25DbLP2Z-eV7P6Tk9R6265I', 'Players!A1:AE'))
+    player = sheetdata.loc[sheetdata['Tracker'].str.contains(name), 'Username']
+    try:
+        player = player.values[0]
+        return player
+    except:
+        return None

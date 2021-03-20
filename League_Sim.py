@@ -1,5 +1,7 @@
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
+from numba import jit, types
+from numba.typed import Dict
 
 from rlpc import elo
 
@@ -26,6 +28,8 @@ indy_teams = list(indy_records.index)
 mav_teams = list(mav_records.index)
 ren_teams = list(ren_records.index)
 pal_teams = list(pal_records.index)
+
+divs = Dict.empty(types.unicode_type, types.unicode_type)
 
 divisions = {'Sharks': 'Predator', 'Bulls': 'Predator', 'Panthers': 'Predator', 'Lions': 'Predator', 
              'Whitecaps': 'Elements', 'Storm': 'Elements', 'Flames': 'Elements', 'Ascension': 'Elements',
@@ -60,7 +64,11 @@ divisions = {'Sharks': 'Predator', 'Bulls': 'Predator', 'Panthers': 'Predator', 
              'Dragonflies': 'Wild', 'Cosmos': 'Wild', 'Ninjas': 'Wild', 'Cubs': 'Wild',
              'Roadrunners': 'Brawler', 'Penguins': 'Brawler', 'Buzzards': 'Brawler', 'Sorcerers': 'Brawler'}
 
-def predict_season(league, times, image=False, official=False):
+for k, v in divisions.items():
+    divs[k] = v
+
+@jit
+def predict_season(league, times, image=False, official=False, divisions=divs):
     
     if league.casefold() not in ['major', 'aaa', 'aa', 'a', 'independent', 'maverick', 'renegade', 'paladin']:
         print('Please use a valid league')
@@ -68,12 +76,12 @@ def predict_season(league, times, image=False, official=False):
     
     schedule = []
     if league.casefold() in ['major', 'aaa', 'aa', 'a']:
-        sheet_schedule = sheet.gsheet2df(sheet.get_google_sheet("1umoAxAcVLkE_XKlpTNNdc42rECU7-GtoDvUhEXja7XA", f'{league} Schedule!N4:V'))
+        sheet_schedule = sheet.gsheet2df(sheet.get_google_sheet("1AJoBYkYGMIrpe8HkkJcB25DbLP2Z-eV7P6Tk9R6265I", str(league)+' Schedule!N4:V'))
     elif league.casefold() in ['independent', 'maverick', 'renegade', 'paladin']:
-        sheet_schedule = sheet.gsheet2df(sheet.get_google_sheet("10cLowvKoG5tAtLNS9NEk808vROULHl5KMU0LduBNqbI", f'{league} Schedule!N4:V'))
+        sheet_schedule = sheet.gsheet2df(sheet.get_google_sheet("1bWvgo_YluMbpQPheldQQZdASKGHRPIUVfYL2r2KSdaE", str(league)+' Schedule!N4:V'))
     for row in sheet_schedule.index:
         if sheet_schedule.loc[row, "Winner"] == '':
-            game = f'{sheet_schedule.iloc[row, 2]} - {sheet_schedule.iloc[row, 4]}'
+            game = sheet_schedule.iloc[row, 2]+' - '+sheet_schedule.iloc[row, 4]
             schedule.append(game)
     
     # Make a series of the ELO for the league so it can be used repeatedly
@@ -120,7 +128,7 @@ def predict_season(league, times, image=False, official=False):
         predicted_records[team] = 0
     
     for i in range(1,times+1):
-        print(f"Simulation #{i}     {league}")
+        print("Simulation #"+str(i)+"     "+league)
         temp_ratings = ratings.copy().sample(frac=1)
         temp_records = records.copy().sample(frac=1)
         temp_schedule = schedule.copy()
@@ -226,8 +234,8 @@ def predict_season(league, times, image=False, official=False):
         playoffs.append(max(conf1, key=conf1.get))
         conf1_teams[max(conf1, key=conf1.get)] = conf1[max(conf1, key=conf1.get)]
         conf1_teams = sorted(conf1_teams, key=conf1_teams.get, reverse=True)
-        quarter_games.append(f"{conf1_teams[0]} - {conf1_teams[3]}")
-        quarter_games.append(f"{conf1_teams[1]} - {conf1_teams[2]}")
+        quarter_games.append(conf1_teams[0]+' - '+conf1_teams[3])
+        quarter_games.append(conf1_teams[1]+' - '+conf1_teams[2])
         conf2 = {}
         conf2.update(elements)
         conf2.update(brawler)
@@ -240,8 +248,8 @@ def predict_season(league, times, image=False, official=False):
         playoffs.append(max(conf2, key=conf2.get))
         conf2_teams[max(conf2, key=conf2.get)] = conf2[max(conf2, key=conf2.get)]
         conf2_teams = sorted(conf2_teams, key=conf2_teams.get, reverse=True)
-        quarter_games.append(f"{conf2_teams[0]} - {conf2_teams[3]}")
-        quarter_games.append(f"{conf2_teams[1]} - {conf2_teams[2]}")
+        quarter_games.append(conf2_teams[0]+' - '+conf2_teams[3])
+        quarter_games.append(conf2_teams[1]+' - '+conf2_teams[2])
         
         # Simulate the Quarter-finals of the playoffs, add the winners to the semifinals list
         semifinals = []
@@ -263,8 +271,8 @@ def predict_season(league, times, image=False, official=False):
         # Simulate the Semi-finals of the playoffs, add the winners to the Finals list
         finals = []
         semi_games = []
-        semi_games.append(f"{semifinals[0]} - {semifinals[1]}")
-        semi_games.append(f"{semifinals[2]} - {semifinals[3]}")
+        semi_games.append(semifinals[0]+' - '+semifinals[1])
+        semi_games.append(semifinals[2]+' - '+semifinals[3])
         for game in semi_games:
             game = game.split(' - ')
             team1 = game[0].title()
@@ -282,7 +290,7 @@ def predict_season(league, times, image=False, official=False):
         
         # Simulate the finals, make the champion the winner of this match
         champion = None
-        game = f"{finals[0]} - {finals[1]}"
+        game = finals[0]+' - '+finals[1]
         game = game.split(' - ')
         team1 = game[0].title()
         team2 = game[-1].title()
@@ -330,7 +338,7 @@ def predict_season(league, times, image=False, official=False):
             values.append(col_values)
             
         body = {'majorDimension': "COLUMNS", 'values': values}
-        range_name = f"Most Recent!B{row}:F{row+15}"
+        range_name = "Most Recent!B"+str(row)+":F"+str(row+15)
         
         sheet.clear(sheet_id, range_name)
         sheet.append_data(sheet_id, range_name, body, insertDataOption = 'OVERWRITE')
@@ -350,10 +358,10 @@ def full_forecast(times=10000, images=False):
     predict_season("independent", times, official=True, image=images)
     print("STARTING MAVERICK")
     predict_season("maverick", times, official=True, image=images)
-    print("STARTING RENEGADE")
-    predict_season("renegade", times, official=True, image=images)
-    print("STARTING PALADIN")
-    predict_season("paladin", times, official=True, image=images)
+    # print("STARTING RENEGADE")
+    # predict_season("renegade", times, official=True, image=images)
+    # print("STARTING PALADIN")
+    # predict_season("paladin", times, official=True, image=images)
 
 def forecast_image(league, forecast):
     
