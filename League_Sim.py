@@ -67,7 +67,7 @@ divisions = {'Sharks': 'Predator', 'Bulls': 'Predator', 'Panthers': 'Predator', 
 for k, v in divisions.items():
     divs[k] = v
 
-@jit
+#@jit
 def predict_season(league, times, image=False, official=False, divisions=divs):
     
     if league.casefold() not in ['major', 'aaa', 'aa', 'a', 'independent', 'maverick', 'renegade', 'paladin']:

@@ -107,7 +107,12 @@ class Fantasy(commands.Cog):
     @commands.command(aliases=("player","playerinfo","info",))
     async def player_info(self,ctx,*,player):
         async with ctx.typing():
-            answer = fantasy.info(player)
+            pg = False
+            if 'pg' in player:
+                player = player[:-3]
+                pg = True
+            
+            answer = fantasy.info(player, pg=pg)
             player_card=discord.Embed(title=f"{player}'s player info", color=0xff0000)
             player_card.add_field(name="Region", value=answer[0], inline=True)
             player_card.add_field(name="Platform", value=answer[1], inline=True)

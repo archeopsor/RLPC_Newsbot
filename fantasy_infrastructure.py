@@ -210,7 +210,7 @@ def show_team(person: str) -> pd.Series:
     fantasy_teams = fantasy_teams.set_index("username")
     return(fantasy_teams.loc[person])
 
-def info(player: str) -> pd.Series:
+def info(player: str, pg: bool = False) -> pd.Series:
     """
     Gets info about an RLPC player
 
@@ -231,6 +231,8 @@ def info(player: str) -> pd.Series:
         player = players.loc[pindex][0]
     for row in players.index:
         players.loc[row,'Username'] = players.loc[row,'Username'].upper()
+    if pg:
+        players['Fantasy Points'] = round(players['Fantasy Points']/players['Series Played'], 1).fillna(value=0)
     player = player.upper()
     players = players.set_index("Username")
     return(players.loc[player])
