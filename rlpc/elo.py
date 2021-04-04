@@ -4,6 +4,8 @@ from rlpc.players import find_league
 
 from tools.database import engine, select
 
+import settings
+
 def recall_data(league=""):
     leagues = {'major': "Major", 'aaa': 'AAA', 'aa': 'AA', 'a': 'A', 'indy': 'Independent', 'independent': 'Independent', 'mav': 'Maverick', 'maverick': 'Maverick', 'renegade': 'Renegade', 'ren': 'Renegade', 'paladin': 'Paladin', 'pal': 'Paladin', '': ''}
     try:
@@ -24,7 +26,7 @@ def add_games_manual(league,team1,team2,winner,score):
     data = recall_data(league).set_index('Team')
     Ra = data.loc[team1, 'elo'] # Team 1 rating
     Rb = data.loc[team2, 'elo'] # Team 2 rating
-    k = 60
+    k = settings.k
     score = list(score.strip())
     score = f"{score[0]} - {score[-1]}"
     team1 = team1.title()

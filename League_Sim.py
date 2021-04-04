@@ -7,6 +7,8 @@ from rlpc import elo
 
 from tools import sheet
 
+import settings
+
 # Get the wins and losses of all the teams in a dataframe from the sheet
 gsheet = sheet.get_google_sheet("1Tlc_TgGMrY5aClFF-Pb5xvtKrJ1Hn2PJOLy2fUDDdFI","Team Wins!A1:AE17")
 winloss = sheet.gsheet2df(gsheet)
@@ -20,14 +22,14 @@ mav_records = winloss.iloc[:, 20:23].set_index("Mav Teams").astype('int')
 ren_records = winloss.iloc[:, 24:27].set_index("Renegade Teams").astype('int')
 pal_records = winloss.iloc[:, 28:31].set_index("Paladin Teams").astype('int')
 
-major_teams = list(major_records.index)
-aaa_teams = list(aaa_records.index)
-aa_teams = list(aa_records.index)
-a_teams = list(a_records.index)
-indy_teams = list(indy_records.index)
-mav_teams = list(mav_records.index)
-ren_teams = list(ren_records.index)
-pal_teams = list(pal_records.index)
+major_teams = major_records.index.to_numpy()
+aaa_teams = aaa_records.index.to_numpy()
+aa_teams = aa_records.index.to_numpy()
+a_teams = a_records.index.to_numpy()
+indy_teams = indy_records.index.to_numpy()
+mav_teams = mav_records.index.to_numpy()
+ren_teams = ren_records.index.to_numpy()
+pal_teams = pal_records.index.to_numpy()
 
 divs = Dict.empty(types.unicode_type, types.unicode_type)
 
@@ -157,7 +159,7 @@ def predict_season(league, times, image=False, official=False, divisions=divs):
             team2_score = 3 if winner == team2 else np.random.choice([0,1,2])
             
             # Update temporary records and elo
-            k = 60
+            k = settings.k
             Qa = 10**(temp_ratings[team1]/600)
             Qb = 10**(temp_ratings[team2]/600)
             

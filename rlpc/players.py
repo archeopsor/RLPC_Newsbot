@@ -280,7 +280,7 @@ def change_name(old, new, playerid):
     
 def tracker_identify(name):
     sheetdata = sheet.gsheet2df(sheet.get_google_sheet('1AJoBYkYGMIrpe8HkkJcB25DbLP2Z-eV7P6Tk9R6265I', 'Players!A1:AE'))
-    player = sheetdata.loc[sheetdata['Tracker'].str.contains(name), 'Username']
+    player = sheetdata.loc[sheetdata['Tracker'].str.contains(name.split()[0]), 'Username']
     try:
         player = player.values[0]
         return player

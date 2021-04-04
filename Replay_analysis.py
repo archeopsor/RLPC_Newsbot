@@ -197,7 +197,9 @@ def get_series_stats(replays: list, players: pd.DataFrame) -> pd.DataFrame:
             try:
                 if players.loc[players['Username']==name, 'League'].values[0] != players.loc[players['Team']==teams[0], 'League'].values[0]:
                     # This should only be true if the player is not actually on the team, ie a sub or call down
-                    continue   
+                    continue
+                elif players.loc[players['Username']==name, 'Team'].values[0] not in teams:
+                    continue
             except:
                 continue
             
@@ -398,7 +400,6 @@ def rlpc_replay_analysis():
         # Upload player stats
         for player in indiv_stats.index:
             for col in indiv_stats.columns:
-                pass
                 try: 
                     engine.execute(f"""update players set "{col}" = coalesce("{col}", 0) + {indiv_stats.loc[player, col]} where "Username" = '{player}'""")
                 except: 
@@ -411,6 +412,7 @@ def rlpc_replay_analysis():
     all_stats['Old Points'] = players['Fantasy Points']
     all_stats['New Points'] = all_stats['Old Points'] + all_stats['Fantasy Points']
     all_stats['League'] = players['League']
+    
     
     # Add fantasy points to accounts
     for player in all_stats.index:
