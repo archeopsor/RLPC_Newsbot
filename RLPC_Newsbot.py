@@ -80,7 +80,7 @@ async def on_message(message):
     channels = {598237603254239238: "Major", 598237794762227713: "AAA", 598237830824591490: "AA", 598237861837537304: "A", 715549072936796180: "Indy", 715551351236722708: "Mav", 757714221759987792: "Ren", 757719107041755286: "Pal"}
     if int(message.channel.id) in list(channels):
         
-        criteria, threshold = ("record", 3) # Criteria is either 'record' or 'rating', followed by the threshold for an upset
+        criteria, threshold = ("record", 4) # Criteria is either 'record' or 'rating', followed by the threshold for an upset
         
         print("Found channel")
         # Parse messages
