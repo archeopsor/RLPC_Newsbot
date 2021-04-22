@@ -181,41 +181,41 @@ class Stats(commands.Cog):
             
             if team == "none" and part == "none": 
                 
-                if 'graph' in [x.lower() for x in msg]: # Returns a stacked bar graph rather than image with numbers
-                    new_data = pd.DataFrame(data.index).set_index("Teams", inplace=True)
-                    new_data['Champions'] = data['Champions']
-                    new_data['Finals'] = data['Finals'] - data['Champions']
-                    new_data['Semifinals'] = data['Semifinals'] - data['Finals']
-                    new_data['Playoffs'] = data['Playoffs'] - data['Semifinals']
-                    new_data['No Playoffs'] = 1 - data['Playoffs']
-                    new_data = new_data.sort_values(by="No Playoffs", ascending=False)
-                    plot = new_data.plot(kind='barh', stacked=True, title="Major Forecast", colormap='YlGn_r')
-                    plot.set_xlabel("Probability")
-                    plot.xaxis.grid(True)
+                # if 'graph' in [x.lower() for x in msg]: # Returns a stacked bar graph rather than image with numbers
+                #     new_data = pd.DataFrame(data.index).set_index("Teams", inplace=True)
+                #     new_data['Champions'] = data['Champions']
+                #     new_data['Finals'] = data['Finals'] - data['Champions']
+                #     new_data['Semifinals'] = data['Semifinals'] - data['Finals']
+                #     new_data['Playoffs'] = data['Playoffs'] - data['Semifinals']
+                #     new_data['No Playoffs'] = 1 - data['Playoffs']
+                #     new_data = new_data.sort_values(by="No Playoffs", ascending=False)
+                #     plot = new_data.plot(kind='barh', stacked=True, title="Major Forecast", colormap='YlGn_r')
+                #     plot.set_xlabel("Probability")
+                #     plot.xaxis.grid(True)
                 
-                else:
-                    template = Image.open(f"./Image_templates/Forecast Table.png")
-                    img = ImageDraw.Draw(template)
-                    titlefont = ImageFont.truetype('C:/Windows/Fonts/palab.ttf', size=100)
-                    w, h = template.size
+                # else:
+                #     template = Image.open(f"./Image_templates/Forecast Table.png")
+                #     img = ImageDraw.Draw(template)
+                #     titlefont = ImageFont.truetype('C:/Windows/Fonts/palab.ttf', size=100)
+                #     w, h = template.size
                     
-                    colors = {'major': 'limegreen', 'aaa': 'dodgerblue', 'aa': 'red', 'a': 'yellow', 'independent': 'mediumpurple', 'maverick': 'orange', 'renegade': 'powderblue', 'paladin': 'orchid'}
-                    img.text((w/2-img.textsize(f"{league} Forecast", font=titlefont)[0]/2, 50), f"{league} Forecast", font=titlefont, fill=colors[league])
+                #     colors = {'major': 'limegreen', 'aaa': 'dodgerblue', 'aa': 'red', 'a': 'yellow', 'independent': 'mediumpurple', 'maverick': 'orange', 'renegade': 'powderblue', 'paladin': 'orchid'}
+                #     img.text((w/2-img.textsize(f"{league} Forecast", font=titlefont)[0]/2, 50), f"{league} Forecast", font=titlefont, fill=colors[league])
                     
                     
-#                 message = f"""
-# ╔═══════╦══════╦═════╦═══════╗ 
-# ║ Teams        ║ Record    ║ Playoffs ║ Champions ║"""
-#                 for team in data.index.values:
-#                     wins = str(data.loc[team, 'Expected Wins'])
-#                     playoffs = str(data.loc[team, 'Playoffs'])
-#                     champs = str(data.loc[team, 'Champions'])
-#                     message = message + f"\n╠═══════╬══════╬═════╬═══════╣\n║ {team+('  '*(9-len(team)))} ║ {wins+('  '*(8-len(wins)))} ║ {playoffs+('  '*(8-len(playoffs)))} ║ {champs+('  '*(10-len(champs)))} ║"
-#                 message = message + "\n╚═══════╩══════╩═════╩═══════╝"
-#                 embed=discord.Embed()
-#                 embed.set_footer(text=message)
-#                 await ctx.send(embed=embed) # TODO: Fix Formatting
-#                 return
+                message = f"""
+╔═══════╦══════╦═════╦═══════╗ 
+║ Teams        ║ Record    ║ Playoffs ║ Champions ║"""
+                for team in data.index.values:
+                    wins = str(data.loc[team, 'Expected Wins'])
+                    playoffs = str(data.loc[team, 'Playoffs'])
+                    champs = str(data.loc[team, 'Champions'])
+                    message = message + f"\n╠═══════╬══════╬═════╬═══════╣\n║ {team+('  '*(9-len(team)))} ║ {wins+('  '*(8-len(wins)))} ║ {playoffs+('  '*(8-len(playoffs)))} ║ {champs+('  '*(10-len(champs)))} ║"
+                message = message + "\n╚═══════╩══════╩═════╩═══════╝"
+                embed=discord.Embed()
+                embed.set_footer(text=message)
+                await ctx.send(embed=embed) # TODO: Fix Formatting
+                return
             
             if team != "none":
                 data = data.loc[team.title()]
