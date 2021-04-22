@@ -147,8 +147,8 @@ def predict_season(league, times, image=False, official=False, divisions=divs):
             team1elo = temp_ratings[team1]
             team2elo = temp_ratings[team2]
             
-            Q1 = 10**(team1elo/400)
-            Q2 = 10**(team2elo/400)
+            Q1 = 10**(team1elo/250)
+            Q2 = 10**(team2elo/250)
             team1_win_prob = Q1/(Q1+Q2)
             team2_win_prob = Q2/(Q1+Q2)
             
@@ -160,8 +160,8 @@ def predict_season(league, times, image=False, official=False, divisions=divs):
             
             # Update temporary records and elo
             k = settings.k
-            Qa = 10**(temp_ratings[team1]/600)
-            Qb = 10**(temp_ratings[team2]/600)
+            Qa = 10**(temp_ratings[team1]/250)
+            Qb = 10**(temp_ratings[team2]/250)
             
             Ea = Qa/(Qa+Qb)  # Expected Score
             Eb = Qb/(Qa+Qb)
@@ -261,8 +261,8 @@ def predict_season(league, times, image=False, official=False, divisions=divs):
             team2 = game[-1].title()
             team1elo = temp_ratings[team1]
             team2elo = temp_ratings[team2]
-            Q1 = 10**(team1elo/400)
-            Q2 = 10**(team2elo/400)
+            Q1 = 10**(team1elo/250)
+            Q2 = 10**(team2elo/250)
             team1_win_prob = Q1/(Q1+Q2)
             team2_win_prob = Q2/(Q1+Q2)
             
@@ -281,8 +281,8 @@ def predict_season(league, times, image=False, official=False, divisions=divs):
             team2 = game[-1].title()
             team1elo = temp_ratings[team1]
             team2elo = temp_ratings[team2]
-            Q1 = 10**(team1elo/400)
-            Q2 = 10**(team2elo/400)
+            Q1 = 10**(team1elo/250)
+            Q2 = 10**(team2elo/250)
             team1_win_prob = Q1/(Q1+Q2)
             team2_win_prob = Q2/(Q1+Q2)
             
@@ -298,8 +298,8 @@ def predict_season(league, times, image=False, official=False, divisions=divs):
         team2 = game[-1].title()
         team1elo = temp_ratings[team1]
         team2elo = temp_ratings[team2]
-        Q1 = 10**(team1elo/400)
-        Q2 = 10**(team2elo/400)
+        Q1 = 10**(team1elo/250)
+        Q2 = 10**(team2elo/250)
         team1_win_prob = Q1/(Q1+Q2)
         team2_win_prob = Q2/(Q1+Q2)
         

@@ -1,11 +1,16 @@
 import discord
 from discord.ext import commands
+from PIL import Image, ImageDraw, ImageFont
+import pandas as pd
 
 from rlpc import stats, mmr
+from rlpc.players import find_league
 
 from tools import sheet
+from tools.database import select
 
 from settings import prefix
+
 client = commands.Bot(command_prefix = prefix)
 
 class Stats(commands.Cog):
@@ -114,8 +119,8 @@ class Stats(commands.Cog):
                 embed.add_field(name=col, value=answer.values[0][i+1])
         await ctx.send(embed=embed)
         
-    @commands.command(aliases=("probs","prob","probability", "forecast"))
-    async def probabilities(self, ctx, *, msg):
+    @commands.command(aliases=("probs","prob","probability", "probabilities"))
+    async def forecast(self, ctx, *, msg):
         async with ctx.typing():
             msg = msg.split()
             league = "none"
@@ -145,9 +150,14 @@ class Stats(commands.Cog):
                         part = 'finals'
                     elif part in ['winners', 'winner']:
                         part = 'champions'
-            if league == "none":
+    
+            if league == "none" and team == "none":
                 await ctx.send("You haven't chosen a league. You can also see all of the data here: <https://docs.google.com/spreadsheets/d/1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ/edit?usp=sharing>")
                 return
+            elif league == "none" and team != "none":
+                waitingMsg = await ctx.send(f'Finding league for team "{team}"...', )
+                league = find_league(team, select("players")).lower()
+                waitingMsg.delete()
             elif league == "major":
                 gsheet = sheet.get_google_sheet("1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ", "Most Recent!A2:F18")
             elif league == "aaa":
@@ -166,21 +176,46 @@ class Stats(commands.Cog):
                 gsheet = sheet.get_google_sheet("1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ", "Most Recent!A135:F151")
             
             data = sheet.gsheet2df(gsheet).set_index('Teams')
+    
+            
             
             if team == "none" and part == "none": 
-                message = f"""
-╔═══════╦══════╦═════╦═══════╗ 
-║ Teams        ║ Record    ║ Playoffs ║ Champions ║"""
-                for team in data.index.values:
-                    wins = str(data.loc[team, 'Expected Wins'])
-                    playoffs = str(data.loc[team, 'Playoffs'])
-                    champs = str(data.loc[team, 'Champions'])
-                    message = message + f"\n╠═══════╬══════╬═════╬═══════╣\n║ {team+('  '*(9-len(team)))} ║ {wins+('  '*(8-len(wins)))} ║ {playoffs+('  '*(8-len(playoffs)))} ║ {champs+('  '*(10-len(champs)))} ║"
-                message = message + "\n╚═══════╩══════╩═════╩═══════╝"
-                embed=discord.Embed()
-                embed.set_footer(text=message)
-                await ctx.send(embed=embed) # TODO: Fix Formatting
-                return
+                
+                if 'graph' in [x.lower() for x in msg]: # Returns a stacked bar graph rather than image with numbers
+                    new_data = pd.DataFrame(data.index).set_index("Teams", inplace=True)
+                    new_data['Champions'] = data['Champions']
+                    new_data['Finals'] = data['Finals'] - data['Champions']
+                    new_data['Semifinals'] = data['Semifinals'] - data['Finals']
+                    new_data['Playoffs'] = data['Playoffs'] - data['Semifinals']
+                    new_data['No Playoffs'] = 1 - data['Playoffs']
+                    new_data = new_data.sort_values(by="No Playoffs", ascending=False)
+                    plot = new_data.plot(kind='barh', stacked=True, title="Major Forecast", colormap='YlGn_r')
+                    plot.set_xlabel("Probability")
+                    plot.xaxis.grid(True)
+                
+                else:
+                    template = Image.open(f"./Image_templates/Forecast Table.png")
+                    img = ImageDraw.Draw(template)
+                    titlefont = ImageFont.truetype('C:/Windows/Fonts/palab.ttf', size=100)
+                    w, h = template.size
+                    
+                    colors = {'major': 'limegreen', 'aaa': 'dodgerblue', 'aa': 'red', 'a': 'yellow', 'independent': 'mediumpurple', 'maverick': 'orange', 'renegade': 'powderblue', 'paladin': 'orchid'}
+                    img.text((w/2-img.textsize(f"{league} Forecast", font=titlefont)[0]/2, 50), f"{league} Forecast", font=titlefont, fill=colors[league])
+                    
+                    
+#                 message = f"""
+# ╔═══════╦══════╦═════╦═══════╗ 
+# ║ Teams        ║ Record    ║ Playoffs ║ Champions ║"""
+#                 for team in data.index.values:
+#                     wins = str(data.loc[team, 'Expected Wins'])
+#                     playoffs = str(data.loc[team, 'Playoffs'])
+#                     champs = str(data.loc[team, 'Champions'])
+#                     message = message + f"\n╠═══════╬══════╬═════╬═══════╣\n║ {team+('  '*(9-len(team)))} ║ {wins+('  '*(8-len(wins)))} ║ {playoffs+('  '*(8-len(playoffs)))} ║ {champs+('  '*(10-len(champs)))} ║"
+#                 message = message + "\n╚═══════╩══════╩═════╩═══════╝"
+#                 embed=discord.Embed()
+#                 embed.set_footer(text=message)
+#                 await ctx.send(embed=embed) # TODO: Fix Formatting
+#                 return
             
             if team != "none":
                 data = data.loc[team.title()]
@@ -191,7 +226,7 @@ class Stats(commands.Cog):
             await ctx.send(data)
             await ctx.send("See all of the data here: <https://docs.google.com/spreadsheets/d/1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ/edit?usp=sharing>")
         
-    @probabilities.error
+    @forecast.error
     async def probabilities_error(self,ctx,error):
         if isinstance(error,commands.MissingRequiredArgument):
             await ctx.send("You haven't chosen a league. You can also see all of the data here: https://docs.google.com/spreadsheets/d/1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ/edit?usp=sharing")

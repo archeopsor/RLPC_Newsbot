@@ -66,15 +66,6 @@ async def alerts_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
         await ctx.send("You don't have admin perms for this server.")
 
-@client.command()
-async def test(ctx):
-    for channel_id in select('alerts_channels').values:
-        channel = client.get_channel(channel_id[0])
-        print(channel, channel.guild)
-        for role in channel.guild.roles:
-            if role.name.casefold() == "upset alerts":
-                print("Has role")
-
 @client.event
 async def on_message(message):
     channels = {598237603254239238: "Major", 598237794762227713: "AAA", 598237830824591490: "AA", 598237861837537304: "A", 715549072936796180: "Indy", 715551351236722708: "Mav", 757714221759987792: "Ren", 757719107041755286: "Pal"}

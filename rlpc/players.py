@@ -92,6 +92,11 @@ def download_ids():
     for player in sheetdata['Username']:
         if sheetdata.loc[sheetdata['Username']==player, 'Team'].values[0] in ['Not Playing', 'Ineligible', 'Future Star', 'Departed', 'Banned', 'Waitlist']:
             continue
+        try:
+            superset = set(dbdata.loc[dbdata['Username']==player, 'id'].values[0]).issuperset(set(sheetdata.loc[sheetdata['Username']==player, 'Unique IDs'].values[0]))
+        except:
+            print(player)
+            continue
         if player not in dbdata['Username'].values: # If the player isn't in the database at all
             fixed = False
             # Check to make sure there are no similar IDs, indicating a name change
@@ -104,16 +109,24 @@ def download_ids():
                             username = dbdata.loc[index, 'Username']
                             engine.execute(f"""update players set "Username" = '{username}' where '{playerid}' = any("id")""")
                             print(f'{player} has changed their name to {username}')
+                            fixed = True
             if not fixed:
                 playerinfo = sheetdata.loc[sheetdata['Username']==player]
                 add_player(player, playerinfo['Region'].values[0], playerinfo['Platform'].values[0], playerinfo['Sheet MMR'].values[0], playerinfo['Team'].values[0], playerinfo['League'].values[0], ids = playerinfo['Unique IDs'])
                 print(f'{player} added')
-        elif sheetdata.loc[sheetdata['Username']==player, 'Unique IDs'].values != dbdata.loc[dbdata['Username']==player, 'id'].values:
-            try: engine.execute(f"""update players set "id" = array[{str(sheetdata.loc[sheetdata['Username']==player, 'Unique IDs'].values[0])[1:-1]}] where "Username" = '{player}'""")
-            except: pass
+        elif not superset:
+            # Above is false if database contains all ids on sheet
+            sheet_ids = set(sheetdata.loc[sheetdata['Username']==player, 'Unique IDs'].values[0])
+            db_ids = set(dbdata.loc[dbdata['Username']==player, 'id'].values[0])
+            ids = sheet_ids.union(db_ids)
+            try:
+                engine.execute(f"""update players set "id" = array[{str(ids)[1:-1]}] where "Username" = '{player}'""")
+            except:
+                pass
             print(f"{player} updated")
     print('Done downloading IDs.')
-
+    
+    
 def identify(id: str, players: pd.DataFrame) -> str:
     """
     Determines which player matches a given ID
