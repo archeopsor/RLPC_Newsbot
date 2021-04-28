@@ -113,7 +113,6 @@ async def on_message(message):
         team2_wins = int(records.loc[team2, 'Wins'])
         
         if criteria == "rating":
-            print("Getting ratings")
             ratings = elo.recall_data(league).set_index("Team")
             team1_rating = int(ratings.loc[team1, 'elo'])
             team2_rating = int(ratings.loc[team2, 'elo'])
@@ -124,25 +123,26 @@ async def on_message(message):
         elif criteria == "rating" and team2_rating - team1_rating >= threshold:
             upset = True
         
+        # Send to #game-scores channel
+        gamescores_channel = client.get_channel(836784966221430805)
+        gamescores_channel.send(f'**{league} result**\n{team1} ({team1_record})  -  {team1_score}\n{team2} ({team2_record})  -  {team2_score}')
+        
+        
         descriptors = ["have taken down","have defeated","beat","were victorious over", "thwarted", "have upset", "have overpowered", "got the better of", "overcame", "triumphed over"]
         
-        print("Reached if True")
         if upset:
             alert_message = f"""**UPSET ALERT**
 {team1} {team1_record} {choice(descriptors)} {team2} {team2_record} with a score of {team1_score} - {team2_score}
             """
             # Send the message out to subscribed channels
-            print("Waiting until ready")
             await client.wait_until_ready()
             send_to = select("alerts_channels").values
-            print("Sending Messages")
             for channel in send_to:
                 try:
                      channel = client.get_channel(channel[0])
                 except:
                     continue
                 new_message = alert_message
-                print(channel)
                 for role in channel.guild.roles:
                     if role.name.casefold() == "upset alerts":
                         new_message += f'\n{channel.guild.get_role(role.id).mention}'

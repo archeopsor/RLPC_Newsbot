@@ -119,6 +119,17 @@ class Stats(commands.Cog):
                 embed.add_field(name=col, value=answer.values[0][i+1])
         await ctx.send(embed=embed)
         
+        
+    @commands.command(aliases=("topstats", "statslb", "stats_lb",))
+    async def top(self, ctx, *, msg):
+        async with ctx.typing():
+            # Default arguments
+            useSheet = False
+            league = "all"
+            stat = "Points Per Game"
+            limit = 10
+    
+        
     @commands.command(aliases=("probs","prob","probability", "probabilities"))
     async def forecast(self, ctx, *, msg):
         async with ctx.typing():
@@ -156,7 +167,7 @@ class Stats(commands.Cog):
                 return
             elif league == "none" and team != "none":
                 waitingMsg = await ctx.send(f'Finding league for team "{team}"...', )
-                league = find_league(team, select("players")).lower()
+                league = find_league(team.title(), select("players")).lower()
                 waitingMsg.delete()
             elif league == "major":
                 gsheet = sheet.get_google_sheet("1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ", "Most Recent!A2:F18")

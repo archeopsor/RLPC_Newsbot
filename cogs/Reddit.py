@@ -11,12 +11,22 @@ class Reddit(commands.Cog):
     def __init__(self,client):
         self.client = client
         
-    @commands.command(aliases=("top","listtop","listop",))
-    async def list_top(self, ctx, limit=5):
+        
+    @commands.command(aliases=('listreddit',))
+    async def reddit(self, ctx, sort='new', limit=5):
         async with ctx.typing():
             if limit > 10:
                 limit = 10
-            posts = reddit.list_top(limit)
+                
+            if sort.lower() == "top":
+                posts = reddit.list_top(limit)
+            elif sort.lower() == "hot":
+                posts = reddit.list_hot(limit)
+            elif sort.lower() == "new":
+                posts = reddit.list_new(limit)
+            else:
+                return await ctx.send(f'{sort} is not a valid way to sort reddit posts. Please use "new", "hot", or "top".')
+            
             for post in range(len(posts[0])):
                 embed = discord.Embed(title=f'{post+1}. {posts[0][post]}', color=0xff8000)
                 embed.add_field(name="Author:", value=posts[1][post], inline=False)
@@ -25,39 +35,56 @@ class Reddit(commands.Cog):
                 embed.add_field(name="Comments:", value=posts[4][post], inline=False)
                 await ctx.send(embed=embed)
                 
-        await ctx.send(f"Use '{prefix}get top [number]' to get the contents of any specific post")
+        return await ctx.send(f"Use '{prefix}get {sort} [number]' to get the contents of any specific post")
+
+        
+    # @commands.command(aliases=("top","listtop","listop",))
+    # async def list_top(self, ctx, limit=5):
+    #     async with ctx.typing():
+    #         if limit > 10:
+    #             limit = 10
+    #         posts = reddit.list_top(limit)
+    #         for post in range(len(posts[0])):
+    #             embed = discord.Embed(title=f'{post+1}. {posts[0][post]}', color=0xff8000)
+    #             embed.add_field(name="Author:", value=posts[1][post], inline=False)
+    #             embed.add_field(name="Upvotes:", value=posts[2][post], inline=False)
+    #             embed.add_field(name="Downvotes:", value=posts[3][post], inline=False)
+    #             embed.add_field(name="Comments:", value=posts[4][post], inline=False)
+    #             await ctx.send(embed=embed)
                 
-    @commands.command(aliases=("hot","listhot",))
-    async def list_hot(self, ctx, limit=5):
-        async with ctx.typing():
-            if limit > 10:
-                limit = 10
-            posts = reddit.list_hot(limit)
-            for post in range(len(posts[0])):
-                embed = discord.Embed(title=f'{post+1}. {posts[0][post]}', color=0xff8000)
-                embed.add_field(name="Author:", value=posts[1][post], inline=False)
-                embed.add_field(name="Upvotes:", value=posts[2][post], inline=False)
-                embed.add_field(name="Downvotes:", value=posts[3][post], inline=False)
-                embed.add_field(name="Comments:", value=posts[4][post], inline=False)
-                await ctx.send(embed=embed)
+    #     await ctx.send(f"Use '{prefix}get top [number]' to get the contents of any specific post")
                 
-        await ctx.send(f"Use '{prefix}get hot [number]' to get the contents of any specific post")
+    # @commands.command(aliases=("hot","listhot",))
+    # async def list_hot(self, ctx, limit=5):
+    #     async with ctx.typing():
+    #         if limit > 10:
+    #             limit = 10
+    #         posts = reddit.list_hot(limit)
+    #         for post in range(len(posts[0])):
+    #             embed = discord.Embed(title=f'{post+1}. {posts[0][post]}', color=0xff8000)
+    #             embed.add_field(name="Author:", value=posts[1][post], inline=False)
+    #             embed.add_field(name="Upvotes:", value=posts[2][post], inline=False)
+    #             embed.add_field(name="Downvotes:", value=posts[3][post], inline=False)
+    #             embed.add_field(name="Comments:", value=posts[4][post], inline=False)
+    #             await ctx.send(embed=embed)
                 
-    @commands.command(aliases=("listnew",))
-    async def list_new(self, ctx, limit=5):
-        async with ctx.typing():
-            if limit > 10:
-                limit = 10
-            posts = reddit.list_new(limit)
-            for post in range(len(posts[0])):
-                embed = discord.Embed(title=f'{post+1}. {posts[0][post]}', color=0xff8000)
-                embed.add_field(name="Author:", value=posts[1][post], inline=False)
-                embed.add_field(name="Upvotes:", value=posts[2][post], inline=False)
-                embed.add_field(name="Downvotes:", value=posts[3][post], inline=False)
-                embed.add_field(name="Comments:", value=posts[4][post], inline=False)
-                await ctx.send(embed=embed)
+    #     await ctx.send(f"Use '{prefix}get hot [number]' to get the contents of any specific post")
                 
-        await ctx.send(f"Use '{prefix}get new [number]' to get the contents of any specific post")
+    # @commands.command(aliases=("listnew",))
+    # async def list_new(self, ctx, limit=5):
+    #     async with ctx.typing():
+    #         if limit > 10:
+    #             limit = 10
+    #         posts = reddit.list_new(limit)
+    #         for post in range(len(posts[0])):
+    #             embed = discord.Embed(title=f'{post+1}. {posts[0][post]}', color=0xff8000)
+    #             embed.add_field(name="Author:", value=posts[1][post], inline=False)
+    #             embed.add_field(name="Upvotes:", value=posts[2][post], inline=False)
+    #             embed.add_field(name="Downvotes:", value=posts[3][post], inline=False)
+    #             embed.add_field(name="Comments:", value=posts[4][post], inline=False)
+    #             await ctx.send(embed=embed)
+                
+    #     await ctx.send(f"Use '{prefix}get new [number]' to get the contents of any specific post")
     
     @commands.command(aliases=("get",))
     async def get_post(self, ctx, type, number):
