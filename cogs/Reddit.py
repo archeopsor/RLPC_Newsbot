@@ -13,7 +13,7 @@ class Reddit(commands.Cog):
         
         
     @commands.command(aliases=('listreddit',))
-    async def reddit(self, ctx, sort='new', limit=5):
+    async def getreddit(self, ctx, sort='new', limit=5):
         async with ctx.typing():
             if limit > 10:
                 limit = 10
