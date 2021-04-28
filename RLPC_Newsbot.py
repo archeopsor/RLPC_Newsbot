@@ -125,7 +125,7 @@ async def on_message(message):
         
         # Send to #game-scores channel
         gamescores_channel = client.get_channel(836784966221430805)
-        await gamescores_channel.send(f'**{league} result**\n{team1} ({team1_record})  -  {team1_score}\n{team2} ({team2_record})  -  {team2_score}')
+        await gamescores_channel.send(f'**{league} result**\n{team1} {team1_record}  -  {team1_score}\n{team2} {team2_record}  -  {team2_score}')
         
         
         descriptors = ["have taken down","have defeated","beat","were victorious over", "thwarted", "have upset", "have overpowered", "got the better of", "overcame", "triumphed over"]
