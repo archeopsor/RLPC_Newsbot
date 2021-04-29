@@ -256,6 +256,8 @@ def check_players():
                     continue
                 if playerid in flatten([players.loc[x, 'id'] for x in players.index if players.loc[x, 'id'] != None]):
                     for username in players.index:
+                        if players.loc[username, 'id'] == None:
+                            players.loc[username, 'id'] = ['']
                         if playerid in players.loc[username, 'id']: # Change player's name in database
                             change_name(username, player, playerid)
                             print(f'{username} has changed their name to {player}')

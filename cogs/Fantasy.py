@@ -3,7 +3,7 @@ import fantasy_infrastructure as fantasy
 import discord
 
 from rlpc import mmr
-from tools import accounts
+from tools import accounts, sheet
 
 from settings import prefix
 client = commands.Bot(command_prefix = prefix)
@@ -111,7 +111,15 @@ class Fantasy(commands.Cog):
             if 'pg' in player:
                 player = player[:-3]
                 pg = True
-            
+            if 'me' in player.lower().split(' '):
+                waitingMsg = await ctx.send("One second, retreiving discord ID and stats")
+                msg = str(ctx.author.id)
+                ids = sheet.gsheet2df(sheet.get_google_sheet('1AJoBYkYGMIrpe8HkkJcB25DbLP2Z-eV7P6Tk9R6265I', 'PlayerIDs!A1:B')).set_index('Discord ID')
+                try:
+                    msg = ids.loc[msg, 'Username']
+                except:
+                    return await ctx.send("You don't appear to have an up-to-date discord id on record. Try using the name that shows up on the RLPC spreadsheet.")
+                await waitingMsg.delete(delay=5)
             answer = fantasy.info(player, pg=pg)
             player_card=discord.Embed(title=f"{player}'s player info", color=0xff0000)
             player_card.add_field(name="Region", value=answer[0], inline=True)

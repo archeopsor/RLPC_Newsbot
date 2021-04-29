@@ -20,7 +20,7 @@ browser.find_element_by_xpath("/html/body/app-root/div/app-main/div/app-logs-sta
 time.sleep(3)
 
 dates = browser.find_elements_by_xpath('/html/body/app-root/div/app-main/div/app-logs-status/div/div[2]/p-dropdown[1]/div/div[4]/div/ul/li')
-dates[-1].click() # Click lowest (most recent) date on the list
+dates[-2].click() # Click lowest (most recent) date on the list
 time.sleep(3)
 
 browser.find_element_by_xpath('/html/body/app-root/div/app-main/div/app-logs-status/div/div[2]/p-dropdown[2]/div/label').click() # Click "League" tab

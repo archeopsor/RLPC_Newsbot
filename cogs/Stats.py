@@ -242,5 +242,59 @@ class Stats(commands.Cog):
         if isinstance(error,commands.MissingRequiredArgument):
             await ctx.send("You haven't chosen a league. You can also see all of the data here: https://docs.google.com/spreadsheets/d/1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ/edit?usp=sharing")
 
+    @commands.command(aliases=("gameday_stats",))
+    async def gdstats(self, ctx, player, day, stat=None):
+        async with ctx.typing():
+            dates = {'1': '3/16/21 Data', '2': '3/18/21 Data', '3': '3/23/21 Data', '4': '3/25/21 Data', '5': '3/30/21 Data', '6': '4/1/21 Data', '7': '4/6/21 Data', '8': '4/8/21 Data', '9': '4/13/21 Data', '10': '4/15/21 Data', '11': '4/20/21 Data', '12': '4/22/21 Data', '13': '4/27/21 Data', '14': '4/29/21 Data', '15': '5/4/21 Data', '16': '5/6/21 Data', '17': '5/11/21 Data', '18': '5/13/21 Data'}
+            try:
+                if 'gd' in day:
+                    day = day.split('gd')[-1]
+                datarange = dates[day]
+            except:
+                return await ctx.send(f'{day} is not a valid gameday. Please enter a number between 1 and 18.')
+            
+            try:
+                data = sheet.gsheet2df(sheet.get_google_sheet('1DU14mG8jHh2AG8ol16iYpUvXDjTHFgt7Kwe7CIoxRxU', datarange)).set_index("Username")
+            except:
+                return await ctx.send(f'There was an error retrieving data from gameday {day}.')
+            
+            if player.lower() == "me":
+                waitingMsg = await ctx.send("One second, retreiving discord ID and stats")
+                playerid = str(ctx.author.id)
+                ids = sheet.gsheet2df(sheet.get_google_sheet('1AJoBYkYGMIrpe8HkkJcB25DbLP2Z-eV7P6Tk9R6265I', 'PlayerIDs!A1:B')).set_index('Discord ID')
+                try:
+                    player = ids.loc[playerid, 'Username']
+                except:
+                    return await ctx.send("You don't appear to have an up-to-date discord id on record. Try using the name that shows up on the RLPC spreadsheet.")
+                await waitingMsg.delete(delay=3)
+                
+            try:
+                stats = data.loc[player]
+            except:
+                return await ctx.send(f"Could not find stats for {player} on gameday {day}")
+            
+            if stat == None:
+                embed = discord.Embed(title=f"{player}'s Stats on Gameday {day}", color=0x3333ff)
+                embed.add_field(name='Games Played', value=f'{stats.loc["Games Played"]}')
+                embed.add_field(name="Goals", value=f"{stats.loc['Goals']}")
+                embed.add_field(name="Assists", value=f"{stats.loc['Assists']}")
+                embed.add_field(name="Saves", value=f"{stats.loc['Saves']}")
+                embed.add_field(name="Shots", value=f"{stats.loc['Shots']}")
+                embed.add_field(name="Fantasy Points", value=f"{stats.loc['Fantasy Points']}")
+                
+                return await ctx.send(embed=embed)
+                
+            else:
+                try:
+                    return await ctx.send(stats.loc[stat.title()])
+                except:
+                    return await ctx.send(f'Could not understand stat "{stat}".')
+                
+    @gdstats.error
+    async def gdstats_error(self, ctx, error):
+        if isinstance(error, commands.MissingRequiredArgument):
+            return await ctx.send(error)
+
+
 def setup(client):
     client.add_cog(Stats(client))
