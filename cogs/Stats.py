@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 from PIL import Image, ImageDraw, ImageFont
 import pandas as pd
+import numpy as np
 
 from rlpc import stats, mmr
 from rlpc.players import find_league
@@ -12,6 +13,8 @@ from tools.database import select
 from settings import prefix
 
 client = commands.Bot(command_prefix = prefix)
+
+valid_stats = ['Series Played' , 'Series Won' , 'Games Played' , 'Games Won' , 'Goals' , 'Assists' , 'Saves' , 'Shots' , 'Dribbles' , 'Passes' , 'Aerials' , 'Boost Used' , 'Wasted Collection' , 'Wasted Usage' , '# Small Boosts' , '# Large Boosts' , '# Boost Steals' , 'Wasted Big' , 'Wasted Small' , 'Time Slow' , 'Time Boost' , 'Time Supersonic' , 'Turnovers Lost' , 'Defensive Turnovers Lost' , 'Offensive Turnovers lost' , 'Turnovers Won' , 'Hits' , 'Kickoffs' , 'Demos Inflicted' , 'Demos Taken' , 'First Touches' , 'Kickoff Cheats' , 'Kickoff Boosts' , 'Flicks' , 'Clears']
 
 class Stats(commands.Cog):
     
@@ -243,8 +246,54 @@ class Stats(commands.Cog):
             await ctx.send("You haven't chosen a league. You can also see all of the data here: https://docs.google.com/spreadsheets/d/1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ/edit?usp=sharing")
 
     @commands.command(aliases=("gameday_stats",))
-    async def gdstats(self, ctx, player, day, stat=None):
+    async def gdstats(self, ctx, *, msg):
         async with ctx.typing():
+            player = "me"
+            day = '1'
+            stat = None
+            pergame = False
+            
+            msg = msg.split(' ')
+            used_args = []
+            
+            for i, arg in enumerate(msg):
+                try:
+                    day = str(int(arg)) # Ensure that it's an integer
+                    used_args.append(arg)
+                    continue
+                except:
+                    pass
+                if arg == 'me':
+                    used_args.append(arg)
+                elif 'gd' in arg:
+                    try:
+                        day = str(int(arg.split('gd')[-1])) # Ensure that it's an integer
+                        used_args.append(arg)
+                    except:
+                        pass
+                elif arg == 'pg': 
+                    pergame = True
+                    used_args.append(arg)
+                elif arg.lower() in [x.split()[0].lower() for x in valid_stats]: # First word of a stat
+                    stat = arg.title()
+                    used_args.append(arg)
+                    if len(msg) == i+1: # If that was the last arg in the msg
+                        break
+                    if msg[i+1].lower() in [x.split()[1].lower() if len(x.split())>1 else None for x in valid_stats]: # Second word
+                        stat = stat + ' ' + msg[i+1].title()
+                        used_args.append(msg[i+1])
+                        if len(msg) == i+2: # If the next arg is the last arg in the msg
+                            break
+                        if msg[i+2].lower() in [x.split()[2].lower() if len(x.split())>2 else None for x in valid_stats]: # Third word
+                            stat = stat + ' ' + msg[i+2].title()
+                            used_args.append(msg[i+2])
+                    
+                
+            if len(msg) > len(used_args): # If there are still args left, it must be the player
+                for i in used_args:
+                    msg.remove(i)
+                player = ' '.join(msg)
+            
             dates = {'1': '3/16/21 Data', '2': '3/18/21 Data', '3': '3/23/21 Data', '4': '3/25/21 Data', '5': '3/30/21 Data', '6': '4/1/21 Data', '7': '4/6/21 Data', '8': '4/8/21 Data', '9': '4/13/21 Data', '10': '4/15/21 Data', '11': '4/20/21 Data', '12': '4/22/21 Data', '13': '4/27/21 Data', '14': '4/29/21 Data', '15': '5/4/21 Data', '16': '5/6/21 Data', '17': '5/11/21 Data', '18': '5/13/21 Data'}
             try:
                 if 'gd' in day:
@@ -257,7 +306,7 @@ class Stats(commands.Cog):
                 data = sheet.gsheet2df(sheet.get_google_sheet('1DU14mG8jHh2AG8ol16iYpUvXDjTHFgt7Kwe7CIoxRxU', datarange)).set_index("Username")
             except:
                 return await ctx.send(f'There was an error retrieving data from gameday {day}.')
-            
+
             if player.lower() == "me":
                 waitingMsg = await ctx.send("One second, retreiving discord ID and stats")
                 playerid = str(ctx.author.id)
@@ -267,11 +316,24 @@ class Stats(commands.Cog):
                 except:
                     return await ctx.send("You don't appear to have an up-to-date discord id on record. Try using the name that shows up on the RLPC spreadsheet.")
                 await waitingMsg.delete(delay=3)
-                
+            
+            lower_players = data.index.str.lower()
+            if player.lower() in lower_players.values:
+                print("test")
+                pindex = np.where(lower_players.to_numpy()==player.lower())
+                player = data.index[pindex].values[0]
+                print(player)
+            else:
+                return await ctx.send(f"Could not find stats for {player} on gameday {day}.")
+            
             try:
                 stats = data.loc[player]
             except:
-                return await ctx.send(f"Could not find stats for {player} on gameday {day}")
+                return await ctx.send(f"Could not find stats for {player} on gameday {day}.")
+            
+            if pergame:
+                stats[3:-1] = stats[3:-1].apply(lambda x: float(x)) / int(stats['Games Played'])
+                stats[3:-1] = stats[3:-1].apply(lambda x: round(x, 2))
             
             if stat == None:
                 embed = discord.Embed(title=f"{player}'s Stats on Gameday {day}", color=0x3333ff)
