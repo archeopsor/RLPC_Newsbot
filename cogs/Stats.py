@@ -3,6 +3,8 @@ from discord.ext import commands
 from PIL import Image, ImageDraw, ImageFont
 import pandas as pd
 import numpy as np
+import dataframe_image as dfi
+import os
 
 from rlpc import stats, mmr
 from rlpc.players import find_league
@@ -158,8 +160,8 @@ class Stats(commands.Cog):
                     part = word
                     if part in ['playoff', 'semifinal', 'final', 'champion']:
                         part += 's'
-                    elif part in ['wins', 'record']:
-                        part = 'expected wins'
+                    elif part in ['wins', 'expected wins']:
+                        part = 'record'
                     elif part == 'finalist':
                         part = 'finals'
                     elif part in ['winners', 'winner']:
@@ -191,54 +193,97 @@ class Stats(commands.Cog):
             
             data = sheet.gsheet2df(gsheet).set_index('Teams')
     
-            
+            if league in ['aaa', 'aa', 'a']:
+                league = league.upper()
+            else:
+                league = league.title()
             
             if team == "none" and part == "none": 
                 
-                # if 'graph' in [x.lower() for x in msg]: # Returns a stacked bar graph rather than image with numbers
-                #     new_data = pd.DataFrame(data.index).set_index("Teams", inplace=True)
-                #     new_data['Champions'] = data['Champions']
-                #     new_data['Finals'] = data['Finals'] - data['Champions']
-                #     new_data['Semifinals'] = data['Semifinals'] - data['Finals']
-                #     new_data['Playoffs'] = data['Playoffs'] - data['Semifinals']
-                #     new_data['No Playoffs'] = 1 - data['Playoffs']
-                #     new_data = new_data.sort_values(by="No Playoffs", ascending=False)
-                #     plot = new_data.plot(kind='barh', stacked=True, title="Major Forecast", colormap='YlGn_r')
-                #     plot.set_xlabel("Probability")
-                #     plot.xaxis.grid(True)
+                if 'graph' in [x.lower() for x in msg]: # Returns a stacked bar graph rather than image with numbers
+                    new_data = pd.DataFrame(data.index).set_index("Teams")
+                    new_data['Champions'] = data['Champions'].str.rstrip('%').astype(float)/100
+                    new_data['Finals'] = data['Finals'].str.rstrip('%').astype(float)/100 - data['Champions'].str.rstrip('%').astype(float)/100
+                    new_data['Semifinals'] = data['Semifinals'].str.rstrip('%').astype(float)/100 - data['Finals'].str.rstrip('%').astype(float)/100
+                    new_data['Playoffs'] = data['Playoffs'].str.rstrip('%').astype(float)/100 - data['Semifinals'].str.rstrip('%').astype(float)/100
+                    new_data['No Playoffs'] = 1 - data['Playoffs'].str.rstrip('%').astype(float)/100
+                    new_data = new_data.sort_values(by="No Playoffs", ascending=False)
+                    plot = new_data.plot(kind='barh', stacked=True, title=f"{league} Forecast", colormap='YlGn_r')
+                    plot.set_xlabel("Probability")
+                    plot.xaxis.grid(True)
+                    plot.figure.savefig('forecast.png')
+                    
+                    path = os.path.abspath('forecast.png')
+                    
+                    file = discord.File(path)                    
+                    
+                    await ctx.send(file=file)
+                    return os.remove(path)
                 
-                # else:
-                #     template = Image.open(f"./Image_templates/Forecast Table.png")
-                #     img = ImageDraw.Draw(template)
-                #     titlefont = ImageFont.truetype('C:/Windows/Fonts/palab.ttf', size=100)
-                #     w, h = template.size
+                else:
+                    data.rename(columns={"Expected Wins": 'Record', 'Semifinals': 'Semis', 'Champions': 'Champs'}, inplace=True)
+                    data['Record'] = data['Record'].apply(lambda x: f'({round(float(x), 1)} - {round(18-float(x), 1)})')
+                    data['sort'] = data['Playoffs'].str.rstrip('%').astype(float)*100 + data['Semis'].str.rstrip('%').astype(float)
+                    data = data.sort_values(by="sort", ascending=False)
+                    data.drop(columns=['sort'], inplace=True)
+                    filename = "forecast.png"
+                    dfi.export(data, filename, table_conversion='matplotlib')
+                    path = os.path.abspath(filename)
+                    file = discord.File(path)
                     
-                #     colors = {'major': 'limegreen', 'aaa': 'dodgerblue', 'aa': 'red', 'a': 'yellow', 'independent': 'mediumpurple', 'maverick': 'orange', 'renegade': 'powderblue', 'paladin': 'orchid'}
-                #     img.text((w/2-img.textsize(f"{league} Forecast", font=titlefont)[0]/2, 50), f"{league} Forecast", font=titlefont, fill=colors[league])
+                    await ctx.send(file=file)
+                    return os.remove(path)
                     
                     
-                message = f"""
-╔═══════╦══════╦═════╦═══════╗ 
-║ Teams        ║ Record    ║ Playoffs ║ Champions ║"""
-                for team in data.index.values:
-                    wins = str(data.loc[team, 'Expected Wins'])
-                    playoffs = str(data.loc[team, 'Playoffs'])
-                    champs = str(data.loc[team, 'Champions'])
-                    message = message + f"\n╠═══════╬══════╬═════╬═══════╣\n║ {team+('  '*(9-len(team)))} ║ {wins+('  '*(8-len(wins)))} ║ {playoffs+('  '*(8-len(playoffs)))} ║ {champs+('  '*(10-len(champs)))} ║"
-                message = message + "\n╚═══════╩══════╩═════╩═══════╝"
-                embed=discord.Embed()
-                embed.set_footer(text=message)
-                await ctx.send(embed=embed) # TODO: Fix Formatting
-                return
+#                 message = f"""
+# ╔═══════╦══════╦═════╦═══════╗ 
+# ║ Teams        ║ Record    ║ Playoffs ║ Champions ║"""
+#                 for team in data.index.values:
+#                     wins = str(data.loc[team, 'Expected Wins'])
+#                     playoffs = str(data.loc[team, 'Playoffs'])
+#                     champs = str(data.loc[team, 'Champions'])
+#                     message = message + f"\n╠═══════╬══════╬═════╬═══════╣\n║ {team+('  '*(9-len(team)))} ║ {wins+('  '*(8-len(wins)))} ║ {playoffs+('  '*(8-len(playoffs)))} ║ {champs+('  '*(10-len(champs)))} ║"
+#                 message = message + "\n╚═══════╩══════╩═════╩═══════╝"
+#                 embed=discord.Embed()
+#                 embed.set_footer(text=message)
+#                 await ctx.send(embed=embed) # TODO: Fix Formatting
+#                 return
             
-            if team != "none":
+            elif team != "none" and part == "none":
+                embed = discord.Embed(title = f'{team.title()} Forecast', description = "Average record and probability of making each part of playoffs throughout 100,000 simulations of the league.", color=0x000080)
                 data = data.loc[team.title()]
+                data['Expected Wins'] = f"({round(float(data['Expected Wins']), 1)} - {round(18-float(data['Expected Wins']), 1)})"
+                data.rename({'Expected Wins': 'Record'}, inplace=True)
+
+                for col in data.index:
+                    embed.add_field(name=col, value=data[col], inline=False)
+                return await ctx.send("See all of the data here: <https://docs.google.com/spreadsheets/d/1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ/edit?usp=sharing>", embed=embed)
                 
-            if part != "none":
+            elif team == "none" and part != "none":
+                embed = discord.Embed(title = f'{part.title()} Forecast', description = "Average results of 100,000 simulations showing how likely each team was to make it to this point.", color=0x000080)
+                if part == 'record':    
+                    data.rename(columns={'Expected Wins': 'Record'}, inplace=True)
+                    data['Record'] = data['Record'].astype(float)
+                    data = data.sort_values(by='Record', ascending=False)
+                    data['Record'] = data['Record'].apply(lambda x: f'({round(float(x), 1)} - {round(18-float(x), 1)})')
+                else:
+                    data['sort'] = data[part.title()].str.rstrip('%').astype(float)
+                    data = data.sort_values(by='sort', ascending=False)
                 data = data[part.title()]
+
+                for team in data.index:
+                    embed.add_field(name=team, value=data[team], inline=False)
+                return await ctx.send("See all of the data here: <https://docs.google.com/spreadsheets/d/1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ/edit?usp=sharing>", embed=embed)
                 
-            await ctx.send(data)
-            await ctx.send("See all of the data here: <https://docs.google.com/spreadsheets/d/1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ/edit?usp=sharing>")
+            
+            elif team != "none" and part != "none":
+                if part == 'record':
+                    data = data.loc[team.title(), 'Expected Wins']
+                    data = f'({round(float(data), 1)} - {round(18-float(data), 1)})'
+                else:
+                    data = data.loc[team.title(), part.title()]
+                await ctx.send(data)
+                return await ctx.send("See all of the data here: <https://docs.google.com/spreadsheets/d/1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ/edit?usp=sharing>")
         
     @forecast.error
     async def probabilities_error(self,ctx,error):
