@@ -1,0 +1,10 @@
+**__Reddit Commands__**
+*Parameters must be in order. Those in italics are optional, those underlined are case-sensitive.*
+
+
+
+**{prefix}getreddit *[sort]* *[limit]***: Shows previews of up to 10 reddit posts on the RLPC subreddit. Sort can be any of 'top', 'hot', or 'new'.
+
+**{prefix}get [sort] [index]**: Displays the nth post on the RLPC subreddit when sorting by the specified sort.
+
+**{prefix}newest**: Displayes the newest post on the RLPC subreddit.

@@ -1,0 +1,10 @@
+**__Elo Commands__**
+*Parameters must be in order. Those in italics are optional, those underlined are case-sensitive.*
+
+
+
+**{prefix}predict [team 1] [team 2] *[# of games]***: Predicts the score of a hypothetical match between two teams, based on the teams' current ELO. Only works between teams in the same league.
+
+**{prefix}rank [league]**: Ranks all the teams in a league based on an internal elo system. These are computer-generated, use {prefix}pr for human-generated rankings.
+
+**{prefix}forecast [league] *[team]* *[part]* *[graph]***: Shows a computer-generated forecast for the given league. Can specify a specific team or part of the forecast to focus on, and can also turn the data into a graph if specified.

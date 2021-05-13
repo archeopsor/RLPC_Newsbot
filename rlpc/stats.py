@@ -3,46 +3,48 @@ import pandas as pd
 from tools import sheet
 from tools.database import select
 
+from settings import valid_stats, leagues
+
 sheet_id = "1AJoBYkYGMIrpe8HkkJcB25DbLP2Z-eV7P6Tk9R6265I"
 
 def get_player_stats(player,stat="all"):
     # Make sure the program understands the specified stat if it's mis-capitalized or whatever
-    if stat.casefold() in ["sp","series","series_played","series-played","splayed","seris","sieries","seiries"]:
+    if stat.lower() in ["sp","series","series_played","series-played","splayed","seris","sieries","seiries"]:
         stat = "Series Played"
-    elif stat.casefold() in ["gp","games","games_played","games-played","gplayed"]:
+    elif stat.lower() in ["gp","games","games_played","games-played","gplayed"]:
         stat = "Games Played"
-    elif stat.casefold() in ["goals","goal","scores"]:
+    elif stat.lower() in ["goals","goal","scores"]:
         stat = "Goals"
-    elif stat.casefold() in ['assists','assist','passes']:
+    elif stat.lower() in ['assists','assist','passes']:
         stat = "Assists"
-    elif stat.casefold() in ['saves','save']:
+    elif stat.lower() in ['saves','save']:
         stat = "Saves"
-    elif stat.casefold() in ['shots','shot']:
+    elif stat.lower() in ['shots','shot']:
         stat = "Shots"
-    elif stat.casefold() in ['points','point','goals+assists','goals + assists','goals and assists']:
+    elif stat.lower() in ['points','point','goals+assists','goals + assists','goals and assists']:
         stat = "Points (Goals+Assists)"
-    elif stat.casefold() in ['gpg','goals per game','goals pg','goals per']:
+    elif stat.lower() in ['gpg','goals per game','goals pg','goals per']:
         stat = "Goals per game"
-    elif stat.casefold() in ['apg','assists per game','assists pg','assists per']:
+    elif stat.lower() in ['apg','assists per game','assists pg','assists per']:
         stat = "Assists per game"
-    elif stat.casefold() in ['spg','sapg','saves per game','saves pg','saves per']:
+    elif stat.lower() in ['spg','sapg','saves per game','saves pg','saves per']:
         stat = "Saves per game"
-    elif stat.casefold() in ['shot rate','shooting percent','shooting percentage','shot accuracy','shooting accuracy','shooting %','shot %']:
+    elif stat.lower() in ['shot rate','shooting percent','shooting percentage','shot accuracy','shooting accuracy','shooting %','shot %']:
         stat = "Shooting %"
-    elif stat.casefold() in ['win rate','winning rate','winning percent','winning percentage']:
+    elif stat.lower() in ['win rate','winning rate','winning percent','winning percentage']:
         stat = "Winning %"
-    elif stat.casefold() in ['wins','win']:
+    elif stat.lower() in ['wins','win']:
         stat = "Wins"
-    elif stat.casefold() in ['ppg','points per game','points pg','points per']:
+    elif stat.lower() in ['ppg','points per game','points pg','points per']:
         stat = "Points per Game"
-    elif stat.casefold() in ['shpg','shots per game',' shots pg', 'shots per']:
+    elif stat.lower() in ['shpg','shots per game',' shots pg', 'shots per']:
         stat = "Shots Per Game"
     
     playersheet = sheet.get_google_sheet(sheet_id, 'Players!A1:I')
     players = sheet.gsheet2df(playersheet)
     lower_players = players['Username'].str.lower()
-    if player.casefold() in lower_players.values:
-        pindex = lower_players[lower_players == player.casefold()].index[0]
+    if player.lower() in lower_players.values:
+        pindex = lower_players[lower_players == player.lower()].index[0]
         player = players.loc[pindex][0]
     players = players.set_index("Username")
     league = players.loc[player, "League"]
@@ -50,7 +52,7 @@ def get_player_stats(player,stat="all"):
         league = league[0]
     statsheet = sheet.get_google_sheet(sheet_id, f"{league} League Stat Database!C3:R")    
     stats = sheet.gsheet2df(statsheet)
-    if stat not in list(stats) and stat.casefold() != "all":
+    if stat not in list(stats) and stat.lower() != "all":
         return("That stat could not be understood.")
     stats = stats.loc[stats['Player']==player]
     if stat != "all":
@@ -58,9 +60,8 @@ def get_player_stats(player,stat="all"):
     return(stats)   
     
 def power_rankings(league):
-    leagues = {'major': "Major", 'aaa': 'AAA', 'aa': 'AA', 'a': 'A', 'indy': 'Independent', 'independent': 'Independent', 'mav': 'Maverick', 'maverick': 'Maverick', 'renegade': 'Renegade', 'ren': 'Renegade', 'paladin': 'Paladin', 'pal': 'Paladin'}
     try:
-        league = leagues[league.casefold()]
+        league = leagues[league.lower()]
     except:
         return "Could not understand league"
     
@@ -80,75 +81,95 @@ def power_rankings(league):
     rankings = rankings.sort_values(ascending=False)
     return rankings
 
-
-def statleaderboard(useSheet = False, league = "all", stat = "Points", limit = 10):
+# TODO: Add option to reverse lb order for statlb
+# TODO: Add boost ratio, shot %, win %, etc as stats
+def statlb(useSheet = False, league = "all", stat = "Goals", limit = 10, pergame=False):
     if useSheet == True and league == "all":
         return "Must choose a specific league to use sheet stats"
-    leagues = {'major': 'Major', 'aaa': 'AAA', 'aa': 'AA', 'a': 'A', 'independent': 'Independent', 'indy': 'Independent', 'maverick': 'Maverick', 'mav': 'Maverick', 'renegade': 'Renegade', 'ren': 'Renegade', 'paladin': 'Paladin', 'pal': 'Paladin'}
-    try:
-        leagues[league.lower()]
-    except:
-        return f"Could not understand league {league}."
+    if league != "all":
+        try:
+            league = leagues[league.lower()]
+        except:
+            return f"Could not understand league {league}."
     
     # Make sure the program understands the specified stat if it's mis-capitalized or whatever
     # SHEETS-UNDERSTANDABLE STATS
     if useSheet == True:
-        if stat.casefold() in ["sp","series","series_played","series-played","splayed","seris","sieries","seiries"]:
+        if stat.lower() in ["sp","series","series_played","series-played","splayed","seris","sieries","seiries"]:
             stat = "Series Played"
-        elif stat.casefold() in ["gp","games","games_played","games-played","gplayed"]:
+        elif stat.lower() in ["gp","games","games_played","games-played","gplayed"]:
             stat = "Games Played"
-        elif stat.casefold() in ["goals","goal","scores"]:
+        elif stat.lower() in ["goals","goal","scores"]:
             stat = "Goals"
-        elif stat.casefold() in ['assists','assist','passes']:
+        elif stat.lower() in ['assists','assist','passes']:
             stat = "Assists"
-        elif stat.casefold() in ['saves','save']:
+        elif stat.lower() in ['saves','save']:
             stat = "Saves"
-        elif stat.casefold() in ['shots','shot']:
+        elif stat.lower() in ['shots','shot']:
             stat = "Shots"
-        elif stat.casefold() in ['points','point','goals+assists','goals + assists','goals and assists']:
+        elif stat.lower() in ['points','point','goals+assists','goals + assists','goals and assists']:
             stat = "Points (Goals+Assists)"
-        elif stat.casefold() in ['gpg','goals per game','goals pg','goals per']:
+        elif stat.lower() in ['gpg','goals per game','goals pg','goals per']:
             stat = "Goals per game"
-        elif stat.casefold() in ['apg','assists per game','assists pg','assists per']:
+        elif stat.lower() in ['apg','assists per game','assists pg','assists per']:
             stat = "Assists per game"
-        elif stat.casefold() in ['spg','sapg','saves per game','saves pg','saves per']:
+        elif stat.lower() in ['spg','sapg','saves per game','saves pg','saves per']:
             stat = "Saves per game"
-        elif stat.casefold() in ['shot rate','shooting percent','shooting percentage','shot accuracy','shooting accuracy','shooting %','shot %']:
+        elif stat.lower() in ['shot rate','shooting percent','shooting percentage','shot accuracy','shooting accuracy','shooting %','shot %']:
             stat = "Shooting %"
-        elif stat.casefold() in ['win rate','winning rate','winning percent','winning percentage']:
+        elif stat.lower() in ['win rate','winning rate','winning percent','winning percentage']:
             stat = "Winning %"
-        elif stat.casefold() in ['wins','win']:
+        elif stat.lower() in ['wins','win']:
             stat = "Wins"
-        elif stat.casefold() in ['ppg','points per game','points pg','points per']:
+        elif stat.lower() in ['ppg','points per game','points pg','points per']:
             stat = "Points per Game"
-        elif stat.casefold() in ['shpg','shots per game',' shots pg', 'shots per']:
+        elif stat.lower() in ['shpg','shots per game',' shots pg', 'shots per']:
             stat = "Shots Per Game"
         else:
             return f'Could not understand stat {stat.title()}. Try using "$help stats" for a list of available stats, or include "db" in your command to use advanced stats rather than sheet stats.'
     # DATABASE STATS
     # I got lazy and people will have to type these in accurately for it to work
     else:
-        if stat.title() not in ['Series Played',
-        'Series Won', 'Games Played', 'Games Won', 'Goals', 'Assists', 'Saves',
-        'Shots', 'Dribbles', 'Passes', 'Aerials', 'Boost Used',
-        'Wasted Collection', 'Wasted Usage', '# Small Boosts', '# Large Boosts',
-        '# Boost Steals', 'Wasted Big', 'Wasted Small', 'Time Slow',
-        'Time Boost', 'Time Supersonic', 'Turnovers Lost',
-        'Defensive Turnovers Lost', 'Offensive Turnovers Lost', 'Turnovers Won',
-        'Hits', 'Kickoffs', 'Demos Inflicted', 'Demos Taken',
-        'First Touches', 'Kickoff Cheats', 'Kickoff Boosts', 'Flicks', 'Clears']:
+        if stat.title() not in valid_stats:
             return f'Could not understand stat {stat.title()}. Try using "$help stats" for a list of available stats, or include "db" in your command to use advanced stats rather than sheet stats.'
+        else:
+            stat = stat.title()
     
     if useSheet == False:
         data = select("players")
+        data.fillna(value=0, inplace=True)
+        data.set_index("Username", inplace=True)
+        if league != "all":
+            data = data.loc[data['League'] == league]
     else: 
         # This is redundant for now but sheet ids can be different just in case something changes in the future
         if league.lower() in ['major', 'aaa', 'aa', 'a']: 
             data = sheet.gsheet2df(sheet.get_google_sheet('1AJoBYkYGMIrpe8HkkJcB25DbLP2Z-eV7P6Tk9R6265I', '{league} League Stat Database!C3:R'))
         elif league.lower() in ['independent', 'maverick', 'renegade', 'paladin']:
             data = sheet.gsheet2df(sheet.get_google_sheet('1AJoBYkYGMIrpe8HkkJcB25DbLP2Z-eV7P6Tk9R6265I', '{league} League Stat Database!C3:R'))
+        data.set_index("Player", inplace=True)
+        data.replace(to_replace='', value='0', inplace=True)        
+        # Turn number strings into ints and floats
+        for col in data.columns:
+            try:
+                data[col] = data[col].astype(int)
+            except:
+                try:
+                    data[col] = data[col].astype(float)
+                except:
+                    data[col] = data[col].str.rstrip('%').astype(float)
     
+    lb = data[stat.title()]
+    games_played = data['Games Played']
     
+    if pergame:
+        if stat in ['Goals Per Game', 'Assists per game', 'Saves per game', 'Points per Game', 'Shots per Game', 'Winning %', 'Shooting %']:
+            pass # These stats are already per game
+        else:
+            lb = round(lb/games_played, 2)
+            
+    
+    return lb.sort_values(ascending=False).head(limit)
     
     
     

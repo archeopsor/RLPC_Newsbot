@@ -1,0 +1,8 @@
+**__Other Commands__**
+*Parameters must be in order. Those in italics are optional, those underlined are case-sensitive.*
+
+
+
+**{prefix}ping**: Shows the bot's current ping.
+
+**{prefix}alerts**: Subscribes the current channel to Upset Alerts. Only usable if you have Admin perms in the server.

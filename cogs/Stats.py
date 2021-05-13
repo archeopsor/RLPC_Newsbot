@@ -12,16 +12,18 @@ from rlpc.players import find_league
 from tools import sheet
 from tools.database import select
 
-from settings import prefix
+from settings import prefix, valid_stats, leagues
 
 client = commands.Bot(command_prefix = prefix)
-
-valid_stats = ['Series Played' , 'Series Won' , 'Games Played' , 'Games Won' , 'Goals' , 'Assists' , 'Saves' , 'Shots' , 'Dribbles' , 'Passes' , 'Aerials' , 'Boost Used' , 'Wasted Collection' , 'Wasted Usage' , '# Small Boosts' , '# Large Boosts' , '# Boost Steals' , 'Wasted Big' , 'Wasted Small' , 'Time Slow' , 'Time Boost' , 'Time Supersonic' , 'Turnovers Lost' , 'Defensive Turnovers Lost' , 'Offensive Turnovers lost' , 'Turnovers Won' , 'Hits' , 'Kickoffs' , 'Demos Inflicted' , 'Demos Taken' , 'First Touches' , 'Kickoff Cheats' , 'Kickoff Boosts' , 'Flicks' , 'Clears']
 
 class Stats(commands.Cog):
     
     def __init__(self,client):
         self.client = client
+        
+    @commands.command(aliases=('validstats', 'valid_stats',))
+    async def valid(self, ctx):
+        await ctx.send(f"""**Valid stats**: ['Series Played', 'Games Played', 'Goals', 'Assists', 'Saves', 'Shots', 'Points (Goals+Assists)', 'Goals per game', 'Assists per game', 'Saves per game', 'Shooting %', 'Winning %', 'Wins', 'Points per Game', 'Shots Per Game'].\n**Advanced stats** (may need to specify 'db' or 'advanced' in the command to use these): {valid_stats}.""")
         
     @commands.command(aliases = ('power', 'powerrankings', 'power_rankings', 'rankings', 'ranking',))
     async def pr(self, ctx, league):
@@ -58,7 +60,7 @@ class Stats(commands.Cog):
         if isinstance(error,commands.MissingRequiredArgument):
             await ctx.send("You haven't chosen a league.")
     
-    @commands.command()
+    @commands.command() # TODO: fix this
     async def mmr(self, ctx, *, player):
         async with ctx.typing():
             players = sheet.gsheet2df(sheet.get_google_sheet('1AJoBYkYGMIrpe8HkkJcB25DbLP2Z-eV7P6Tk9R6265I', 'Players!A1:R'))
@@ -92,7 +94,7 @@ class Stats(commands.Cog):
                 await ctx.send(embed=embed)
     
     @commands.command(aliases=("getstats","stats","get_stats",))
-    async def get_player_stats(self, ctx, *, msg):
+    async def get_player_stats(self, ctx, *, msg): # TODO: Add database stats
         async with ctx.typing():
             if msg.casefold() == "me":
                 waitingMsg = await ctx.send("One second, retreiving discord ID and stats")
@@ -133,162 +135,43 @@ class Stats(commands.Cog):
             league = "all"
             stat = "Points Per Game"
             limit = 10
-    
-        
-    @commands.command(aliases=("probs","prob","probability", "probabilities"))
-    async def forecast(self, ctx, *, msg):
-        async with ctx.typing():
+            pergame = False
+            
             msg = msg.split()
-            league = "none"
-            team = "none"
-            part = "none"
             
-            for word in msg:
-                if word.casefold() in ["major","aaa","aa","a","independent", "indy", "mav",'maverick', 'renegade','ren','paladin','pal']:
-                    league = word.casefold()
-                    if league == "indy":
-                        league = "independent"
-                    elif league == 'mav':
-                        league = 'maverick'
-                    elif league == 'ren':
-                        league = 'renegade'
-                    elif league == 'pal':
-                        league = 'paladin'
-                elif word.casefold() in ['bulls', 'lions', 'panthers', 'sharks', 'cobras', 'ducks', 'eagles', 'hawks', 'ascension', 'flames', 'storm', 'whitecaps', 'kings', 'lumberjacks', 'pirates', 'spartans', 'bulldogs', 'tigers', 'bobcats', 'dolphins', 'vipers', 'geese', 'osprey', 'owls', 'entropy', 'heat', 'thunder', 'tundra', 'knights', 'pioneers', 'raiders', 'trojans', 'mustangs', 'lynx', 'jaguars', 'barracuda', 'pythons', 'herons', 'falcons', 'vultures', 'pulsars', 'inferno', 'lightning', 'avalanche', 'dukes', 'voyagers', 'bandits', 'warriors', 'stallions', 'cougars', 'leopards', 'gulls', 'rattlers', 'pelicans', 'ravens', 'cardinals', 'genesis', 'embers', 'tempest', 'eskimos', 'jesters', 'miners', 'wranglers', 'titans', 'admirals', 'dragons', 'beavers', 'cyclones', 'grizzlies', 'centurions', 'yellow jackets', 'galaxy', 'sockeyes', 'wolves', 'wildcats', 'rhinos', 'scorpions', 'thrashers', 'toucans', 'wizards', 'captains', 'yetis', 'otters', 'tides', 'pandas', 'samurai', 'hornets', 'solar', 'piranhas', 'terriers', 'jackrabbits', 'zebras', 'camels', 'raptors', 'macaws', 'mages', 'pilots', 'werewolves', 'wolverines', 'hurricanes', 'koalas', 'vikings', 'fireflies', 'comets', 'stingrays', 'hounds', 'warthogs', 'gorillas', 'coyotes', 'harriers', 'puffins', 'witches', 'sailors', 'griffins', 'badgers', 'quakes', 'cubs', 'ninjas', 'dragonflies', 'cosmos', 'hammerheads', 'foxes', 'jackals', 'wildebeests', 'roadrunners', 'buzzards', 'penguins', 'sorcerers']:
-                    team = word
-                elif word.casefold() in ["wins","expected wins","record","playoffs","playoff","semifinals","semifinal","finals","final","finalist","champions","champion","winners","winner"]:
-                    part = word
-                    if part in ['playoff', 'semifinal', 'final', 'champion']:
-                        part += 's'
-                    elif part in ['wins', 'expected wins']:
-                        part = 'record'
-                    elif part == 'finalist':
-                        part = 'finals'
-                    elif part in ['winners', 'winner']:
-                        part = 'champions'
+            for i, word in enumerate(msg):
+                try:
+                    limit = int(word)
+                except:
+                    pass
+                if word.lower() in leagues.keys():
+                    league = leagues[word.lower()]
+                elif word.lower() in ['pg', 'pergame']:
+                    pergame = True
+                elif word.lower() in ['sheet', 'usesheet']:
+                    useSheet = True
+                elif word.lower() in [x.split()[0].lower() for x in valid_stats]: # First word of a stat
+                    stat = word.title()
+                    if len(msg) == i+1: # If that was the last arg in the msg
+                        break
+                    if msg[i+1].lower() in [x.split()[1].lower() if len(x.split())>1 else None for x in valid_stats]: # Second word
+                        stat = stat + ' ' + msg[i+1].title()
+                        if len(msg) == i+2: # If the next arg is the last arg in the msg
+                            break
+                        if msg[i+2].lower() in [x.split()[2].lower() if len(x.split())>2 else None for x in valid_stats]: # Third word
+                            stat = stat + ' ' + msg[i+2].title()
+                    
+            lb = stats.statlb(useSheet=useSheet, league=league, stat=stat, limit=limit, pergame=pergame)
+            
+            embed = discord.Embed(title=f'{stat} {"per game " if pergame else ""}Leaderboard', description=f"League: {league}, Source: {'Sheet' if useSheet else 'Fantasy Database'}")
+            for i, player in enumerate(lb.index):
+                embed.add_field(name=f'{i+1}) {player}', value = lb[player], inline=False)
+                
+        return await ctx.send(embed=embed)
+            
     
-            if league == "none" and team == "none":
-                await ctx.send("You haven't chosen a league. You can also see all of the data here: <https://docs.google.com/spreadsheets/d/1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ/edit?usp=sharing>")
-                return
-            elif league == "none" and team != "none":
-                waitingMsg = await ctx.send(f'Finding league for team "{team}"...', )
-                league = find_league(team.title(), select("players")).lower()
-                waitingMsg.delete()
-            elif league == "major":
-                gsheet = sheet.get_google_sheet("1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ", "Most Recent!A2:F18")
-            elif league == "aaa":
-                gsheet = sheet.get_google_sheet("1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ", "Most Recent!A21:F37")
-            elif league == "aa":
-                gsheet = sheet.get_google_sheet("1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ", "Most Recent!A40:F56")
-            elif league == "a":
-                gsheet = sheet.get_google_sheet("1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ", "Most Recent!A59:F75")
-            elif league == "independent":
-                gsheet = sheet.get_google_sheet("1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ", "Most Recent!A78:F94")
-            elif league == "maverick":
-                gsheet = sheet.get_google_sheet("1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ", "Most Recent!A97:F113")
-            elif league == "renegade":
-                gsheet = sheet.get_google_sheet("1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ", "Most Recent!A116:F132")
-            elif league == "paladin":
-                gsheet = sheet.get_google_sheet("1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ", "Most Recent!A135:F151")
-            
-            data = sheet.gsheet2df(gsheet).set_index('Teams')
-    
-            if league in ['aaa', 'aa', 'a']:
-                league = league.upper()
-            else:
-                league = league.title()
-            
-            if team == "none" and part == "none": 
-                
-                if 'graph' in [x.lower() for x in msg]: # Returns a stacked bar graph rather than image with numbers
-                    new_data = pd.DataFrame(data.index).set_index("Teams")
-                    new_data['Champions'] = data['Champions'].str.rstrip('%').astype(float)/100
-                    new_data['Finals'] = data['Finals'].str.rstrip('%').astype(float)/100 - data['Champions'].str.rstrip('%').astype(float)/100
-                    new_data['Semifinals'] = data['Semifinals'].str.rstrip('%').astype(float)/100 - data['Finals'].str.rstrip('%').astype(float)/100
-                    new_data['Playoffs'] = data['Playoffs'].str.rstrip('%').astype(float)/100 - data['Semifinals'].str.rstrip('%').astype(float)/100
-                    new_data['No Playoffs'] = 1 - data['Playoffs'].str.rstrip('%').astype(float)/100
-                    new_data = new_data.sort_values(by="No Playoffs", ascending=False)
-                    plot = new_data.plot(kind='barh', stacked=True, title=f"{league} Forecast", colormap='YlGn_r')
-                    plot.set_xlabel("Probability")
-                    plot.xaxis.grid(True)
-                    plot.figure.savefig('forecast.png')
-                    
-                    path = os.path.abspath('forecast.png')
-                    
-                    file = discord.File(path)                    
-                    
-                    await ctx.send(file=file)
-                    return os.remove(path)
-                
-                else:
-                    data.rename(columns={"Expected Wins": 'Record', 'Semifinals': 'Semis', 'Champions': 'Champs'}, inplace=True)
-                    data['Record'] = data['Record'].apply(lambda x: f'({round(float(x), 1)} - {round(18-float(x), 1)})')
-                    data['sort'] = data['Playoffs'].str.rstrip('%').astype(float)*100 + data['Semis'].str.rstrip('%').astype(float)
-                    data = data.sort_values(by="sort", ascending=False)
-                    data.drop(columns=['sort'], inplace=True)
-                    filename = "forecast.png"
-                    dfi.export(data, filename, table_conversion='matplotlib')
-                    path = os.path.abspath(filename)
-                    file = discord.File(path)
-                    
-                    await ctx.send(file=file)
-                    return os.remove(path)
-                    
-                    
-#                 message = f"""
-# ╔═══════╦══════╦═════╦═══════╗ 
-# ║ Teams        ║ Record    ║ Playoffs ║ Champions ║"""
-#                 for team in data.index.values:
-#                     wins = str(data.loc[team, 'Expected Wins'])
-#                     playoffs = str(data.loc[team, 'Playoffs'])
-#                     champs = str(data.loc[team, 'Champions'])
-#                     message = message + f"\n╠═══════╬══════╬═════╬═══════╣\n║ {team+('  '*(9-len(team)))} ║ {wins+('  '*(8-len(wins)))} ║ {playoffs+('  '*(8-len(playoffs)))} ║ {champs+('  '*(10-len(champs)))} ║"
-#                 message = message + "\n╚═══════╩══════╩═════╩═══════╝"
-#                 embed=discord.Embed()
-#                 embed.set_footer(text=message)
-#                 await ctx.send(embed=embed) # TODO: Fix Formatting
-#                 return
-            
-            elif team != "none" and part == "none":
-                embed = discord.Embed(title = f'{team.title()} Forecast', description = "Average record and probability of making each part of playoffs throughout 100,000 simulations of the league.", color=0x000080)
-                data = data.loc[team.title()]
-                data['Expected Wins'] = f"({round(float(data['Expected Wins']), 1)} - {round(18-float(data['Expected Wins']), 1)})"
-                data.rename({'Expected Wins': 'Record'}, inplace=True)
-
-                for col in data.index:
-                    embed.add_field(name=col, value=data[col], inline=False)
-                return await ctx.send("See all of the data here: <https://docs.google.com/spreadsheets/d/1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ/edit?usp=sharing>", embed=embed)
-                
-            elif team == "none" and part != "none":
-                embed = discord.Embed(title = f'{part.title()} Forecast', description = "Average results of 100,000 simulations showing how likely each team was to make it to this point.", color=0x000080)
-                if part == 'record':    
-                    data.rename(columns={'Expected Wins': 'Record'}, inplace=True)
-                    data['Record'] = data['Record'].astype(float)
-                    data = data.sort_values(by='Record', ascending=False)
-                    data['Record'] = data['Record'].apply(lambda x: f'({round(float(x), 1)} - {round(18-float(x), 1)})')
-                else:
-                    data['sort'] = data[part.title()].str.rstrip('%').astype(float)
-                    data = data.sort_values(by='sort', ascending=False)
-                data = data[part.title()]
-
-                for team in data.index:
-                    embed.add_field(name=team, value=data[team], inline=False)
-                return await ctx.send("See all of the data here: <https://docs.google.com/spreadsheets/d/1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ/edit?usp=sharing>", embed=embed)
-                
-            
-            elif team != "none" and part != "none":
-                if part == 'record':
-                    data = data.loc[team.title(), 'Expected Wins']
-                    data = f'({round(float(data), 1)} - {round(18-float(data), 1)})'
-                else:
-                    data = data.loc[team.title(), part.title()]
-                await ctx.send(data)
-                return await ctx.send("See all of the data here: <https://docs.google.com/spreadsheets/d/1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ/edit?usp=sharing>")
         
-    @forecast.error
-    async def probabilities_error(self,ctx,error):
-        if isinstance(error,commands.MissingRequiredArgument):
-            await ctx.send("You haven't chosen a league. You can also see all of the data here: https://docs.google.com/spreadsheets/d/1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ/edit?usp=sharing")
+
 
     @commands.command(aliases=("gameday_stats",))
     async def gdstats(self, ctx, *, msg):

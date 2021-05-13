@@ -1,0 +1,5 @@
+**Command: {prefix}drop [slot]**
+Aliases: drop_player, dropplayer, removeplayer, remove_player
+
+Removes the player in the specified slot on your fantasy team.
+[slot] must be a number between 1-5.

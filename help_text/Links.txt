@@ -1,0 +1,8 @@
+**Link Commands**
+*Shows links for important RLPC and RLPC News sites*
+
+ - {prefix}rlpc shows RLPC invite link
+ - {prefix}rlpcnews shows RLPC News invite link
+ - {prefix}reddit shows the link to the RLPC subreddit
+ - {prefix}apply shows the link to apply to join the RLPC News team
+ - {prefix}invite shows the link to invite the RLPC Newsbot to your server

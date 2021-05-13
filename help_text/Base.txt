@@ -1,0 +1,12 @@
+Hello! This is a bot primarily meant to run a fantasy league for RLPC, but it has some other functions as well!
+If you have any questions, notice any issues or bugs, or have any suggestions, please feel free to contact <@160901864072806401>.
+
+The bot currently has too many commands to list them all at the same time. Please repeat this command with either a category or specific command for more info.
+
+**Categories**
+ - Elo: predict, rank, forecast
+ - Fantasy: new, pick, drop, lb, team, info, players, search
+ - Links: N/A
+ - Reddit: getreddit, get, newest
+ - StatsCog: valid, pr, mmr, stats, gdstats, top
+ - Other: ping, alerts

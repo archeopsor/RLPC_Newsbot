@@ -87,14 +87,14 @@ class Reddit(commands.Cog):
     #     await ctx.send(f"Use '{prefix}get new [number]' to get the contents of any specific post")
     
     @commands.command(aliases=("get",))
-    async def get_post(self, ctx, type, number):
+    async def get_post(self, ctx, sort, number):
         number = int(number)
         if number < 1:
             await ctx.send("Please choose an integer number greater than 1.")
         else: 
             pass
         async with ctx.typing():
-            post = reddit.get_post(type, number)
+            post = reddit.get_post(sort, number)
         await ctx.send(f'**Title: {post[0]}, author: {post[1]}, score: {post[2]-post[3]}**')
         if len(post[4]) > 2000:
             await ctx.send(f'{post[4][0:1000]}... \n\n *This post is too long for discord, see the full post at: https://www.reddit.com{post[5]}*')

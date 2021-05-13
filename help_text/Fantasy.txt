@@ -1,0 +1,25 @@
+**__Fantasy Commands__**
+*Parameters must be in order. Those in italics are optional, those underlined are case-sensitive.*
+
+
+
+**{prefix}new**: Creates a new fantasy team linked to your discord username.
+    *Note: teams are currently linked to your discord username, rather than your id. If you change your username, please contact arco to regain access to your team.*
+
+**{prefix}pick [player] *[slot #]***: Adds a player to your fantasy team, in one of 5 player slots. If no slot is specified, it will automatically fill the first open slot. 
+    *Note: If there are no open slots, a slot must be specified to drop and then fill. This uses one transaction. Filling an empty slot doesn't use a transaction.*
+
+**{prefix}drop [slot]**: Empties the given slot of your fantasy team. Uses one transaction.
+
+**{prefix}lb**: Displays the current points leaderboard for fantasy teams.
+
+**{prefix}team *[user]***: Shows the current fantasy team of any fantasy player. Not specifying a player will show your team.
+
+**{prefix}info [player]**: Gives relevant information about a player. '{prefix}info me' will display your own info.
+
+**{prefix}players *[league]* *[limit]* *[pg]***: Shows a leaderboard of players based on fantasy points. Adding 'pg' to the command divides each player's points by the number of series played.
+    *Note: Parameters do not need to be in order*
+    
+**{prefix}search [\*\*args]**: Finds five players that meet the specified requirements. Can specify a minimum salary, maximum salary, team, league, and name, although you can use as many or as few of these parameters as you want.
+    *Note: Args should be labeled in key: value pairs, but order doesn't matter. Valid keys are: name, min, max, team, league.*
+    *Example: {prefix}search name: arco min: 100 max: 200 team: FA league: AA*

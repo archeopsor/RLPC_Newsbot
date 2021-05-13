@@ -8,7 +8,7 @@ from rlpc import elo
 from tools.sheet import gsheet2df, get_google_sheet
 
 @jitclass
-class structures:
+class Structs:
     def __init__(self, league):
         self.league = league.lower()
         assert (self.league in ['major', 'aaa', 'aa', 'a', 'independent', 'maverick', 'renegade', 'paladin']), f"{league} is not valid."
@@ -50,6 +50,7 @@ class structures:
         
         return records
     
+    @classmethod
     def get_divisions(self):
         return {'Sharks': 'Predator', 'Bulls': 'Predator', 'Panthers': 'Predator', 'Lions': 'Predator', 
                  'Whitecaps': 'Elements', 'Storm': 'Elements', 'Flames': 'Elements', 'Ascension': 'Elements',
@@ -103,7 +104,7 @@ class structures:
     
     
 @jitclass
-class simulation:
+class Simulation:
     def __init__(self, league, schedule, records, elo):
         self.league = league
         self.schedule = schedule.copy()
@@ -116,8 +117,8 @@ class simulation:
 class sim_manager:
     
     def __init__(self, league, times, image=False, official=False):
-        self.structs = structures(league)
-        self.league = structures.capitalize_league(league)
+        self.structs = Structs(league)
+        self.league = Structs.capitalize_league(league)
         self.schedule = self.structs.schedule
         self.records = self.structs.records
         self.ratings = self.structs.ratings
@@ -137,7 +138,7 @@ class sim_manager:
         for i in range(1, self.times+1):
             print("Simulation #"+str(i)+"     "+self.league)
             
-            sim = simulation(self.league, self.schedule, self.records, self.ratings)
+            sim = Simulation(self.league, self.schedule, self.records, self.ratings)
             
             
             

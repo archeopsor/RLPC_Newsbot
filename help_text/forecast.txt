@@ -1,0 +1,7 @@
+**Command: {prefix}forecast [league] *[team] [part] [graph]***
+Aliases: fc, forecasts, probs, prob, probability, probabilities
+
+Displays the most recent forecast for the specified league. Can specify a team or part to focus on, and can also turn the output into a graph.
+[part] should be one of 'Playoffs', 'Semis', 'Finals', 'Champs', and [graph] should just be the word 'graph'.
+
+These forecasts are created by a monte carlo simulation, which simulates each league 100,000 times. The simulations work by randomly picking winners for each remaining game in the schedule, with probabilities based on the teams' elo ratings. The playoffs are then simulated, and this is repeated 100,000 times. The results are averaged to produce what's shown by the command.
