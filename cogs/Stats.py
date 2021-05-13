@@ -161,9 +161,13 @@ class Stats(commands.Cog):
                         if msg[i+2].lower() in [x.split()[2].lower() if len(x.split())>2 else None for x in valid_stats]: # Third word
                             stat = stat + ' ' + msg[i+2].title()
                     
+            statsmap = {'Demos': 'Demos Inflicted'} # For common misused stat names
+            if stat in statsmap.keys():
+                stat = statsmap[stat]
+                    
             lb = stats.statlb(useSheet=useSheet, league=league, stat=stat, limit=limit, pergame=pergame)
             
-            embed = discord.Embed(title=f'{stat} {"per game " if pergame else ""}Leaderboard', description=f"League: {league}, Source: {'Sheet' if useSheet else 'Fantasy Database'}")
+            embed = discord.Embed(title=f'{stat} {"Per Game " if pergame else ""}Leaderboard', description=f"League: {league}, Source: {'Sheet' if useSheet else 'Fantasy Database'}")
             for i, player in enumerate(lb.index):
                 embed.add_field(name=f'{i+1}) {player}', value = lb[player], inline=False)
                 
