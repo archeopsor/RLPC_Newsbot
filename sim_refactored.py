@@ -5,7 +5,14 @@ from numba.experimental import jitclass
 
 from rlpc import elo
 
-from tools.sheet import gsheet2df, get_google_sheet
+from tools.sheet import Sheet
+
+from settings import forecast_sheet, power_rankings_sheet, sheet_p4, sheet_indy
+
+fc_sheet = Sheet(forecast_sheet, refresh_cooldown = 600)
+pr_sheet = Sheet(power_rankings_sheet, refresh_cooldown = 600)
+p4_sheet = Sheet(sheet_p4, refresh_cooldown = 600)
+indy_sheet = Sheet(sheet_indy, refresh_cooldown = 600)
 
 @jitclass
 class Structs:
@@ -13,7 +20,7 @@ class Structs:
         self.league = league.lower()
         assert (self.league in ['major', 'aaa', 'aa', 'a', 'independent', 'maverick', 'renegade', 'paladin']), f"{league} is not valid."
         
-        self.winloss = gsheet2df(get_google_sheet("1Tlc_TgGMrY5aClFF-Pb5xvtKrJ1Hn2PJOLy2fUDDdFI","Team Wins!A1:AE17"))
+        self.winloss = pr_sheet.to_df("Team Wins!A1:AE17")
         self.records = self.get_records()
         self.teams = self.records.index.to_numpy()
         self.divisions = self.get_divisions()
@@ -91,9 +98,9 @@ class Structs:
     def get_schedule(self):
         schedule = []
         if self.league in ['major', 'aaa', 'aa', 'a']:
-            sheet_schedule = gsheet2df(get_google_sheet("1AJoBYkYGMIrpe8HkkJcB25DbLP2Z-eV7P6Tk9R6265I", str(self.league)+' Schedule!N4:V'))
+            sheet_schedule = p4_sheet.to_df(str(self.league)+' Schedule!N4:V')
         elif self.league in ['independent', 'maverick', 'renegade', 'paladin']:
-            sheet_schedule = gsheet2df(get_google_sheet("1bWvgo_YluMbpQPheldQQZdASKGHRPIUVfYL2r2KSdaE", str(self.league)+' Schedule!N4:V'))
+            sheet_schedule = indy_sheet.to_df(str(self.league)+' Schedule!N4:V')
         for row in sheet_schedule.index:
             if sheet_schedule.loc[row, "Winner"] == '':
                 game = sheet_schedule.iloc[row, 2]+' - '+sheet_schedule.iloc[row, 4]

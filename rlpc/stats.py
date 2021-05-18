@@ -1,11 +1,13 @@
 import pandas as pd
 
-from tools import sheet
+from tools.sheet import Sheet
 from tools.database import select
 
-from settings import valid_stats, leagues
+from settings import valid_stats, leagues, sheet_p4, sheet_indy, power_rankings_sheet
 
-sheet_id = "1AJoBYkYGMIrpe8HkkJcB25DbLP2Z-eV7P6Tk9R6265I"
+p4sheet = Sheet(sheet_p4)
+indysheet = Sheet(sheet_indy)
+powerrankings = Sheet(power_rankings_sheet)
 
 def get_player_stats(player,stat="all"):
     # Make sure the program understands the specified stat if it's mis-capitalized or whatever
@@ -40,8 +42,7 @@ def get_player_stats(player,stat="all"):
     elif stat.lower() in ['shpg','shots per game',' shots pg', 'shots per']:
         stat = "Shots Per Game"
     
-    playersheet = sheet.get_google_sheet(sheet_id, 'Players!A1:I')
-    players = sheet.gsheet2df(playersheet)
+    players = p4sheet.to_df('Players!A1:I')
     lower_players = players['Username'].str.lower()
     if player.lower() in lower_players.values:
         pindex = lower_players[lower_players == player.lower()].index[0]
@@ -50,8 +51,7 @@ def get_player_stats(player,stat="all"):
     league = players.loc[player, "League"]
     if type(league) == pd.core.series.Series:
         league = league[0]
-    statsheet = sheet.get_google_sheet(sheet_id, f"{league} League Stat Database!C3:R")    
-    stats = sheet.gsheet2df(statsheet)
+    stats = p4sheet.to_df(f"{league} League Stat Database!C3:R")
     if stat not in list(stats) and stat.lower() != "all":
         return("That stat could not be understood.")
     stats = stats.loc[stats['Player']==player]
@@ -67,8 +67,7 @@ def power_rankings(league):
     
     start_rows = {'Major': 2, 'AAA': 21, 'AA': 40, 'A': 59, 'Independent': 78, 'Maverick': 97, 'Renegade': 116, 'Paladin': 135}
     data_range = f'Rankings History!A{start_rows[league]}:M{start_rows[league]+16}'
-    # week = sheet.get_google_sheet("1Tlc_TgGMrY5aClFF-Pb5xvtKrJ1Hn2PJOLy2fUDDdFI", 'Sheet Resources!U14')['values'][0][0]
-    data = sheet.gsheet2df(sheet.get_google_sheet('1Tlc_TgGMrY5aClFF-Pb5xvtKrJ1Hn2PJOLy2fUDDdFI', data_range)).set_index('')
+    data = powerrankings.to_df(data_range).set_index('')
     column = 1
     for i in range(12):
         if data.iloc[:, i].values[0] == '':
@@ -144,9 +143,9 @@ def statlb(useSheet = False, league = "all", stat = "Goals", limit = 10, pergame
     else: 
         # This is redundant for now but sheet ids can be different just in case something changes in the future
         if league.lower() in ['major', 'aaa', 'aa', 'a']: 
-            data = sheet.gsheet2df(sheet.get_google_sheet('1AJoBYkYGMIrpe8HkkJcB25DbLP2Z-eV7P6Tk9R6265I', '{league} League Stat Database!C3:R'))
+            data = p4sheet.to_df('{league} League Stat Database!C3:R')
         elif league.lower() in ['independent', 'maverick', 'renegade', 'paladin']:
-            data = sheet.gsheet2df(sheet.get_google_sheet('1AJoBYkYGMIrpe8HkkJcB25DbLP2Z-eV7P6Tk9R6265I', '{league} League Stat Database!C3:R'))
+            data = indysheet.to_df('{league} League Stat Database!C3:R')
         data.set_index("Player", inplace=True)
         data.replace(to_replace='', value='0', inplace=True)        
         # Turn number strings into ints and floats

@@ -5,4 +5,4 @@
 
 **{prefix}ping**: Shows the bot's current ping.
 
-**{prefix}alerts**: Subscribes the current channel to Upset Alerts. Only usable if you have Admin perms in the server.
+**{prefix}alerts**: Subscribes the current channel to Upset Alerts. Only usable if you have Manage_Channel perms in the server.

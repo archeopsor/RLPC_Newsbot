@@ -4,7 +4,7 @@ import pytz
 from difflib import SequenceMatcher
 
 from tools.database import engine, select
-from tools import sheet, accounts
+from tools.sheet import Sheet
 
 from settings import prefix
 
@@ -345,15 +345,3 @@ def player_lb(league: str = None, sortby: str="Fantasy Points", num: int=10, per
     lb = players['Fantasy Points'].sort_values(ascending=False)
         
     return lb.head(num)
-
-
-def push_to_sheet():
-    players = select('players')
-    players = players.drop(columns='id')
-    players = players.drop(players[players['Team'].isin(['Below MMR', 'Waitlist', 'Future Star', 'Ineligible', 'Not Playing', 'Suspended', 'Inactive'])].index)
-    sheet.df_to_sheet('1rmJVnfWvVe3tSnFrXpExv4XGbIN3syZO12dGBeoAf-w', 'Players!A2:ZZ', players)
-    
-    
-def temp(salaries):
-    for player in salaries.index:
-        engine.execute(f"""update players set "Fantasy Value" = {salaries.loc[player, 'Fantasy Value']} where "Username" = '{player}'""")

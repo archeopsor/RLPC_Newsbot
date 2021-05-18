@@ -8,9 +8,12 @@ from zipfile import ZipFile
 import carball
 
 from tools.database import engine, select
-from tools import sheet
+from tools.sheet import df_to_sheet
 
 from rlpc.players import download_ids, identify, find_team, find_league, check_players, tracker_identify
+
+global failed
+failed = []
 
 def fantasy_formula(row: pd.Series) -> int:
     """
@@ -163,6 +166,7 @@ def get_series_stats(replays: list, players: pd.DataFrame) -> pd.DataFrame:
         try:
             stats = get_replay_stats(replay)
         except: 
+            failed.append(replay)
             continue
         
         temp_player_stats = player_stats.copy()
@@ -201,6 +205,7 @@ def get_series_stats(replays: list, players: pd.DataFrame) -> pd.DataFrame:
                 elif players.loc[players['Username']==name, 'Team'].values[0] not in teams:
                     continue
             except:
+                failed.append(name)
                 continue
             
             if name not in temp_player_stats.index.values:
@@ -367,7 +372,6 @@ def rlpc_replay_analysis():
     fantasy_players = select('fantasy_players').set_index('username')
     
     counter = 1
-    failed = []
 
     for series in list(replays): # Repeats this for every series downloaded
         print(f'Analyzing series {counter} of {len(list(replays))} ({round(((counter-1)/len(list(replays)))*100)}%)')
@@ -445,4 +449,4 @@ def log_data(data, sheet_range: str):
     None.
 
     """
-    sheet.df_to_sheet('1DU14mG8jHh2AG8ol16iYpUvXDjTHFgt7Kwe7CIoxRxU', sheet_range, data.reset_index().fillna(value=0).drop(columns=['id', 'price', 'price_history', 'stock_float']))
+    df_to_sheet('1DU14mG8jHh2AG8ol16iYpUvXDjTHFgt7Kwe7CIoxRxU', sheet_range, data.reset_index().fillna(value=0).drop(columns=['id', 'price', 'price_history', 'stock_float']))

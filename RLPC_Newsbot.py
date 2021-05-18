@@ -8,11 +8,13 @@ from discord.ext.commands import has_permissions
 from rlpc import elo
 
 from tools.database import engine, select
-from tools import sheet
+from tools.sheet import Sheet
 
-from settings import prefix
+from settings import prefix, power_rankings_sheet
 client = commands.Bot(command_prefix = prefix)
 client.remove_command('help')
+
+pr_sheet = Sheet(power_rankings_sheet)
 
 @client.event
 async def on_ready():
@@ -43,7 +45,7 @@ async def unload(ctx, extension):
     await ctx.send(f"{extension} unloaded")
     
 @client.command(aliases=("alert","subscribe",))
-@has_permissions(administrator=True)
+@has_permissions(manage_channels=True)
 async def alerts(ctx):
     async with ctx.typing():
         channels = select("select id from alerts_channels")['id'].to_list()
@@ -89,7 +91,7 @@ async def on_message(message):
         
         print("Getting records")
         # This is needed to put records in alert_message, even if using rating for the criteria
-        records = sheet.gsheet2df(sheet.get_google_sheet("1Tlc_TgGMrY5aClFF-Pb5xvtKrJ1Hn2PJOLy2fUDDdFI","Team Wins!A1:AE17"))
+        records = pr_sheet.to_df("Team Wins!A1:AE17")
         if league == "Major":
             records = records.iloc[:,0:3]
         elif league == "AAA":

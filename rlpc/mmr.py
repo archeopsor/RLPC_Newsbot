@@ -4,7 +4,7 @@ import time
 import urllib
 import re
 
-from tools import sheet
+from tools.sheet import Sheet
 
 BASE_URL = 'https://rocketleague.tracker.network'
 PROFILE_URL = BASE_URL + '/profile/{platform}/{username}'
@@ -142,36 +142,36 @@ def get_rows(soup, seasons_ago):
 	table_body = playlist_table.find('tbody')
 	return table_body.find_all('tr')
 
-def findmmrs():
-    done = sheet.gsheet2df(sheet.get_google_sheet('1rmJVnfWvVe3tSnFrXpExv4XGbIN3syZO12dGBeoAf-w', 'Player Data!A1:B'))
-    players = sheet.gsheet2df(sheet.get_google_sheet('1C10LolATTti0oDuW64pxDhYRLkdUxrXP0fHYBk3ZwmU', 'Players!A1:R'))
-    players = players.loc[players['Tracker']!= ""]
-    try: players = players.loc[~players['Username'].isin(done['Username'])]
-    except: pass
+# def findmmrs():
+#     done = sheet.gsheet2df(sheet.get_google_sheet('1rmJVnfWvVe3tSnFrXpExv4XGbIN3syZO12dGBeoAf-w', 'Player Data!A1:B'))
+#     players = sheet.gsheet2df(sheet.get_google_sheet('1C10LolATTti0oDuW64pxDhYRLkdUxrXP0fHYBk3ZwmU', 'Players!A1:R'))
+#     players = players.loc[players['Tracker']!= ""]
+#     try: players = players.loc[~players['Username'].isin(done['Username'])]
+#     except: pass
     
-    for i in players.index.values:
-        peaks=[0]
-        peaks.append(int(players.loc[i, 'Tracker MMR']))
+#     for i in players.index.values:
+#         peaks=[0]
+#         peaks.append(int(players.loc[i, 'Tracker MMR']))
         
-        for url in players.loc[i, 'Tracker'].split(", "):
-            link = url.strip()
-            if 'mmr' not in link:
-                text = link.split("/profile")
-                link = text[0] + "/profile/mmr" + text[-1]
+#         for url in players.loc[i, 'Tracker'].split(", "):
+#             link = url.strip()
+#             if 'mmr' not in link:
+#                 text = link.split("/profile")
+#                 link = text[0] + "/profile/mmr" + text[-1]
             
-            try:
-                peaks.append(getMmr(link))
-            except:
-                try:
-                    peaks.append(max(seasonpeak(link)))
-                except:
-                    print(players.loc[i, 'Username']+' failed')
+#             try:
+#                 peaks.append(getMmr(link))
+#             except:
+#                 try:
+#                     peaks.append(max(seasonpeak(link)))
+#                 except:
+#                     print(players.loc[i, 'Username']+' failed')
         
-        peaks = [x for x in peaks if x != None]
-        values = [[players.loc[i, 'Username']], [max(peaks)]]
-        body = {'majorDimension': "COLUMNS", 'values': values}
-        sheet.append_data('1rmJVnfWvVe3tSnFrXpExv4XGbIN3syZO12dGBeoAf-w', 'Player Data!A1:C', body)
-        time.sleep(60)
+#         peaks = [x for x in peaks if x != None]
+#         values = [[players.loc[i, 'Username']], [max(peaks)]]
+#         body = {'majorDimension': "COLUMNS", 'values': values}
+#         sheet.append_data('1rmJVnfWvVe3tSnFrXpExv4XGbIN3syZO12dGBeoAf-w', 'Player Data!A1:C', body)
+#         time.sleep(60)
         
         
 def seasonpeak(url):
@@ -320,11 +320,3 @@ def getMmr(url):
         raise Exception("No MMRs found")
     else:
         return playerMmr
-    
-def randomcode():
-    new = sheet.gsheet2df(sheet.get_google_sheet("1rmJVnfWvVe3tSnFrXpExv4XGbIN3syZO12dGBeoAf-w", "Player Data!A1:B"))
-    season12 = sheet.gsheet2df(sheet.get_google_sheet("1C10LolATTti0oDuW64pxDhYRLkdUxrXP0fHYBk3ZwmU", "Players!A1:H"))
-    new['Team'] = season12['Team']
-    active = new.loc[~new['Team'].isin(['Not Playing','Below MMR','Future Star','Ineligible','Inactive'])]
-    active["MMR"] = active['Peak MMR'].map(lambda x: int(x))
-    active = active.drop(columns=['Peak MMR'])

@@ -5,13 +5,17 @@ from numba.typed import Dict
 
 from rlpc import elo
 
-from tools import sheet
+from tools.sheet import Sheet
 
-from settings import k, divisions
+from settings import k, divisions, power_rankings_sheet, forecast_sheet, sheet_p4, sheet_indy
+
+pr_sheet = Sheet(power_rankings_sheet, refresh_cooldown = 600)
+fc_sheet = Sheet(forecast_sheet, refresh_cooldown = 600)
+p4_sheet = Sheet(sheet_p4, refresh_cooldown = 600)
+indy_sheet = Sheet(sheet_indy, refresh_cooldown = 600)
 
 # Get the wins and losses of all the teams in a dataframe from the sheet
-gsheet = sheet.get_google_sheet("1Tlc_TgGMrY5aClFF-Pb5xvtKrJ1Hn2PJOLy2fUDDdFI","Team Wins!A1:AE17")
-winloss = sheet.gsheet2df(gsheet)
+winloss = pr_sheet.to_df("Team Wins!A1:AE17")
 
 major_records = winloss.iloc[:, 0:3].set_index("Major Teams").astype('int')
 aaa_records = winloss.iloc[:, 4:7].set_index("AAA Teams").astype('int')
@@ -45,9 +49,9 @@ def predict_season(league, times, image=False, official=False, divisions=divs):
     
     schedule = []
     if league.casefold() in ['major', 'aaa', 'aa', 'a']:
-        sheet_schedule = sheet.gsheet2df(sheet.get_google_sheet("1AJoBYkYGMIrpe8HkkJcB25DbLP2Z-eV7P6Tk9R6265I", str(league)+' Schedule!N4:V'))
+        sheet_schedule = p4_sheet.to_df(str(league)+' Schedule!N4:V')
     elif league.casefold() in ['independent', 'maverick', 'renegade', 'paladin']:
-        sheet_schedule = sheet.gsheet2df(sheet.get_google_sheet("1bWvgo_YluMbpQPheldQQZdASKGHRPIUVfYL2r2KSdaE", str(league)+' Schedule!N4:V'))
+        sheet_schedule = indy_sheet.to_df(str(league)+' Schedule!N4:V')
     for row in sheet_schedule.index:
         if sheet_schedule.loc[row, "Winner"] == '':
             game = sheet_schedule.iloc[row, 2]+' - '+sheet_schedule.iloc[row, 4]
@@ -299,19 +303,16 @@ def predict_season(league, times, image=False, official=False, divisions=divs):
         rows = {"major": 3, "aaa": 22, "aa": 41, "a": 60, "independent": 79, "maverick": 98, "renegade": 117, "paladin": 136}
         row = rows[league.casefold()]
         
-        sheet_id = "1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ"
-        
         values = []
         for column in forecast:
             col_values = list(column.values())
             values.append(col_values)
             
-        body = {'majorDimension': "COLUMNS", 'values': values}
         range_name = "Most Recent!B"+str(row)+":F"+str(row+15)
         
-        sheet.clear(sheet_id, range_name)
-        sheet.append_data(sheet_id, range_name, body, insertDataOption = 'OVERWRITE')
-    
+        fc_sheet.clear(range_name)
+        fc_sheet.append(range_name, values)
+            
     return forecast
 
 def full_forecast(times=10000, images=False):

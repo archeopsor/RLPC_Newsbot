@@ -1,18 +1,15 @@
 import discord
 from discord.ext import commands
-from PIL import Image, ImageDraw, ImageFont
-import pandas as pd
 import numpy as np
-import dataframe_image as dfi
-import os
 
 from rlpc import stats, mmr
-from rlpc.players import find_league
 
-from tools import sheet
-from tools.database import select
+from tools.sheet import Sheet
 
-from settings import prefix, valid_stats, leagues
+from settings import prefix, valid_stats, leagues, sheet_p4, gdstats_sheet
+
+p4sheet = Sheet(sheet_p4)
+gdsheet = Sheet(gdstats_sheet)
 
 client = commands.Bot(command_prefix = prefix)
 
@@ -63,7 +60,7 @@ class Stats(commands.Cog):
     @commands.command() # TODO: fix this
     async def mmr(self, ctx, *, player):
         async with ctx.typing():
-            players = sheet.gsheet2df(sheet.get_google_sheet('1AJoBYkYGMIrpe8HkkJcB25DbLP2Z-eV7P6Tk9R6265I', 'Players!A1:R'))
+            players = p4sheet.to_df('Players!A1:R')
             
             # Remove case-sensitivity
             lower_players = players['Username'].str.lower()
@@ -99,7 +96,7 @@ class Stats(commands.Cog):
             if msg.casefold() == "me":
                 waitingMsg = await ctx.send("One second, retreiving discord ID and stats")
                 msg = str(ctx.author.id)
-                ids = sheet.gsheet2df(sheet.get_google_sheet('1AJoBYkYGMIrpe8HkkJcB25DbLP2Z-eV7P6Tk9R6265I', 'PlayerIDs!A1:B')).set_index('Discord ID')
+                ids = p4sheet.to_df('PlayerIDs!A1:B').set_index('Discord ID')
                 try:
                     msg = ids.loc[msg, 'Username']
                 except:
@@ -150,6 +147,8 @@ class Stats(commands.Cog):
                     pergame = True
                 elif word.lower() in ['sheet', 'usesheet']:
                     useSheet = True
+                elif word.lower() in ['db', 'database', 'fantasy', 'fantasydb']:
+                    useSheet = False
                 elif word.lower() in [x.split()[0].lower() for x in valid_stats]: # First word of a stat
                     stat = word.title()
                     if len(msg) == i+1: # If that was the last arg in the msg
@@ -235,14 +234,14 @@ class Stats(commands.Cog):
                 return await ctx.send(f'{day} is not a valid gameday. Please enter a number between 1 and 18.')
             
             try:
-                data = sheet.gsheet2df(sheet.get_google_sheet('1DU14mG8jHh2AG8ol16iYpUvXDjTHFgt7Kwe7CIoxRxU', datarange)).set_index("Username")
+                data = gdsheet.to_df(datarange).set_index("Username")
             except:
                 return await ctx.send(f'There was an error retrieving data from gameday {day}.')
 
             if player.lower() == "me":
                 waitingMsg = await ctx.send("One second, retreiving discord ID and stats")
                 playerid = str(ctx.author.id)
-                ids = sheet.gsheet2df(sheet.get_google_sheet('1AJoBYkYGMIrpe8HkkJcB25DbLP2Z-eV7P6Tk9R6265I', 'PlayerIDs!A1:B')).set_index('Discord ID')
+                ids = p4sheet.to_df('PlayerIDs!A1:B').set_index('Discord ID')
                 try:
                     player = ids.loc[playerid, 'Username']
                 except:

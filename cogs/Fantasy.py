@@ -3,9 +3,13 @@ import fantasy_infrastructure as fantasy
 import discord
 
 from rlpc import mmr
-from tools import accounts, sheet
+from tools import accounts
+from tools.sheet import Sheet
 
-from settings import prefix
+from settings import prefix, sheet_p4
+
+p4_sheet = Sheet(sheet_p4)
+
 client = commands.Bot(command_prefix = prefix)
 
 class Fantasy(commands.Cog):
@@ -104,6 +108,7 @@ class Fantasy(commands.Cog):
             team.add_field(name="Total Points", value=answer[5], inline=False)
         await ctx.send(embed=team)
     
+    # TODO: Add field to show how many teams the player is on
     @commands.command(aliases=("player","playerinfo","info",))
     async def player_info(self,ctx,*,player):
         async with ctx.typing():
@@ -114,7 +119,7 @@ class Fantasy(commands.Cog):
             if 'me' in player.lower().split(' '):
                 waitingMsg = await ctx.send("One second, retreiving discord ID and stats")
                 msg = str(ctx.author.id)
-                ids = sheet.gsheet2df(sheet.get_google_sheet('1AJoBYkYGMIrpe8HkkJcB25DbLP2Z-eV7P6Tk9R6265I', 'PlayerIDs!A1:B')).set_index('Discord ID')
+                ids = p4_sheet.to_df('PlayerIDs!A1:B').set_index('Discord ID')
                 try:
                     player = ids.loc[msg, 'Username']
                 except:

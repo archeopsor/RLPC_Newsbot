@@ -1,7 +1,11 @@
 prefix = '$'
 k = 40
-sheet_p4 = ''
-sheet_indy = ''
+sheet_p4 = '1AJoBYkYGMIrpe8HkkJcB25DbLP2Z-eV7P6Tk9R6265I'
+sheet_indy = '1bWvgo_YluMbpQPheldQQZdASKGHRPIUVfYL2r2KSdaE'
+test_sheet = '1Aoujd5BdcVYYf-3-f2ha_I3agsyT0f1CYdW5qJ54ca4'
+power_rankings_sheet = '1Tlc_TgGMrY5aClFF-Pb5xvtKrJ1Hn2PJOLy2fUDDdFI'
+gdstats_sheet = '1DU14mG8jHh2AG8ol16iYpUvXDjTHFgt7Kwe7CIoxRxU'
+forecast_sheet = '1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ'
 valid_stats = ['Series Played' , 'Series Won' , 'Games Played' , 'Games Won' , 'Goals' , 'Assists' , 'Saves' , 'Shots' , 'Dribbles' , 'Passes' , 'Aerials' , 'Boost Used' , 'Wasted Collection' , 'Wasted Usage' , '# Small Boosts' , '# Large Boosts' , '# Boost Steals' , 'Wasted Big' , 'Wasted Small' , 'Time Slow' , 'Time Boost' , 'Time Supersonic' , 'Turnovers Lost' , 'Defensive Turnovers Lost' , 'Offensive Turnovers lost' , 'Turnovers Won' , 'Hits' , 'Kickoffs' , 'Demos Inflicted' , 'Demos Taken' , 'First Touches' , 'Kickoff Cheats' , 'Kickoff Boosts' , 'Flicks' , 'Clears']
 leagues = {'major': "Major", 'aaa': 'AAA', 'aa': 'AA', 'a': 'A', 'indy': 'Independent', 'independent': 'Independent', 'mav': 'Maverick', 'maverick': 'Maverick', 'renegade': 'Renegade', 'ren': 'Renegade', 'paladin': 'Paladin', 'pal': 'Paladin'}
 divisions = {'Sharks': 'Predator', 'Bulls': 'Predator', 'Panthers': 'Predator', 'Lions': 'Predator', 
@@ -36,3 +40,4 @@ divisions = {'Sharks': 'Predator', 'Bulls': 'Predator', 'Panthers': 'Predator', 
              'Wildebeests': 'Elements', 'Hammerheads': 'Elements', 'Jackals': 'Elements', 'Foxes': 'Elements',
              'Dragonflies': 'Wild', 'Cosmos': 'Wild', 'Ninjas': 'Wild', 'Cubs': 'Wild',
              'Roadrunners': 'Brawler', 'Penguins': 'Brawler', 'Buzzards': 'Brawler', 'Sorcerers': 'Brawler'}
+

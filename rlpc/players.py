@@ -1,32 +1,9 @@
 import pandas as pd
 
 from tools.database import engine, select
-from tools import sheet
+from tools.sheet import Sheet
 
-def get_fantasy():
-    gsheet = sheet.get_google_sheet('1rmJVnfWvVe3tSnFrXpExv4XGbIN3syZO12dGBeoAf-w','Player Info!A1:I')
-    players = sheet.gsheet2df(gsheet)
-    players[['MMR', 'Fantasy Value', 'Fantasy Points']] = players[['MMR', 'Fantasy Value', 'Fantasy Points']].apply(pd.to_numeric)
-    return(players)
-
-def get_database():
-    players = select('select * from players')
-    return players
-
-def push_sheet_to_sql(): # Temporary
-    data = get_fantasy()
-    data.to_sql("players", con=engine, if_exists='relpace')
-
-def push_sql_to_sheet():
-    data = get_database()
-    sheet.df_to_sheet('1rmJVnfWvVe3tSnFrXpExv4XGbIN3syZO12dGBeoAf-w','Player Info!A1:I', data)
-
-def check() -> bool:
-    # Returns True if the database matches the sheet
-    fantasy = get_fantasy()
-    db = get_database()
-    check = fantasy == db
-    return not False in check.values
+from settings import sheet_p4
 
 def flatten(items, seqtypes=(list, tuple)):
     for i, x in enumerate(items):
@@ -35,13 +12,10 @@ def flatten(items, seqtypes=(list, tuple)):
     items = [i for i in items if i != '']
     return items
 
+p4sheet = Sheet(sheet_p4)
 
-global teams
-teams = sheet.gsheet2df(sheet.get_google_sheet('1AJoBYkYGMIrpe8HkkJcB25DbLP2Z-eV7P6Tk9R6265I', 'Teams!F1:P129'))
-
-
-def add_player(username, region, platform, mmr, team, league, ids=[]):
-    players = sheet.gsheet2df(sheet.get_google_sheet('1AJoBYkYGMIrpe8HkkJcB25DbLP2Z-eV7P6Tk9R6265I', 'Players!A1:W'))
+def add_player(username, region, platform, mmr, team, league, ids=[]): 
+    players = p4sheet.to_df('Players!A1:W')
     players['Sheet MMR'] = players['Sheet MMR'].apply(lambda x: int(x) if x != '' else x)
     players['Tracker MMR'] = players['Tracker MMR'].apply(lambda x: int(x) if x != '' else x)
     data = players.loc[(players['League']==league) & ~(players['Team'].isin(['Not Playing', 'Waitlist', 'Future Star']))].reset_index(drop=True) # Get valid players from correct league
@@ -81,8 +55,8 @@ def download_ids():
 
     """
     print('Downloading IDs...')
-    gsheet = sheet.get_google_sheet("1AJoBYkYGMIrpe8HkkJcB25DbLP2Z-eV7P6Tk9R6265I", 'Players!A1:AE')
-    sheetdata = sheet.gsheet2df(gsheet) 
+        
+    sheetdata = p4sheet.to_df('Players!A1:AE')
     sheetdata['Unique IDs'] = sheetdata['Unique IDs'].map(lambda x: x.split(","))
     sheetdata = sheetdata.drop_duplicates(subset='Username')
     sheetdata = sheetdata.loc[sheetdata['Username']!=""]
@@ -150,7 +124,8 @@ def identify(id: str, players: pd.DataFrame) -> str:
         try:
             if id in players.loc[players['Username']==player, 'id'].values[0]:
                 return player
-        except: pass
+        except: 
+            pass
         
 def find_team(names: list, players: pd.DataFrame, id_players: bool = False, choices: list = None) -> str:
     """
@@ -185,6 +160,9 @@ def find_team(names: list, players: pd.DataFrame, id_players: bool = False, choi
     
     found_teams = []
     players = players.set_index('Username')
+    
+    teams = p4sheet.to_df('Teams!F1:P129')
+    
     for player in names:
         
         team = players.loc[player, 'Team']
@@ -195,7 +173,7 @@ def find_team(names: list, players: pd.DataFrame, id_players: bool = False, choi
             affiliate_columns = {'Major': 'Major Affiliate', 'AAA': 'AAA Affiliate', 'AA': 'AA Affiliate', 'A': 'A Affiliate', 'Independent': 'Major Affiliate', 'Maverick': 'AAA Affiliate', 'Renegade': 'AA Affiliate', 'Paladin': 'A Affiliate'}
             team = teams.loc[teams["Team"]==team_league, affiliate_columns[choice_league]]
         
-        teams.append(team)
+        found_teams.append(team)
     
     for team in found_teams:
         if found_teams.count(team) > 1:
@@ -228,8 +206,7 @@ def find_league(team: str, players: pd.DataFrame) -> str:
 def check_players():
     print("Checking players...")
     players = select('players')
-    gsheet = sheet.get_google_sheet("1AJoBYkYGMIrpe8HkkJcB25DbLP2Z-eV7P6Tk9R6265I", 'Players!A1:W')
-    sheetdata = sheet.gsheet2df(gsheet)
+    sheetdata = p4sheet.to_df('Players!A1:W')
     sheetdata['Unique IDs'] = sheetdata['Unique IDs'].map(lambda x: x.split(","))
     sheetdata = sheetdata.drop_duplicates(subset='Username')
     sheetdata = sheetdata.loc[sheetdata['Username']!=""]
@@ -294,7 +271,7 @@ def change_name(old, new, playerid):
     engine.execute(f"""update fantasy_players set players = array_replace("players", '{old}', '{new}')""")
     
 def tracker_identify(name):
-    sheetdata = sheet.gsheet2df(sheet.get_google_sheet('1AJoBYkYGMIrpe8HkkJcB25DbLP2Z-eV7P6Tk9R6265I', 'Players!A1:AE'))
+    sheetdata = p4sheet.to_df('Players!A1:AE')
     player = sheetdata.loc[sheetdata['Tracker'].str.contains(name.split()[0]), 'Username']
     try:
         player = player.values[0]

@@ -23,7 +23,7 @@ class Help(commands.Cog):
             await ctx.send(f"Couldn't understand {specified.title()}")
             specified = "none"
         
-        path = os.getcwd()[-4]+'help_text\\'
+        path = '\\'.join(os.getcwd().split('\\')[:-1]) + 'help_text\\'
         with open(path+specified+'.txt') as f:
             text = f.read()
             text = text.replace('{prefix}', prefix)

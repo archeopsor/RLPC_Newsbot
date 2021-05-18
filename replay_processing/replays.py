@@ -11,10 +11,19 @@ import pytz
 import carball
 
 from tools.database import engine, select
-from tools import sheet
+from tools.sheet import Sheet
 
 from rlpc.players import download_ids, identify, find_team, find_league, check_players, tracker_identify
 from rlpc import elo
+
+
+class Structs: # TODO: Make an analysis class and put all these in there
+    def __init__(self):
+        self._players = select("players").fillna(value=0)
+        
+    @property
+    def players(self):
+        return self._players
 
 
 class Retreiver:
@@ -22,9 +31,7 @@ class Retreiver:
         pass
     
     @staticmethod
-    def download():
-        
-        
+    def download(elo=True):
         """
         Downloads yesterday's replays from the rlpcgamelogs website
 
@@ -107,7 +114,8 @@ class Retreiver:
                 
             time.sleep(13)
         
-        elo.autoparse(scores)
+        if elo:
+            elo.autoparse(scores)
         
         return browser.quit()
         
@@ -180,7 +188,11 @@ class Retreiver:
 class Replay:
     def __init__(self, path):
         self.path = path
+        self.failed = False
+        self.structs = Structs()
         self._stats, self._frames = self.process()
+        self._teams = self.get_teams()
+        self._players = self.get_players()
     
     def process(self) -> (dict, pd.DataFrame):
         """
@@ -194,11 +206,77 @@ class Replay:
             Dataframe with data for each actor every frame.
 
         """
-        analysis_manager = carball.analyze_replay_file(self.path, logging_level=logging.CRITICAL)
+        # Decompile Replay
+        try:
+            analysis_manager = carball.analyze_replay_file(self.path, logging_level=logging.CRITICAL)
+        except:
+            print("REPLAY FAILED: " + self.path)
+        
         frames = analysis_manager.get_data_frame().fillna(value=0)
         stats = dict(analysis_manager.get_json_data())
         
         return stats, frames
+    
+    def get_teams(self):
+        """
+        Returns a verified and ordered list of the two teams' names
+
+        Returns
+        -------
+        teams : list
+            The two teams in this replay.
+
+        """
+        players = self.structs.players
+        stats = self._stats
+        choices = self.path.split('/')[5].split(' - ')
+        
+        teams = []
+        teams.append([x['id'] for x in stats['teams'][0]['playerIds']])
+        teams.append([x['id'] for x in stats['teams'][1]['playerIds']])
+        team1 = find_team(teams[0], players, id_players = True, choices = choices)
+        team2 = find_team(teams[1], players, id_players = True, choices = choices)
+    
+        return [team1, team2]
+        
+    def get_players(self):
+        """
+        Gets a list of all the valid (non-sub) players
+
+        Returns
+        -------
+        players : list
+            List of all valid players in the replay.
+
+        """
+        teams = self._teams
+        stats = self._stats
+        players = self.structs.players
+        players = []
+        
+        for player in stats['players']:
+            name = identify(player['id']['id'], players)
+            if name == None:
+                name = identify(player['name'], players)
+                if name == None:
+                    name = tracker_identify(player['name'])
+                    if name == None:
+                        name = player['name']
+            
+            # Handle subs
+            try: 
+                if players.loc[players['Username']==name, 'League'].values[0] != players.loc[players['Team']==teams[0], 'League'].values[0]:
+                    # This should only be true if the player is not actually on the team, ie a sub or call down
+                    continue
+                elif players.loc[players['Username']==name, 'Team'].values[0] not in teams:
+                    continue
+            except:
+                print("PLAYER FAILED: " + name)
+                continue
+            
+            players.append(name)
+            
+        return players
     
     @property
     def stats(self):
@@ -207,6 +285,19 @@ class Replay:
     @property
     def frames(self):
         return self._frames
+    
+    @property
+    def players(self):
+        return self._players
+    
+    @property
+    def teams(self):
+        return self._teams
+    
+
+    
+
+
     
     def normalise_frames(self, inplace: bool = False) -> pd.DataFrame:
         """
@@ -249,5 +340,4 @@ class Replay:
             self._frames = df
         
         return df
-    
     

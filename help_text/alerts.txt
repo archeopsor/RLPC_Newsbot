@@ -1,4 +1,4 @@
 **Command: {prefix}alerts**
 
 Subscribes the channel to upset alerts. If the server has a role named "Upset Alerts", it will also ping this role.
-Requires Admin perms to use.
+Requires Manage Channels perms to use.

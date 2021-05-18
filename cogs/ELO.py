@@ -1,19 +1,20 @@
 import discord
 from discord.ext import commands
 import pandas as pd
-import numpy as np
 import dataframe_image as dfi
 import os
 
-from settings import prefix, valid_stats, leagues
+from settings import prefix, forecast_sheet
 
 from rlpc.players import find_league
-from rlpc.elo import exp_score, rank_teams, recall_data
+from rlpc.elo import exp_score, rank_teams
 
-from tools import sheet
+from tools.sheet import Sheet
 from tools.database import select
 
 client = commands.Bot(command_prefix = prefix)
+
+fc_sheet = Sheet(forecast_sheet)
 
 class ELO(commands.Cog):
     
@@ -102,23 +103,23 @@ class ELO(commands.Cog):
                 league = find_league(team.title(), select("players")).lower()
                 waitingMsg.delete(delay=3)
             elif league == "major":
-                gsheet = sheet.get_google_sheet("1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ", "Most Recent!A2:F18")
+                datarange = "Most Recent!A2:F18"
             elif league == "aaa":
-                gsheet = sheet.get_google_sheet("1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ", "Most Recent!A21:F37")
+                datarange = "Most Recent!A21:F37"
             elif league == "aa":
-                gsheet = sheet.get_google_sheet("1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ", "Most Recent!A40:F56")
+                datarange = "Most Recent!A40:F56"
             elif league == "a":
-                gsheet = sheet.get_google_sheet("1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ", "Most Recent!A59:F75")
+                datarange = "Most Recent!A59:F75"
             elif league == "independent":
-                gsheet = sheet.get_google_sheet("1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ", "Most Recent!A78:F94")
+                datarange = "Most Recent!A78:F94"
             elif league == "maverick":
-                gsheet = sheet.get_google_sheet("1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ", "Most Recent!A97:F113")
+                datarange = "Most Recent!A97:F113"
             elif league == "renegade":
-                gsheet = sheet.get_google_sheet("1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ", "Most Recent!A116:F132")
+                datarange = "Most Recent!A116:F132"
             elif league == "paladin":
-                gsheet = sheet.get_google_sheet("1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ", "Most Recent!A135:F151")
+                datarange = "Most Recent!A135:F151"
             
-            data = sheet.gsheet2df(gsheet).set_index('Teams')
+            data = fc_sheet.to_df(datarange).set_index('Teams')
     
             if league in ['aaa', 'aa', 'a']:
                 league = league.upper()
@@ -160,21 +161,6 @@ class ELO(commands.Cog):
                     
                     await ctx.send(file=file)
                     return os.remove(path)
-                    
-                    
-#                 message = f"""
-# ╔═══════╦══════╦═════╦═══════╗ 
-# ║ Teams        ║ Record    ║ Playoffs ║ Champions ║"""
-#                 for team in data.index.values:
-#                     wins = str(data.loc[team, 'Expected Wins'])
-#                     playoffs = str(data.loc[team, 'Playoffs'])
-#                     champs = str(data.loc[team, 'Champions'])
-#                     message = message + f"\n╠═══════╬══════╬═════╬═══════╣\n║ {team+('  '*(9-len(team)))} ║ {wins+('  '*(8-len(wins)))} ║ {playoffs+('  '*(8-len(playoffs)))} ║ {champs+('  '*(10-len(champs)))} ║"
-#                 message = message + "\n╚═══════╩══════╩═════╩═══════╝"
-#                 embed=discord.Embed()
-#                 embed.set_footer(text=message)
-#                 await ctx.send(embed=embed) # TODO: Fix Formatting
-#                 return
             
             elif team != "none" and part == "none":
                 embed = discord.Embed(title = f'{team.title()} Forecast', description = "Average record and probability of making each part of playoffs throughout 100,000 simulations of the league.", color=0x000080)

@@ -1,178 +1,231 @@
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
+
 import os.path
 import pickle
 import pandas as pd
 import json
+import logging
+import time
+
 try:
     from passwords import CREDS
 except:
     CREDS = os.environ.get("CREDS")
 
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
-SPREADSHEET_ID = "1rmJVnfWvVe3tSnFrXpExv4XGbIN3syZO12dGBeoAf-w"
+TOKEN_PATH = '\\'.join(os.getcwd().split('\\')[:-1]) + "\\token.pickle"
 
-def add_metadata(spreadsheet_id, body):
+logger = logging.getLogger(__name__)
+
+def get_creds():
     creds = None
-    if os.path.exists("token.pickle"):
-        with open("token.pickle", "rb") as token:
+    
+    if os.path.exists(TOKEN_PATH):
+        with open(TOKEN_PATH, 'rb') as token:
             creds = pickle.load(token)
+            
     if not creds or not creds.valid:
+        logger.warning("Sheet creds invalid or missing")
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
             flow = InstalledAppFlow.from_client_config(json.loads(CREDS), SCOPES)
             creds = flow.run_local_server()
-        with open("token.pickle", "wb") as token:
+        
+        with open(TOKEN_PATH, 'wb') as token:
             pickle.dump(creds, token)
-    service = build("sheets", "v4", credentials=creds)
     
-    batch_update_spreadsheet_request_body = body
-    
-    return(service.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id, body=batch_update_spreadsheet_request_body))
+    return build("sheets", "v4", credentials=creds)
 
-def update_cell(spreadsheet_id, cell, value):
-    creds = None
-    if os.path.exists("token.pickle"):
-        with open("token.pickle", "rb") as token:
-            creds = pickle.load(token)
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_config(json.loads(CREDS), SCOPES)
-            creds = flow.run_local_server()
-        with open("token.pickle", "wb") as token:
-            pickle.dump(creds, token)
-    service = build("sheets", "v4", credentials=creds)
-    
-    body = {"values": [[value]]}
-    
-    return service.spreadsheets().values().update(spreadsheetId=spreadsheet_id, range=cell, body=body, valueInputOption="USER_ENTERED").execute()
 
-def update_by_datafilter(spreadsheet_id, body):
-    creds = None
-    if os.path.exists("token.pickle"):
-        with open("token.pickle", "rb") as token:
-            creds = pickle.load(token)
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_config(json.loads(CREDS), SCOPES)
-            creds = flow.run_local_server()
-        with open("token.pickle", "wb") as token:
-            pickle.dump(creds, token)
-    service = build("sheets", "v4", credentials=creds)
-    
-    return (service.spreadsheets().batchUpdateByDataFilter(spreadsheetId=spreadsheet_id, body=body,valueInputOption="USER_ENTERED"))
+class Sheet:
+    def __init__(self, sheet_id, refresh_cooldown = 10):
+        self.service = get_creds()
+        self.sheet_id = sheet_id
+        self.ranges = {}
+        self.last_refreshed = time.time()
+        self.cooldown = refresh_cooldown
 
-def get_google_sheet(spreadsheet_id, range_name):
-    """ Retrieve sheet data using OAuth credentials and Google Python API. """
-    creds = None
-    # The file token.pickle stores the user's access and refresh tokens, and is
-    # created automatically when the authorization flow completes for the first
-    # time.
-    if os.path.exists("token.pickle"):
-        with open("token.pickle", "rb") as token:
-            creds = pickle.load(token)
-    # If there are no (valid) credentials available, let the user log in.
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_config(json.loads(CREDS), SCOPES)
-            creds = flow.run_local_server()
-        # Save the credentials for the next run
-        with open("token.pickle", "wb") as token:
-            pickle.dump(creds, token)
-    service = build("sheets", "v4", credentials=creds)
+    def get(self, data_range: str) -> dict:
+        """
+        Gets cell values over the given range
 
-    return (
-        service.spreadsheets()
-        .values()
-        .get(spreadsheetId=spreadsheet_id, range=range_name)
-        .execute()
-    )
-    
-def append_data(spreadsheet_id, range_name, values, insertDataOption = "INSERT_ROWS"):
-    creds = None
-    
-    if insertDataOption != "INSERT_ROWS":
-        insertDataOption = "OVERWRITE"
-    
-    if os.path.exists("token.pickle"):
-        with open("token.pickle", "rb") as token:
-            creds = pickle.load(token)
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_config(json.loads(CREDS), SCOPES)
-            creds = flow.run_local_server()
-        with open("token.pickle", "wb") as token:
-            pickle.dump(creds, token)
-    service = build("sheets", "v4", credentials=creds)
+        Parameters
+        ----------
+        data_range : str
+            Sheet range to get data from, such as 'Sheet1!A1:B2'.
 
-    request = (
-        service.spreadsheets()
-        .values()
-        .append(spreadsheetId=spreadsheet_id, range=range_name, valueInputOption="USER_ENTERED", insertDataOption=insertDataOption, body=values)
-    )
-    
-    return request.execute()
-    
-def clear(spreadsheet_id, range_name):
-    creds = None
-    
-    if os.path.exists("token.pickle"):
-        with open("token.pickle", "rb") as token:
-            creds = pickle.load(token)
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
+        Returns
+        -------
+        gsheet : dict
+            Contains majorDimension, range, and cell values.
+
+        """        
+        self.ensure_recent(self.cooldown)
+        gsheet = self.ranges.get(data_range)
+        
+        if not gsheet:
+            try:
+                gsheet = self.service.spreadsheets().values().get(spreadsheetId=self.sheet_id, range=data_range).execute()
+                self.ranges[data_range] = gsheet
+                return gsheet
+            except Exception as error:
+                logger.error("GET SHEET ERROR: %s", error)
+                return
         else:
-            flow = InstalledAppFlow.from_client_config(json.loads(CREDS), SCOPES)
-            creds = flow.run_local_server()
-        with open("token.pickle", "wb") as token:
-            pickle.dump(creds, token)
-    service = build("sheets", "v4", credentials=creds)
-    
-    body = {}
-    
-    request = service.spreadsheets().values().clear(spreadsheetId=spreadsheet_id, range=range_name, body=body)
-    
-    return request.execute()
-    
-def gsheet2df(gsheet):
-    """ Converts Google sheet data to a Pandas DataFrame.
-    Note: This script assumes that your data contains a header file on the first row!
-    Also note that the Google API returns 'none' from empty cells - in order for the code
-    below to work, you'll need to make sure your sheet doesn't contain empty cells,
-    or update the code to account for such instances.
+            return gsheet
+
+    def to_df(self, data_range: str) -> pd.DataFrame:
+        """
+        Converts sheet values to dataframe
+
+        Parameters
+        ----------
+        data_range : str
+            Sheet range to get data from, such as 'Sheet1!A1:B2'.
+
+        Returns
+        -------
+        df : pd.DataFrame
+            Dataframe of specified range.
+
+        """
+        self.ensure_recent(self.cooldown)
+        gsheet = self.ranges.get(data_range)
+        
+        if not gsheet:
+            gsheet = self.get(data_range)
+        
+        try:
+            header = gsheet.get('values', [])[0]   # Assumes first line is header!
+            values = gsheet.get('values', [])[1:]  # Everything else is data.
+        except AttributeError as error:
+            logger.error("SHEET TO DF ERROR: %s", error)
+        if not values:
+            logger.error("SHEET TO DF ERROR: %s", self.sheet_id + ' ' + data_range)
+        else:
+            all_data = []
+            for col_id, col_name in enumerate(header):
+                column_data = []
+                for row in values:
+                    try: datapoint = row[col_id]
+                    except: datapoint = ""
+                    column_data.append(datapoint)
+                ds = pd.Series(data=column_data, name=col_name)
+                all_data.append(ds)
+            df = pd.concat(all_data, axis=1)
+            return df
+
+    def update_cell(self, cell: str, value) -> dict:
+        """
+        Changes the value of a single cell
+
+        Parameters
+        ----------
+        cell : str
+            1-cell sheet range, such as 'Sheet1!A1'.
+        value
+            Value to put in the cell.
+
+        Returns
+        -------
+        response : dict.
+            Google API response.
+
+        """
+        body = {"values": [[value]]}
+        try:
+            return self.service.spreadsheets().values().update(spreadsheetId=self.sheet_id, range=cell, body=body, valueInputOption="USER_ENTERED").execute()
+        except Exception as error:
+            logger.error("UPDATE CELL ERROR: %s", error)
+
+    def append(self, data_range: str, values: list, insertDataOption: str = "INSERT_ROWS", majorDimension: str = "ROWS") -> dict:
+        """
+        Appends list(s) of values to the sheet
+
+        Parameters
+        ----------
+        data_range : str
+            Sheet range to append data to, such as 'Sheet1!A1:B2'.
+        values : list
+            1- or 2-dimensional array of values to append.
+        insertDataOption : str, optional
+            Google API insertDataOption. The default is "INSERT_ROWS".
+        majorDimension : str, optional
+            Google API majorDimension. The default is "COLUMNS".
+
+        Returns
+        -------
+        response : dict
+            Google API response.
+
+        """
+        try:
+            body = {'majorDimension': majorDimension, 'values': values}
+            return self.service.spreadsheets().values().append(spreadsheetId=self.sheet_id, range=data_range, valueInputOption="USER_ENTERED", insertDataOption=insertDataOption, body=body).execute()
+        except Exception as error:
+            logger.error("SHEET APPEND ERROR: %s", error)
+
+    def clear(self, data_range: str) -> dict:
+        """
+        Clears range in spreadsheet of all values
+
+        Parameters
+        ----------
+        data_range : str
+            Sheet range to clear, such as 'Sheet1!A1:B2'.
+
+        Returns
+        -------
+        response : dict
+            Google API response.
+
+        """        
+        try:
+            return self.service.spreadsheets().values().clear(spreadsheetId=self.sheet_id, range=data_range, body={}).execute()
+        except Exception as error:
+            logger.error("SHEET CLEAR ERROR: %s", error)
+            
+    def refresh(self):
+        self.ranges = {}
+        self.last_refreshed = time.time()
+        
+    def ensure_recent(self, minutes=10):
+        if (time.time() - self.last_refreshed) > (60*minutes):
+            self.refresh
+            
+            
+def df_to_sheet(sheet_id: str, range_name: str, df: pd.DataFrame, dimension: str = "COLUMNS") -> dict:
     """
-    header = gsheet.get('values', [])[0]   # Assumes first line is header!
-    values = gsheet.get('values', [])[1:]  # Everything else is data.
-    if not values:
-        print('No data found.')
-    else:
-        all_data = []
-        for col_id, col_name in enumerate(header):
-            column_data = []
-            for row in values:
-                try: datapoint = row[col_id]
-                except: datapoint = ""
-                column_data.append(datapoint)
-            ds = pd.Series(data=column_data, name=col_name)
-            all_data.append(ds)
-        df = pd.concat(all_data, axis=1)
-        return df
-    
-def df_to_sheet(sheet_id, range_name, df, dimension="COLUMNS"):
+    Appends values in a dataframe to the specified range
+
+    Parameters
+    ----------
+    sheet_id : str
+        Spreadsheet ID.
+    range_name : str
+        Sheet range to append to, such as 'Sheet1!A1:B2'.
+    df : pd.DataFrame
+        Dataframe to append.
+    dimension : str, optional
+        Major Dimension of the dataframe. The default is "COLUMNS".
+
+    Returns
+    -------
+    response : dict
+        Google API response.
+
+    """
     values = []
     for column in df.columns:
         col_values = df[column].to_list()
         values.append(col_values)
-    body = {'majorDimension': f'{dimension}', 'values': values}
-    append_data(sheet_id, range_name, body)
+    sheet = Sheet(sheet_id)
+    try:
+        response = sheet.append(range_name, values, majorDimension = dimension)
+        return response
+    except Exception as error:
+        logger.error("DF TO SHEET ERROR: %s", error)
+        return
