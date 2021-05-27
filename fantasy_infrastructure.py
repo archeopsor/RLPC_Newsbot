@@ -3,10 +3,12 @@ from datetime import datetime
 import pytz
 from difflib import SequenceMatcher
 
-from tools.database import engine, select
+from tools.database import engine, select, Session, Fantasy_players, Players, Transfer_log
 from tools.sheet import Sheet
 
 from settings import prefix
+
+session = Session().session
 
 def fantasy_lb() -> pd.DataFrame:
     """
@@ -64,8 +66,9 @@ def pick_player(person: str , player: str, slot: int=0) -> str:
     rlpc_players = select("players")
     lower_players = rlpc_players['Username'].str.lower()
     
-    try: fantasy_players.loc[person,"players"][0]
-    except: return(f"You don't currently have an account! Use {prefix}new to make an account")
+    row = session.query(Fantasy_players).get(person)
+    if row == None:
+        return(f"You don't currently have an account! Use {prefix}new to make an account")
     
     if slot == 0:
         if fantasy_players.loc[person, "players"][0] == "Not Picked":
@@ -150,7 +153,8 @@ def pick_player(person: str , player: str, slot: int=0) -> str:
             return(f"This player would cause you to exceed the salary cap of {salary_cap}.")
     
     if transfer == True and transfers_left > 0:
-        engine.execute(f"update fantasy_players set transfers_left = {transfers_left - 1} where username = '{person}'")
+        row.transfers_left = (transfers_left - 1)
+        # engine.execute(f"update fantasy_players set transfers_left = {transfers_left - 1} where username = '{person}'")
     
     # Log the changes just in case
     timestamp = str(datetime.now())
@@ -160,19 +164,25 @@ def pick_player(person: str , player: str, slot: int=0) -> str:
         player_out = current_occupant
     else:
         player_out = current_occupant    
-    command = """insert into transfer_log ("Timestamp", "Account", "Player in", "Player out")"""
-    values = f"values ('{timestamp}', '{person}', '{player_in}', '{player_out}')"
-    engine.execute(f"{command} {values}")
+    # command = """insert into transfer_log ("Timestamp", "Account", "Player_in", "Player_out")"""
+    # values = f"values ('{timestamp}', '{person}', '{player_in}', '{player_out}')"
+    # engine.execute(f"{command} {values}")
+    session.add(Transfer_log(timestamp, person, player_in, player_out))
     
     if drop == True:
-        engine.execute(f"""update fantasy_players set players[{slot}] = 'Not Picked' where "username" = '{person}'""")
+        # engine.execute(f"""update fantasy_players set players[{slot}] = 'Not Picked' where "username" = '{person}'""")
+        row.players[slot] = "Not Picked"
         new_salary = fantasy_players.loc[person, 'salary'] - rlpc_players.loc[rlpc_players['Username']==player_out,'Fantasy Value'].values[0]
-        engine.execute(f"""update fantasy_players set "salary" = {new_salary} where "username" = '{person}'""")
+        # engine.execute(f"""update fantasy_players set "salary" = {new_salary} where "username" = '{person}'""")
+        row.salary = new_salary
         return(f'You have dropped {current_occupant}')
     else:
-        engine.execute(f"""update fantasy_players set players[{slot}] = '{player}' where "username" = '{person}'""")
-        engine.execute(f"""update fantasy_players set "salary" = {cap_check} where "username" = '{person}'""")
-        
+        row.players[slot] = player
+        row.salary = cap_check
+        # engine.execute(f"""update fantasy_players set players[{slot}] = '{player}' where "username" = '{person}'""")
+        # engine.execute(f"""update fantasy_players set "salary" = {cap_check} where "username" = '{person}'""")
+    
+    session.commit()
     
     # Check to make sure the player isn't in the same league as the account
     # if rlpc_players.loc[rlpc_players['Username']==player,'League'].values[0] == fantasy_players.loc[fantasy_players['Username']==person,'Account League'].values[0]:
@@ -204,8 +214,7 @@ def show_team(person: str) -> pd.Series:
 
     """
     fantasy_teams = select("fantasy_players")
-    for row in fantasy_teams.index:
-        fantasy_teams.loc[row,'username'] = fantasy_teams.loc[row,'username'].upper()
+    fantasy_teams['username'] = fantasy_teams['username'].str.upper()
     person = person.upper()
     fantasy_teams = fantasy_teams.set_index("username")
     return(fantasy_teams.loc[person])

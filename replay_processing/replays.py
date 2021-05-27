@@ -187,12 +187,10 @@ class Retreiver:
             
 class Replay:
     def __init__(self, path):
-        self.path = path
+        self.path = path.replace('\\', '/')
         self.failed = False
         self.structs = Structs()
         self._stats, self._frames = self.process()
-        self._teams = self.get_teams()
-        self._players = self.get_players()
     
     def process(self) -> (dict, pd.DataFrame):
         """
@@ -229,7 +227,7 @@ class Replay:
         """
         players = self.structs.players
         stats = self._stats
-        choices = self.path.split('/')[5].split(' - ')
+        choices = self.path.split('/')[-1].split(' - ')
         
         teams = []
         teams.append([x['id'] for x in stats['teams'][0]['playerIds']])
@@ -288,10 +286,12 @@ class Replay:
     
     @property
     def players(self):
+        self._players = self.get_players()
         return self._players
     
     @property
     def teams(self):
+        self._teams = self.get_teams()
         return self._teams
     
 

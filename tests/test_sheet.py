@@ -6,8 +6,6 @@ p4 = Sheet(settings.sheet_p4)
 indy = Sheet(settings.sheet_indy)
 test = Sheet(settings.test_sheet)
 
-unittest.TestLoader.sortTestMethodsUsing = None
-
 class TestSheet(unittest.TestCase):
     def test_get(self):
         self.assertIsNotNone(p4.get("Players!A1:H"))

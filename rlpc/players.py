@@ -1,9 +1,12 @@
 import pandas as pd
 
-from tools.database import engine, select
+from tools.database import engine, select, Players, Session
 from tools.sheet import Sheet
 
 from settings import sheet_p4
+
+p4sheet = Sheet(sheet_p4)
+session = Session().session
 
 def flatten(items, seqtypes=(list, tuple)):
     for i, x in enumerate(items):
@@ -11,8 +14,6 @@ def flatten(items, seqtypes=(list, tuple)):
             items[i:i+1] = items[i]
     items = [i for i in items if i != '']
     return items
-
-p4sheet = Sheet(sheet_p4)
 
 def add_player(username, region, platform, mmr, team, league, ids=[]): 
     players = p4sheet.to_df('Players!A1:W')
@@ -25,22 +26,14 @@ def add_player(username, region, platform, mmr, team, league, ids=[]):
     percentile = num_less/(num_greater+num_less)
     fantasy_value = round(80 + 100*percentile)
     
-    # Now update SQL database
-    username = username.replace("'", "''")
-    command = 'insert into players ("Username", "Region", "Platform", "MMR", "Team", "League", "Fantasy Value", "Allowed?", "Fantasy Points")'
-    values = f"""('{username}', '{region}', '{platform}', {mmr}, '{team}', '{league}', {fantasy_value}, 'Yes', 0)"""
-    try:
-        ids = ids.reset_index(drop=True) # Not really sure why this is needed, but it is
-    except:
-        pass
-
-    if len(ids) > 0:
-        if ids.values[0] != None:
-            ids = "','".join(ids.values[0])
-            command = command[:-1] + ', "id")'
-            values = values[:-1] + f", array['{ids}'])"
+    row = Players(username, region, platform, mmr, team, league, fantasy_value)
     
-    engine.execute(f"{command} values {values}")
+    if ids:
+        ids = ids.reset_index(drop=True) # Not really sure why this is needed, but it is
+        row.id = ids
+  
+    session.add(row)
+    session.commit()
     
 def update_player(username, region, platform, mmr, team, league):
     pass
