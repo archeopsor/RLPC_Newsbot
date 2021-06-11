@@ -1,5 +1,5 @@
 import os
-from x_goals import xG
+from xg_model_things.x_goals import xG
 import numpy as np
 
 unprocessedReplays: np.ndarray = np.load("xg_model_things/unprocessedReplays.npy")

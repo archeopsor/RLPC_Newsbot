@@ -1,6 +1,7 @@
 import os
 import shutil
 import time
+from typing import Union
 import pandas as pd
 import numpy as np
 import logging
@@ -186,13 +187,13 @@ class Retreiver:
             
             
 class Replay:
-    def __init__(self, path):
+    def __init__(self, path: str, isPerGoal: bool = False):
         self.path = path.replace('\\', '/')
         self.failed = False
         self.structs = Structs()
-        self._stats, self._frames = self.process()
+        self._stats, self._frames = self.process(isPerGoal)
     
-    def process(self) -> (dict, pd.DataFrame):
+    def process(self, isPerGoal: bool = False) -> Union[dict, pd.DataFrame]:
         """
         Processes the replay with carball to get stats and frame data
 
@@ -204,7 +205,6 @@ class Replay:
             Dataframe with data for each actor every frame.
 
         """
-        # Decompile Replay
         try:
             analysis_manager = carball.analyze_replay_file(self.path, logging_level=logging.CRITICAL)
         except:
@@ -215,7 +215,7 @@ class Replay:
         
         return stats, frames
     
-    def get_teams(self):
+    def get_teams(self) -> Union[str, str]:
         """
         Returns a verified and ordered list of the two teams' names
 
@@ -250,7 +250,7 @@ class Replay:
         teams = self._teams
         stats = self._stats
         players = self.structs.players
-        players = []
+        players: list = []
         
         for player in stats['players']:
             name = identify(player['id']['id'], players)

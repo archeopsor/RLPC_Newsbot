@@ -233,3 +233,18 @@ class Transfer_log(Base):
         self.Account = Account
         self.Player_in = Player_in
         self.Player_out = Player_out
+
+
+# class Teams(Base):
+#     """Team stats"""
+#     __tablename__ = "teams"
+
+#     def __init__(self):
+#         pass
+
+
+# class Game_Stats(Base):
+#     """Stats for each series played"""
+#     __tablename__ = "game_stats"
+
+    

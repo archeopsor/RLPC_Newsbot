@@ -7,6 +7,9 @@ import logging
 from zipfile import ZipFile
 import carball
 
+import sys
+sys.path.insert(1, 'C:\\Users\\Simi\\Desktop\\Python Projects\\RLPC_Newsbot')
+
 from tools.database import engine, select
 from tools.sheet import df_to_sheet
 
