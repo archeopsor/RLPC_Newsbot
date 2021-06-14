@@ -1,13 +1,13 @@
-import os
-import pandas as pd
 import logging
+import os
 import time
 
-from sqlalchemy import create_engine, Column, Text, BigInteger, Integer
+import pandas as pd
+from sqlalchemy import BigInteger, Column, Date, Integer, Text, create_engine
 from sqlalchemy.dialects.postgresql import ARRAY, Any
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.schema import Table, MetaData
+from sqlalchemy.schema import MetaData, Table
 
 try: 
     DATABASE_URL = os.environ['DATABASE_URL']
@@ -235,16 +235,43 @@ class Transfer_log(Base):
         self.Player_out = Player_out
 
 
-# class Teams(Base):
-#     """Team stats"""
-#     __tablename__ = "teams"
+class Teams(Base):
+    """Team stats"""
+    __tablename__ = "teams"
 
-#     def __init__(self):
-#         pass
+    league = Column(Text, primary_key=True)
+    team = Column(Text, primary_key=True)
+    players = Column(ARRAY(Text))
+
+    def __init__(self, league, team, players):
+        self.League = league
+        self.Team = team
+        self.Players = players
 
 
-# class Game_Stats(Base):
-#     """Stats for each series played"""
-#     __tablename__ = "game_stats"
+class Game_Data(Base):
+    """Stats for each series played"""
+    __tablename__ = "game_data"
 
-    
+    game_id = Column(Integer, primary_key=True)
+    gameday = Column(Date)
+    league = Column(Text)
+    teams = Column(ARRAY(Text))
+    players = Column(ARRAY(Text))
+    games = Column(Integer)
+    goals = Column(ARRAY(Integer))
+    assists = Column(ARRAY(Integer))
+    saves = Column(ARRAY(Integer))
+    shots = Column(ARRAY(Integer))
+
+    def __init__(self, game_id, gameday, league, teams, players, games, goals, assists, saves, shots):
+        self.Id = game_id
+        self.Gameday = gameday
+        self.League = league
+        self.Teams = teams
+        self.Players = players
+        self.Games = games
+        self.Goals = goals
+        self.Assists = assists
+        self.Saves = saves
+        self.Shots = shots

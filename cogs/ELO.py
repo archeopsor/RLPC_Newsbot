@@ -1,8 +1,11 @@
+import numpy as np
+from team_stats import PoissonDataHandler
 import discord
 from discord.ext import commands
 import pandas as pd
 import dataframe_image as dfi
 import os
+import matplotlib.pyplot as plt
 
 from settings import prefix, forecast_sheet
 
@@ -21,15 +24,15 @@ class ELO(commands.Cog):
     def __init__(self,client):
         self.client = client
         
-    @commands.command(aliases=("predict","predictscore","score_predict","predict_score",))
-    async def scorepredict(self, ctx, team1: str, team2: str, bestof: float=5.0):
+    @commands.command(aliases=("scorepredict","predictscore","score_predict","predict_score",))
+    async def predict(self, ctx, team1: str, team2: str, bestof: float=5.0):
         async with ctx.typing():
             bestof = float(bestof)
             answer = exp_score(team1,team2,bestof)
         await ctx.send(answer)
         
-    @scorepredict.error
-    async def scorepredict_error(self, ctx, error):
+    @predict.error
+    async def predict_error(self, ctx, error):
         if isinstance(error,commands.MissingRequiredArgument):
             if error.param.name in ['team1','team2']:
                 await ctx.send('Please include two teams')
@@ -202,6 +205,64 @@ class ELO(commands.Cog):
     async def probabilities_error(self,ctx,error):
         if isinstance(error,commands.MissingRequiredArgument):
             await ctx.send("You haven't chosen a league. You can also see all of the data here: https://docs.google.com/spreadsheets/d/1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ/edit?usp=sharing")
+
+    @commands.command(aliases=())
+    async def poisson(self, ctx, team1: str, team2: str, numGames: int = 5, img: bool = False):
+        async with ctx.typing():
+            team1 = team1.title()
+            team2 = team2.title()
+
+            players = select("players")
+            try:
+                league = find_league(team1, players)
+            except:
+                return await ctx.send("Could not find the correct league")
+            if league != find_league(team2, players):
+                return await ctx.send("Teams must be from the same league")
+
+            if numGames > 15:
+                return await ctx.send("To avoid spam and rate limiting, 15 is the maximum number of games supported.")
+
+            handler = PoissonDataHandler(league, team1, team2)
+            if img:
+                img = plt.imshow(handler.generatePoisson())
+                img.figure.savefig('poisson.png')
+                path = os.path.abspath('poisson.png')
+                file = discord.File(path)                    
+                await ctx.send(file=file)
+
+            team1Poisson, team2Poisson = handler.getOneWayPoisson()
+            team1Wins = 0
+            team2Wins = 0
+            i = 1
+            while i <= numGames:
+                team1Goals = np.random.choice([0,1,2,3,4,5], p=team1Poisson)
+                team2Goals = np.random.choice([0,1,2,3,4,5], p=team2Poisson)
+                if team1Goals == team2Goals:
+                    # Redo this loop if tied
+                    continue
+                elif team1Goals > team2Goals:
+                    await ctx.send(f"**Game {i} result:** {team1} {team1Goals} - {team2Goals} {team2}")
+                    team1Wins += 1
+                elif team2Goals > team1Goals:
+                    await ctx.send(f"**Game {i} result:** {team2} {team2Goals} - {team1Goals} {team1}")
+                    team2Wins += 1
+                
+                i += 1
+                if team1Wins > (numGames / 2):
+                    return await ctx.send(f"{team1} has won the series with a score of {team1Wins} - {team2Wins}")
+                elif team2Wins > (numGames / 2):
+                    return await ctx.send(f"{team2} has won the series with a score of {team2Wins} - {team1Wins}")
+                    
+            return await ctx.send(f"The series has ended in a {team1Wins} - {team2Wins} draw. Consider using an odd number of games")
+
+    @poisson.error
+    async def poisson_error(self, ctx, error):
+        if isinstance(error, commands.BadArgument):
+            await ctx.send(f"An error occurred. You may have provided an invalid number of games, or an extra argument other than true or false at the end.")
+
+            
+    
 
 def setup(client):
     client.add_cog(ELO(client))

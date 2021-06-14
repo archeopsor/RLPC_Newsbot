@@ -8,3 +8,5 @@
 **{prefix}rank [league]**: Ranks all the teams in a league based on an internal elo system. These are computer-generated, use {prefix}pr for human-generated rankings.
 
 **{prefix}forecast [league] *[team]* *[part]* *[graph]***: Shows a computer-generated forecast for the given league. Can specify a specific team or part of the forecast to focus on, and can also turn the data into a graph if specified.
+
+**{prefix}poisson [team1] [team1] *[# of games]* *[show dist]***: Simulates a random game between two teams based on a poisson distribution. Can show a map of the distribution by adding "true" to the end. Only works between teams in the same league.

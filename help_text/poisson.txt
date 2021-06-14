@@ -1,0 +1,6 @@
+**Command: {prefix}poisson [team1] [team1] *[# of games]* *[show dist]***
+Aliases: none
+
+Simulates a random game between two teams based on a poisson distribution. 
+Can show a map of the distribution by adding "true" to the end, but a number of games must be specified for this to work.
+Only works between teams in the same league.
