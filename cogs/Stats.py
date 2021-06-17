@@ -1,14 +1,21 @@
+import os
+from discord.ext.commands.errors import MissingRequiredArgument
+import pandas as pd
+from tools.database import select
 import discord
 from discord.ext import commands
 import numpy as np
+import dataframe_image as dfi
 
 from rlpc import stats, mmr
+from rlpc.players import find_league
 
 from tools.sheet import Sheet
 
-from settings import prefix, valid_stats, leagues, sheet_p4, gdstats_sheet
+from settings import prefix, valid_stats, leagues, sheet_p4, sheet_indy, gdstats_sheet, divisions
 
 p4sheet = Sheet(sheet_p4)
+indysheet = Sheet(sheet_indy)
 gdsheet = Sheet(gdstats_sheet)
 
 client = commands.Bot(command_prefix = prefix)
@@ -287,6 +294,39 @@ class Stats(commands.Cog):
     async def gdstats_error(self, ctx, error):
         if isinstance(error, commands.MissingRequiredArgument):
             return await ctx.send(error)
+
+    @commands.command(aliases=("schedules", "scheduling",))
+    async def schedule(self, ctx, team: str):
+        async with ctx.typing():
+            team: str = team.title()
+            if team not in divisions.keys():
+                return await ctx.send("Couldn't find team" + team)
+            
+            league: str = find_league(team, select("players"))
+            sheet: Sheet = p4sheet if league.lower() in ['major', 'aaa', 'aa', 'a'] else indysheet
+            all_games: pd.DataFrame = sheet.to_df(f"{league} Schedule!N4:V")
+            if not all_games:
+                return await ctx.send("Schedules couldn't be found, possibly because they aren't on the sheet. Contact arco if you believe this is an error.")
+
+            all_games.columns.values[2] = "Team 1"
+            all_games.columns.values[4] = "Team 2"
+            all_games.columns.values[7] = "Logs"
+            all_games.drop(columns=["Playoff", "Game Logs Processed"], inplace=True)
+
+            schedule: pd.DataFrame = all_games.loc[(all_games['Team 1'] == team) | (all_games["Team 2"] == team)]
+            schedule.set_index("Day", drop=True, inplace=True)
+
+            dfi.export(schedule, "schedule.png", table_conversion='matplotlib')
+            path = os.path.abspath("schedule.png")
+            file = discord.File(path)
+            await ctx.send(file=file)
+            return os.remove(path)
+
+    @schedule.error
+    async def schedule_error(self, ctx, error):
+        if isinstance(error, MissingRequiredArgument):
+            return await ctx.send("Please specify a team.")
+
 
 
 def setup(client):

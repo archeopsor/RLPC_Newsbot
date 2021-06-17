@@ -4,7 +4,7 @@ pytz==2020.1
 google-auth-oauthlib==0.4.1
 google-auth-httplib2==0.0.4
 editdistance==0.5.3
-pandas==1.1.0
+pandas==1.2.4
 discord==1.0.1
 google-api-python-client==1.10.0
 numpy==1.19.1

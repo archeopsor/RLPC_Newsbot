@@ -1,6 +1,6 @@
 prefix = '$'
 k = 40
-sheet_p4 = '1AJoBYkYGMIrpe8HkkJcB25DbLP2Z-eV7P6Tk9R6265I'
+sheet_p4 = '17tPXpZACXlqrCS3gYo59C5gbZyp3oguVdjwsgWQJkcA'
 sheet_indy = '1bWvgo_YluMbpQPheldQQZdASKGHRPIUVfYL2r2KSdaE'
 test_sheet = '1Aoujd5BdcVYYf-3-f2ha_I3agsyT0f1CYdW5qJ54ca4'
 power_rankings_sheet = '1Tlc_TgGMrY5aClFF-Pb5xvtKrJ1Hn2PJOLy2fUDDdFI'
