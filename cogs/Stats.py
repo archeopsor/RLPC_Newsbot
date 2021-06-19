@@ -327,6 +327,10 @@ class Stats(commands.Cog):
         if isinstance(error, MissingRequiredArgument):
             return await ctx.send("Please specify a team.")
 
+    @commands.command(aliases=("teambuilder", "team_builder", "builder",))
+    async def build(self, ctx, *, players):
+        pass
+
 
 
 def setup(client):
