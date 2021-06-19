@@ -1,6 +1,9 @@
+from webbrowser import get
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
+from google.cloud import storage
+from google.oauth2 import service_account
 
 import os.path
 import pickle
@@ -19,29 +22,42 @@ TOKEN_PATH = '\\'.join(os.getcwd().split('\\')[:-1]) + "\\token.pickle"
 
 logger = logging.getLogger(__name__)
 
+
 def get_creds():
     creds = None
-    
-    if os.path.exists(TOKEN_PATH):
-        with open(TOKEN_PATH, 'rb') as token:
-            creds = pickle.load(token)
-            
-    if not creds or not creds.valid:
-        logger.warning("Sheet creds invalid or missing")
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_config(json.loads(CREDS), SCOPES)
-            creds = flow.run_local_server()
-        
-        with open(TOKEN_PATH, 'wb') as token:
-            pickle.dump(creds, token)
+
+    creds_json = json.loads(CREDS, strict=False)
+
+    with open("creds.json", "w") as fp:
+        json.dump(creds_json, fp)
+
+    creds = service_account.Credentials.from_service_account_file(
+        "creds.json", scopes=SCOPES)
+
+    os.remove(os.path.abspath("creds.json"))
     
     return build("sheets", "v4", credentials=creds)
 
+    # if os.path.exists(TOKEN_PATH):
+    #     with open(TOKEN_PATH, 'rb') as token:
+    #         creds = pickle.load(token)
+
+    # if not creds or not creds.valid:
+    #     logger.warning("Sheet creds invalid or missing")
+    #     if creds and creds.expired and creds.refresh_token:
+    #         creds.refresh(Request())
+    #     else:
+    #         flow = InstalledAppFlow.from_client_config(json.loads(CREDS), SCOPES)
+    #         creds = flow.run_local_server()
+
+    #     with open(TOKEN_PATH, 'wb') as token:
+    #         pickle.dump(creds, token)
+
+    # return build("sheets", "v4", credentials=creds)
+
 
 class Sheet:
-    def __init__(self, sheet_id, refresh_cooldown = 10):
+    def __init__(self, sheet_id, refresh_cooldown=10):
         self.service = get_creds()
         self.sheet_id = sheet_id
         self.ranges = {}
@@ -62,13 +78,14 @@ class Sheet:
         gsheet : dict
             Contains majorDimension, range, and cell values.
 
-        """        
+        """
         self.ensure_recent(self.cooldown)
         gsheet = self.ranges.get(data_range)
-        
+
         if not gsheet:
             try:
-                gsheet = self.service.spreadsheets().values().get(spreadsheetId=self.sheet_id, range=data_range).execute()
+                gsheet = self.service.spreadsheets().values().get(
+                    spreadsheetId=self.sheet_id, range=data_range).execute()
                 self.ranges[data_range] = gsheet
                 return gsheet
             except Exception as error:
@@ -94,24 +111,28 @@ class Sheet:
         """
         self.ensure_recent(self.cooldown)
         gsheet = self.ranges.get(data_range)
-        
+
         if not gsheet:
             gsheet = self.get(data_range)
-        
+
         try:
-            header = gsheet.get('values', [])[0]   # Assumes first line is header!
+            # Assumes first line is header!
+            header = gsheet.get('values', [])[0]
             values = gsheet.get('values', [])[1:]  # Everything else is data.
         except AttributeError as error:
             logger.error("SHEET TO DF ERROR: %s", error)
         if not values:
-            logger.error("SHEET TO DF ERROR: %s", self.sheet_id + ' ' + data_range)
+            logger.error("SHEET TO DF ERROR: %s",
+                         self.sheet_id + ' ' + data_range)
         else:
             all_data = []
             for col_id, col_name in enumerate(header):
                 column_data = []
                 for row in values:
-                    try: datapoint = row[col_id]
-                    except: datapoint = ""
+                    try:
+                        datapoint = row[col_id]
+                    except:
+                        datapoint = ""
                     column_data.append(datapoint)
                 ds = pd.Series(data=column_data, name=col_name)
                 all_data.append(ds)
@@ -182,21 +203,21 @@ class Sheet:
         response : dict
             Google API response.
 
-        """        
+        """
         try:
             return self.service.spreadsheets().values().clear(spreadsheetId=self.sheet_id, range=data_range, body={}).execute()
         except Exception as error:
             logger.error("SHEET CLEAR ERROR: %s", error)
-            
+
     def refresh(self):
         self.ranges = {}
         self.last_refreshed = time.time()
-        
+
     def ensure_recent(self, minutes=10):
         if (time.time() - self.last_refreshed) > (60*minutes):
             self.refresh
-            
-            
+
+
 def df_to_sheet(sheet_id: str, range_name: str, df: pd.DataFrame, dimension: str = "COLUMNS") -> dict:
     """
     Appends values in a dataframe to the specified range
@@ -224,7 +245,7 @@ def df_to_sheet(sheet_id: str, range_name: str, df: pd.DataFrame, dimension: str
         values.append(col_values)
     sheet = Sheet(sheet_id)
     try:
-        response = sheet.append(range_name, values, majorDimension = dimension)
+        response = sheet.append(range_name, values, majorDimension=dimension)
         return response
     except Exception as error:
         logger.error("DF TO SHEET ERROR: %s", error)
