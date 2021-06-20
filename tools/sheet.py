@@ -20,7 +20,7 @@ except:
     CREDS["type"] = os.environ.get('GOOGLE_TYPE')
     CREDS["project_id"] = os.environ.get('GOOGLE_PROJECT_ID')
     CREDS["private_key_id"] = os.environ.get('GOOGLE_PRIVATE_KEY_ID')
-    CREDS["private_key"] = os.environ.get('GOOGLE_PRIVATE_KEY')
+    CREDS["private_key"] = os.environ.get('GOOGLE_PRIVATE_KEY').replace("\\n", "\n")
     CREDS["client_email"] = os.environ.get('GOOGLE_CLIENT_EMAIL')
     CREDS["client_id"] = os.environ.get('GOOGLE_CLIENT_ID')
     CREDS["auth_uri"] = os.environ.get('GOOGLE_AUTH_URI')
