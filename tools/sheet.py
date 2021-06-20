@@ -16,7 +16,18 @@ import time
 try:
     from passwords import CREDS
 except:
-    CREDS = os.environ.get("CREDS")
+    CREDS = dict()
+    CREDS["type"] = os.environ.get('GOOGLE_TYPE')
+    CREDS["project_id"] = os.environ.get('GOOGLE_PROJECT_ID')
+    CREDS["private_key_id"] = os.environ.get('GOOGLE_PRIVATE_KEY_ID')
+    CREDS["private_key"] = os.environ.get('GOOGLE_PRIVATE_KEY')
+    CREDS["client_email"] = os.environ.get('GOOGLE_CLIENT_EMAIL')
+    CREDS["client_id"] = os.environ.get('GOOGLE_CLIENT_ID')
+    CREDS["auth_uri"] = os.environ.get('GOOGLE_AUTH_URI')
+    CREDS["token_uri"] = os.environ.get('GOOGLE_TOKEN_URI')
+    CREDS["auth_provider_x509_cert_url"] = os.environ.get('GOOGLE_AUTH_PROVIDER')
+    CREDS["client_x509_cert_url"] = os.environ.get('GOOGLE_CLIENT_URL')
+    
 
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 TOKEN_PATH = '\\'.join(os.getcwd().split('\\')[:-1]) + "\\token.pickle"
@@ -25,6 +36,9 @@ logger = logging.getLogger(__name__)
 
 
 def get_creds():
+    creds = service_account.Credentials.from_service_account_info(CREDS)
+    return build("sheets", "v4", credentials = creds)
+
     creds = None
 
     creds_json = json.loads(CREDS, strict=False)
@@ -32,7 +46,9 @@ def get_creds():
     with open("creds.json", "w") as fp:
         json.dump(creds_json, fp)
 
-    creds = ServiceAccountCredentials.from_json_keyfile_name("creds.json", SCOPES)
+    creds = ServiceAccountCredentials.from_json(creds_json)
+
+    # creds = ServiceAccountCredentials.from_json_keyfile_name()
     
     # creds = service_account.Credentials.from_service_account_file(
     #     "creds.json", scopes=SCOPES)
