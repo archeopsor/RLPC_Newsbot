@@ -17,3 +17,4 @@ dataframe_image==0.1.1
 lxml==4.6.3
 google-cloud-storage==1.38.0
 scipy==1.6.3
+oauth2client==4.1.3

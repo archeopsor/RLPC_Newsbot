@@ -4,6 +4,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from google.cloud import storage
 from google.oauth2 import service_account
+from oauth2client.service_account import ServiceAccountCredentials
 
 import os.path
 import pickle
@@ -31,8 +32,10 @@ def get_creds():
     with open("creds.json", "w") as fp:
         json.dump(creds_json, fp)
 
-    creds = service_account.Credentials.from_service_account_file(
-        "creds.json", scopes=SCOPES)
+    creds = ServiceAccountCredentials.from_json_keyfile_name("creds.json", SCOPES)
+    
+    # creds = service_account.Credentials.from_service_account_file(
+    #     "creds.json", scopes=SCOPES)
 
     os.remove(os.path.abspath("creds.json"))
     
