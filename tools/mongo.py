@@ -231,15 +231,20 @@ fantasyStructure = {
     "discord_id": 0,
     "account_league": "",
     "players": {
-        # username: 0,
+        # 1: ObjectId() | None,
+        # 2: ObjectId() | None,
+        # 3: ObjectId() | None,
+        # 4: ObjectId() | None,
+        # 5: ObjectId() | None,
     },
-    "player_history": {
-        # username: {
+    "player_history": [
+        # {
+        #     "Player": ObjectId(),    
         #     "Date in": "",
-        #     "Date out": "",
-        #     "points": 0,
+        #     "Date out": "" | None,
+        #     "Points": 0,
         # }
-    },
+    ],
     "salary": 0,
     "transfers_left": 2,
     "transfer_log": [
