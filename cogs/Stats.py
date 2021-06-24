@@ -127,7 +127,10 @@ class Stats(commands.Cog):
             except:
                 return await ctx.send(f"Could not find {msg}'s stats. Contact arco if you think this is a bug")
             for i, col in enumerate(answer.columns[1:]):
-                embed.add_field(name=col, value=answer.values[0][i+1])
+                value = answer.values[0][i+1]
+                if not value:
+                    value = 0
+                embed.add_field(name=col, value=value)
         await ctx.send(embed=embed)
         
         
