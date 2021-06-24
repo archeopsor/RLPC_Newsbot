@@ -1,12 +1,12 @@
 import pandas as pd
 
-from tools.database import engine, select, Players, Session
+from tools.mongo import Session
 from tools.sheet import Sheet
 
 from settings import sheet_p4
 
 p4sheet = Sheet(sheet_p4)
-session = Session().session
+db = Session()
 
 def flatten(items, seqtypes=(list, tuple)):
     for i, x in enumerate(items):
