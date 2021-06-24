@@ -140,11 +140,71 @@ class Players:
                     logger.info(f"{player} ids updated")
                     
         self.session.commit()
-        
+    
+
 
 class Identifier:
     def __init__(self):
         self.p4sheet = p4sheet
+        self.session = db
+        self.ids = {}
+
+    def identify(self, id: str) -> str:
+        """
+        Determines which player matches a given ID
+
+        Parameters
+        ----------
+        id : str
+            The unique Rocket Leauge ID of any given player.
+            
+        Returns
+        -------
+        str
+            The name of the player as spelled on the RLPC Spreadsheet.
+
+        """
+        if self.ids.get(id):
+            return self.ids.get(id)
+
+        player = self.session.players.find_one({'info': {'id': id}})
+        self.ids[id] = player['Username']
+        return player['Username']
+
+    def find_team(self, names: list, players: pd.DataFrame, id_players: bool = False, choices: list = None) -> str:
+        """
+        Determines which team most likely matches a given set of three players
+
+        Parameters
+        ----------
+        names : list
+            List of player names (should be verified as the same on the sheet before using find_team()).
+        players : pd.DataFrame
+            Dataframe with all players and IDs, retrieved using select('players').
+        id_players : bool
+            Whether or not this function should identify players first (if given a list of ids rather than names)
+        choices : list
+            A list of possible teams that this can be. This is used to find the correct team in case of subs or call downs
+
+        Returns
+        -------
+        str
+            Team name.
+
+        """
+
+        if id_players:
+            new_names = []
+            for id in names:
+                name = self.identify(id, players)
+                if not name:
+                    continue
+                new_names.append(name)
+            names = new_names
         
-        
-        
+        found_teams = []
+        teams = p4sheet.to_df("Teams!F1:P129")
+
+        for player in names:
+            doc = self.session.players.find_one({'Username': player})
+            team = doc['info']['Team']
