@@ -1,6 +1,7 @@
 import os
 import time
 from bson.objectid import ObjectId
+from pandas.io.pytables import GenericTable
 
 import pymongo
 
@@ -463,3 +464,65 @@ teamIds = {
     'Free Agent': 'Free Agent',
     'Draftee': 'Draftee',
 }
+
+statsCategories = {
+    "general": [
+        "Series Played",
+        "Series Won",
+        "Games Played",
+        "Games Won",
+        "Goals",
+        "Assists",
+        "Saves",
+        "Shots",
+        "Demos Inflicted",
+        "Demos Taken",
+    ],
+    "boost": [
+        "Boost Used",
+        "Wasted Collection",
+        "Wasted Usage",
+        "# Small Boosts",
+        "# Large Boosts",
+        "# Boost Steals",
+        "Wasted Big",
+        "Wasted Small",
+    ],
+    "movement": [
+        "Time Slow",
+        "Time Boost",
+        "Time Supersonic",
+    ],
+    "possession": [
+        "Dribbles",
+        "Passes",
+        "Aerials",
+        "Turnovers Lost",
+        "Defensive Turnovers Lost",
+        "Offensive Turnovers Lost",
+        "Turnovers Won",
+        "Hits",
+        "Flicks",
+        "Clears",
+    ],
+    "kickoffs": [
+        "Kickoffs",
+        "First Touches",
+        "Kickoff Cheats",
+        "Kickoff Boosts",
+    ],
+}
+
+def findCategory(stat: str) -> str:
+    if stat in statsCategories['general']:
+        return "general"
+    elif stat in statsCategories["boost"]:
+        return "boost"
+    elif stat in statsCategories["kickoffs"]:
+        return "kickoffs"
+    elif stat in statsCategories["movement"]:
+        return "movement"
+    elif stat in statsCategories["possession"]:
+        return "possession"
+    else:
+        return None
