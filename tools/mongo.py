@@ -265,7 +265,7 @@ teamsStructure = {
 
 fantasyStructure = {
     "username": None,
-    "discord_id": 0,
+    "discord_id": None,
     "account_league": "",
     "players": [
         # ObjectId() | None,
@@ -284,19 +284,17 @@ fantasyStructure = {
     ],
     "salary": 0,
     "transfers_left": 2,
+    "points": 0,
     "transfer_log": [
-        {
-            "Timestamp": "",
-            "Player_in": {
-                "username": "",
-                "salary": 0,
-                "points": 0,
-            },
-            "Player_out": {
-                "username": "",
-                "salary": 0,
-            }
-        }
+        # {
+        #     "Timestamp": "",
+        #     "Type": "", # in | out
+        #     "Player": {
+        #         "id": ObjectId(""),
+        #         "salary": 0,
+        #         "points": 0,
+        #     },
+        # }
     ]
 }
 
