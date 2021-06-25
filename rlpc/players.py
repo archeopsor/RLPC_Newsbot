@@ -1,5 +1,6 @@
 import pandas as pd
 import logging
+import time
 
 from tools.mongo import Session, teamIds
 from tools.sheet import Sheet
@@ -62,7 +63,7 @@ class Players:
         percentile = num_less/(num_greater+num_less)
         fantasy_value = round(80 + 100*percentile)
 
-        doc = self.session.structures['players']
+        doc = self.session.structures['players'].copy()
         doc["username"] = username
         doc['info']['region'] = region
         doc['info']['platform'] = platform
@@ -73,7 +74,8 @@ class Players:
         doc['info']['discord_id'] = discord_id
         doc['fantasy']['fantasy_value'] = fantasy_value
 
-        return self.session.players.insert_one(doc).inserted_id
+        self.session.refresh()
+        return self.session.client['rlpc-news'].players.insert_one(doc)
 
     def download_ids(self):
         """
@@ -85,16 +87,17 @@ class Players:
 
         """
         logger.info("Downloading IDs...")
-        sheetdata = self.p4sheet.to_df('Players!A1:AE')
+        sheetdata = self.p4sheet.to_df('Players!A1:AG')
         sheetdata['Unique IDs'] = sheetdata['Unique IDs'].map(
             lambda x: x.split(","))
         sheetdata = sheetdata.drop_duplicates(subset='Username')
         sheetdata = sheetdata.loc[sheetdata['Username'] != ""]
+        sheetdata = sheetdata.loc[sheetdata['Departed'] == "FALSE"]
 
         for player in sheetdata['Username']:
 
             # Make sure to only care about active players
-            if sheetdata.loc[sheetdata['Username'] == player, 'Team'].values[0] in ['Not Playing', 'Ineligible', 'Future Star', 'Departed', 'Banned', 'Waitlist']:
+            if sheetdata.loc[sheetdata['Username'] == player, 'Team'].values[0] in ['Not Playing', 'Ineligible', 'Future Star', 'Departed', 'Banned', 'Waitlist', 'Below MMR']:
                 continue
 
             # See if the player's username is in the database
@@ -137,7 +140,7 @@ class Players:
                     ids = sheet_ids.union(db_ids)
                     doc['info']['ids'] = ids
                     self.session.players.update_one(
-                        {"username": player}, {"$set": {"info": {'ids': ids}}})
+                        {"username": player}, {"$set": {"info.ids": ids}})
                     logger.info(f"{player} ids updated")
 
         logger.info("Done downloading ids.")
@@ -153,22 +156,27 @@ class Players:
         """
 
         logger.info("Checking players...")
-        sheetdata = self.p4sheet.to_df("Players!A1:W")
+        sheetdata = self.p4sheet.to_df("Players!A1:AG")
         sheetdata['Unique IDs'] = sheetdata['Unique IDs'].map(
             lambda x: x.split(","))
         sheetdata = sheetdata.drop_duplicates(subset='Username')
         sheetdata = sheetdata.loc[sheetdata['Username'] != ""]
+        sheetdata = sheetdata.loc[sheetdata['Departed'] == "FALSE"]
         sheetdata = sheetdata.set_index('Username')
+
         players = self.session.players
 
         for player in sheetdata.index:
-            if sheetdata.loc[player, 'Team'] in ['Not Playing', 'Ineligible', 'Future Star', 'Departed', 'Banned', 'Waitlist']:
+            if sheetdata.loc[player, 'Team'] in ['Not Playing', 'Ineligible', 'Future Star', 'Departed', 'Banned', 'Waitlist', 'Below MMR']:
                 # See if player's document exists and/or needs to be updated
                 players.find_one_and_update(
-                    {'username': player}, {"$set": {"team": sheetdata.loc[player, 'Team']}})
+                    {'username': player}, {"$set": {"info.team": sheetdata.loc[player, 'Team']}})
+                continue
 
             # Player's username doesn't appear in the database
             if not players.find_one({'username': player}):
+                fixed = False
+
                 # Look through ids on the sheet, see if it maches any in the database
                 # Any matches indicate a name change
                 for playerid in sheetdata.loc[player, 'Unique IDs']:
@@ -187,35 +195,35 @@ class Players:
 
                 if not fixed:
                     # Can't find the id anywhere in db, so add a new player
-                    playerinfo = sheetdata.loc[sheetdata['Username'] == player]
-                    self.add_player(player, playerinfo['Region'].values[0], playerinfo['Platform'].values[0], playerinfo['Sheet MMR'].values[0],
-                                    playerinfo['Team'].values[0], playerinfo['League'].values[0], int(playerinfo['Discord ID'].values[0]), ids=playerinfo['Unique IDs'].tolist())
+                    playerinfo = sheetdata.loc[player]
+                    self.add_player(player, playerinfo['Region'], playerinfo['Platform'], playerinfo['Sheet MMR'],
+                                    playerinfo['Team'], playerinfo['League'], playerinfo['Discord ID'], ids=playerinfo['Unique IDs'])
                     logger.info(f'{player} added')
 
             info = players.find_one({'username': player})['info']
             if info['region'] != sheetdata.loc[player, 'Region']:
                 players.update_one({'username': player}, {
-                                   "$set": {'info': {'region': sheetdata.loc[player, 'Region']}}})
+                                   "$set": {'info.region': sheetdata.loc[player, 'Region']}})
                 logger.info(f"{player} updated")
             if info['platform'] != sheetdata.loc[player, 'Platform']:
                 players.update_one({'username': player}, {
-                                   "$set": {'info': {'region': sheetdata.loc[player, 'Platform']}}})
+                                   "$set": {'info.platform': sheetdata.loc[player, 'Platform']}})
                 logger.info(f"{player} updated")
-            if info['mmr'] != sheetdata.loc[player, 'Sheet MMR']:
+            if info['mmr'] != int(sheetdata.loc[player, 'Sheet MMR']):
                 players.update_one({'username': player}, {
-                                   "$set": {'info': {'region': sheetdata.loc[player, 'Sheet MMR']}}})
+                                   "$set": {'info.mmr': int(sheetdata.loc[player, 'Sheet MMR'])}})
                 logger.info(f"{player} updated")
             if info['team'] != teamIds[sheetdata.loc[player, 'Team']]:
                 players.update_one({'username': player}, {
-                                   "$set": {'info': {'region': teamIds[sheetdata.loc[player, 'Team']]}}})
+                                   "$set": {'info.team': teamIds[sheetdata.loc[player, 'Team']]}})
                 logger.info(f"{player} updated")
             if info['league'] != sheetdata.loc[player, 'League']:
                 players.update_one({'username': player}, {
-                                   "$set": {'info': {'region': sheetdata.loc[player, 'League']}}})
+                                   "$set": {'info.league': sheetdata.loc[player, 'League']}})
                 logger.info(f"{player} updated")
             if info['discord_id'] != sheetdata.loc[player, 'Discord ID']:
                 players.update_one({'username': player}, {
-                                   "$set": {'info': {'region': sheetdata.loc[player, 'Discord ID']}}})
+                                   "$set": {'info.discord_id': sheetdata.loc[player, 'Discord ID']}})
                 logger.info(f"{player} updated")
 
         logger.info("Done checking players.")
@@ -364,3 +372,6 @@ class Identifier:
             return player.values[0]
         except:
             return None
+
+if __name__ == "__main__":
+    Players().check_players()

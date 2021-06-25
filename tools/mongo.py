@@ -460,4 +460,6 @@ teamIds = {
     'Raptors': ObjectId('60d3e0bcf44f81cfb194dd99'), 
     'Macaws': ObjectId('60d3e0c5f44f81cfb194dd9a'), 
     'Mages': ObjectId('60d3e0cdf44f81cfb194dd9b'), 
+    'Free Agent': 'Free Agent',
+    'Draftee': 'Draftee',
 }
