@@ -1,273 +1,366 @@
 import pandas as pd
+import logging
 
-from tools.mongo import Session
+from tools.mongo import Session, teamIds
 from tools.sheet import Sheet
 
 from settings import sheet_p4
 
-p4sheet = Sheet(sheet_p4)
-db = Session()
+logger = logging.getLogger(__name__)
 
-def flatten(items, seqtypes=(list, tuple)):
-    for i, x in enumerate(items):
-        while i < len(items) and isinstance(items[i], seqtypes):
-            items[i:i+1] = items[i]
-    items = [i for i in items if i != '']
-    return items
 
-def add_player(username, region, platform, mmr, team, league, ids=[]): 
-    players = p4sheet.to_df('Players!A1:W')
-    players['Sheet MMR'] = players['Sheet MMR'].apply(lambda x: int(x) if x != '' else x)
-    players['Tracker MMR'] = players['Tracker MMR'].apply(lambda x: int(x) if x != '' else x)
-    data = players.loc[(players['League']==league) & ~(players['Team'].isin(['Not Playing', 'Waitlist', 'Future Star']))].reset_index(drop=True) # Get valid players from correct league
-    mmr = int(mmr)
-    num_greater = data[data['Tracker MMR'] > mmr]['Tracker MMR'].count()
-    num_less = data[data['Tracker MMR'] < mmr]['Tracker MMR'].count()
-    percentile = num_less/(num_greater+num_less)
-    fantasy_value = round(80 + 100*percentile)
-    
-    row = Players(username, region, platform, mmr, team, league, fantasy_value)
-    
-    if ids:
-        ids = ids.reset_index(drop=True) # Not really sure why this is needed, but it is
-        row.id = ids
-  
-    session.add(row)
-    session.commit()
-    
-def update_player(username, region, platform, mmr, team, league):
-    pass
+class Players:
+    def __init__(self, session: Session = None, p4sheet: Sheet = None):
+        if not p4sheet:
+            self.p4sheet = Sheet(sheet_p4)
+        else:
+            self.p4sheet = p4sheet
+        if not session:
+            self.session = Session()
+        else:
+            self.session = session
 
-def download_ids():
-    """
-    Takes player IDs from the RLPC Sheet and adds them to the database
+    def add_player(self, username: str, region: str, platform: str, mmr: int, team: str, league: str, discord_id: int, ids: list = []):
+        """
+        Adds a row to  the players database
 
-    Returns
-    -------
-    None.
+        Parameters
+        ----------
+        username : str
+            Player's username.
+        region : str
+            Region where the player plays from.
+        platform : str
+            Player's main platform.
+        mmr : int
+            Player's mmr as listed on the sheet.
+        team : str
+            Team the player is on.
+        league : str
+            League the player plays in.
+        discord_id: int
+            Player's discord id
+        ids : list, optional
+            List of IDs of rocket league accounts from the sheet. The default is [].
 
-    """
-    print('Downloading IDs...')
-        
-    sheetdata = p4sheet.to_df('Players!A1:AE')
-    sheetdata['Unique IDs'] = sheetdata['Unique IDs'].map(lambda x: x.split(","))
-    sheetdata = sheetdata.drop_duplicates(subset='Username')
-    sheetdata = sheetdata.loc[sheetdata['Username']!=""]
-    
-    dbdata = select('players')
-    
-    for player in sheetdata['Username']:
-        if sheetdata.loc[sheetdata['Username']==player, 'Team'].values[0] in ['Not Playing', 'Ineligible', 'Future Star', 'Departed', 'Banned', 'Waitlist']:
-            continue
-        try:
-            superset = set(dbdata.loc[dbdata['Username']==player, 'id'].values[0]).issuperset(set(sheetdata.loc[sheetdata['Username']==player, 'Unique IDs'].values[0]))
-        except:
-            print(player)
-            continue
-        if player not in dbdata['Username'].values: # If the player isn't in the database at all
-            fixed = False
-            # Check to make sure there are no similar IDs, indicating a name change
-            for playerid in sheetdata.loc[player, 'Unique IDs']:
-                if playerid == '':
-                    continue
-                if playerid in flatten([dbdata.loc[x, 'id'] for x in dbdata.index if dbdata.loc[x, 'id'] != None]):
-                    for index in dbdata.index:
-                        if playerid in dbdata.loc[index, 'id']: # Change player's name in database if true
-                            username = dbdata.loc[index, 'Username']
-                            engine.execute(f"""update players set "Username" = '{username}' where '{playerid}' = any("id")""")
-                            print(f'{player} has changed their name to {username}')
-                            fixed = True
-            if not fixed:
-                playerinfo = sheetdata.loc[sheetdata['Username']==player]
-                add_player(player, playerinfo['Region'].values[0], playerinfo['Platform'].values[0], playerinfo['Sheet MMR'].values[0], playerinfo['Team'].values[0], playerinfo['League'].values[0], ids = playerinfo['Unique IDs'])
-                print(f'{player} added')
-        elif not superset:
-            # Above is false if database contains all ids on sheet
-            sheet_ids = set(sheetdata.loc[sheetdata['Username']==player, 'Unique IDs'].values[0])
-            db_ids = set(dbdata.loc[dbdata['Username']==player, 'id'].values[0])
-            ids = sheet_ids.union(db_ids)
-            try:
-                engine.execute(f"""update players set "id" = array[{str(ids)[1:-1]}] where "Username" = '{player}'""")
-            except:
-                pass
-            print(f"{player} updated")
-    print('Done downloading IDs.')
-    
-    
-def identify(id: str, players: pd.DataFrame) -> str:
-    """
-    Determines which player matches a given ID
+        Returns
+        -------
+        None.
 
-    Parameters
-    ----------
-    id : str
-        The unique Rocket Leauge ID of any given player.
-        
-    players:
-        Dataframe with all players and IDs, retrieved using select('players').
+        """
+        players = self.p4sheet.to_df('Players!A1:W')
+        players['Sheet MMR'] = players['Sheet MMR'].apply(
+            lambda x: int(x) if x != '' else x)
+        players['Tracker MMR'] = players['Tracker MMR'].apply(
+            lambda x: int(x) if x != '' else x)
+        data: pd.DataFrame = players.loc[(players['League'] == league) & ~(players['Team'].isin(
+            ['Not Playing', 'Waitlist', 'Future Star']))].reset_index(drop=True)  # Get valid players from correct league
+        mmr = int(mmr)
+        num_greater: int = data[data['Tracker MMR']
+                                > mmr]['Tracker MMR'].count()
+        num_less: int = data[data['Tracker MMR'] < mmr]['Tracker MMR'].count()
+        percentile = num_less/(num_greater+num_less)
+        fantasy_value = round(80 + 100*percentile)
 
-    Returns
-    -------
-    str
-        The name of the player as spelled on the RLPC Spreadsheet.
+        doc = self.session.structures['players']
+        doc["username"] = username
+        doc['info']['region'] = region
+        doc['info']['platform'] = platform
+        doc['info']['mmr'] = mmr
+        doc['info']['team'] = teamIds[team.title()]
+        doc['info']['league'] = league
+        doc['info']['id'] = ids
+        doc['info']['discord_id'] = discord_id
+        doc['fantasy']['fantasy_value'] = fantasy_value
 
-    """
-    
-    for player in players['Username']:
-        try:
-            if id in players.loc[players['Username']==player, 'id'].values[0]:
-                return player
-        except: 
-            pass
-        
-def find_team(names: list, players: pd.DataFrame, id_players: bool = False, choices: list = None) -> str:
-    """
-    Determines which team most likely matches a given set of three players
+        return self.session.players.insert_one(doc).inserted_id
 
-    Parameters
-    ----------
-    names : list
-        List of player names (should be verified as the same on the sheet before using find_team()).
-    players : pd.DataFrame
-        Dataframe with all players and IDs, retrieved using select('players').
-    id_players : bool
-        Whether or not this function should identify players first (if given a list of ids rather than names)
-    choices : list
-        A list of possible teams that this can be. This is used to find the correct team in case of subs or call downs
+    def download_ids(self):
+        """
+        Takes player IDs from the RLPC Sheet and adds them to the database
 
-    Returns
-    -------
-    str
-        Team name.
+        Returns
+        -------
+        None.
 
-    """
-        
-    if id_players:
-        new_names = []
-        for id in names:
-            name = identify(id, players)
-            if name == None:
+        """
+        logger.info("Downloading IDs...")
+        sheetdata = self.p4sheet.to_df('Players!A1:AE')
+        sheetdata['Unique IDs'] = sheetdata['Unique IDs'].map(
+            lambda x: x.split(","))
+        sheetdata = sheetdata.drop_duplicates(subset='Username')
+        sheetdata = sheetdata.loc[sheetdata['Username'] != ""]
+
+        for player in sheetdata['Username']:
+
+            # Make sure to only care about active players
+            if sheetdata.loc[sheetdata['Username'] == player, 'Team'].values[0] in ['Not Playing', 'Ineligible', 'Future Star', 'Departed', 'Banned', 'Waitlist']:
                 continue
-            new_names.append(name)
-        names = new_names
-    
-    found_teams = []
-    players = players.set_index('Username')
-    
-    teams = p4sheet.to_df('Teams!F1:P129')
-    
-    for player in names:
-        
-        team = players.loc[player, 'Team']
-        
-        if choices != None:
-            choice_league = find_league(choices[0], players.reset_index())
-            team_league = find_league(team, players.reset_index())
-            affiliate_columns = {'Major': 'Major Affiliate', 'AAA': 'AAA Affiliate', 'AA': 'AA Affiliate', 'A': 'A Affiliate', 'Independent': 'Major Affiliate', 'Maverick': 'AAA Affiliate', 'Renegade': 'AA Affiliate', 'Paladin': 'A Affiliate'}
-            team = teams.loc[teams["Team"]==team_league, affiliate_columns[choice_league]]
-        
-        found_teams.append(team)
-    
-    for team in found_teams:
-        if found_teams.count(team) > 1:
-            
-            return team # This will return if any two players are on the same team
-    
-    return "Undetermined" # If every player belongs to a different team
-                         
-def find_league(team: str, players: pd.DataFrame) -> str:
-    """
-    Finds out what league a team plays in
 
-    Parameters
-    ----------
-    team : str
-        Name of the team.
-    players : TYPE, optional
-        Dataframe with all player info. Found using select('players').
+            # See if the player's username is in the database
+            if self.session.players.count_documents({'username': player}) == 0:
+                fixed = False
 
-    Returns
-    -------
-    str
-        Name of the league.
+                # Look through ids on the sheet, see if it maches any in the database
+                # Any matches indicate a name change
+                for playerid in sheetdata.loc[player, 'Unique IDs']:
+                    if playerid == '':
+                        continue  # No ids are available, so just ignore
+                    else:
+                        doc = self.session.players.find_one_and_update(
+                            {'info': {'id': playerid}}, {'$set': {'username': player}})
+                        if not doc:
+                            continue  # There were no players in database with this id
+                        old_username = doc['username']
+                        fixed = True
+                        logger.info(
+                            f'{old_username} has changed their name to {player}')
+                        break
 
-    """
-    
-    return players.loc[players['Team']==team, 'League'].values[0]
-    
+                if not fixed:
+                    # Can't find the id anywhere in db, so add a new player
+                    playerinfo = sheetdata.loc[sheetdata['Username'] == player]
+                    self.add_player(player, playerinfo['Region'].values[0], playerinfo['Platform'].values[0], playerinfo['Sheet MMR'].values[0],
+                                    playerinfo['Team'].values[0], playerinfo['League'].values[0], int(playerinfo['Discord ID'].values[0]), ids=playerinfo['Unique IDs'].tolist())
+                    logger.info(f'{player} added')
 
-def check_players():
-    print("Checking players...")
-    players = select('players')
-    sheetdata = p4sheet.to_df('Players!A1:W')
-    sheetdata['Unique IDs'] = sheetdata['Unique IDs'].map(lambda x: x.split(","))
-    sheetdata = sheetdata.drop_duplicates(subset='Username')
-    sheetdata = sheetdata.loc[sheetdata['Username']!=""]
-    
-    # Replace instances of apostrophe
-    sheetdata['Username'] = sheetdata['Username'].map(lambda x: x.replace("'", "''"))
-    sheetdata = sheetdata.set_index('Username')
-    players['Username'] = players['Username'].map(lambda x: x.replace("'", "''"))
-    players = players.set_index('Username')
-    
-    for player in sheetdata.index:
-        if sheetdata.loc[player, 'Team'] in ['Not Playing', 'Ineligible', 'Future Star', 'Departed', 'Banned', 'Waitlist']:
-            try:
-                if players.loc[player, 'Team'] != sheetdata.loc[player, 'Team']:
-                    engine.execute(f"""update players set "Team" = '{sheetdata.loc[player, 'Team']}' where "Username" = '{player}'""")
-            except:
-                pass
-            continue
-        if player not in players.index: # If they don't appear in the database
-            fixed = False
-            # Check if players IDs are in the database
-            for playerid in sheetdata.loc[player, 'Unique IDs']:
-                if playerid == '':
+            else:  # Player's username is found in db
+                doc = self.session.players.find_one({'username': player})
+                db_ids = set(doc['info']['id'])
+                sheet_ids = set(
+                    sheetdata.loc[sheetdata['Username'] == player, 'Unique IDs'].values[0])
+
+                # Check if database ids are a superset of sheet ids
+                superset = db_ids.issuperset(sheet_ids)
+                if not superset:
+                    # Sheet has id(s) that aren't in db, so combine both sets to get updated list
+                    ids = sheet_ids.union(db_ids)
+                    doc['info']['ids'] = ids
+                    self.session.players.update_one(
+                        {"username": player}, {"$set": {"info": {'ids': ids}}})
+                    logger.info(f"{player} ids updated")
+
+        logger.info("Done downloading ids.")
+
+    def check_players(self):
+        """
+        Compares the rlpc sheet to the database to ensure that all players are present and have accurate info
+
+        Returns
+        -------
+        None.
+
+        """
+
+        logger.info("Checking players...")
+        sheetdata = self.p4sheet.to_df("Players!A1:W")
+        sheetdata['Unique IDs'] = sheetdata['Unique IDs'].map(
+            lambda x: x.split(","))
+        sheetdata = sheetdata.drop_duplicates(subset='Username')
+        sheetdata = sheetdata.loc[sheetdata['Username'] != ""]
+        sheetdata = sheetdata.set_index('Username')
+        players = self.session.players
+
+        for player in sheetdata.index:
+            if sheetdata.loc[player, 'Team'] in ['Not Playing', 'Ineligible', 'Future Star', 'Departed', 'Banned', 'Waitlist']:
+                # See if player's document exists and/or needs to be updated
+                players.find_one_and_update(
+                    {'username': player}, {"$set": {"team": sheetdata.loc[player, 'Team']}})
+
+            # Player's username doesn't appear in the database
+            if not players.find_one({'username': player}):
+                # Look through ids on the sheet, see if it maches any in the database
+                # Any matches indicate a name change
+                for playerid in sheetdata.loc[player, 'Unique IDs']:
+                    if playerid == '':
+                        continue  # No ids are available, so just ignore
+                    else:
+                        doc = self.session.players.find_one_and_update(
+                            {'info': {'id': playerid}}, {'$set': {'username': player}})
+                        if not doc:
+                            continue  # There were no players in database with this id
+                        old_username = doc['username']
+                        fixed = True
+                        logger.info(
+                            f'{old_username} has changed their name to {player}')
+                        break
+
+                if not fixed:
+                    # Can't find the id anywhere in db, so add a new player
+                    playerinfo = sheetdata.loc[sheetdata['Username'] == player]
+                    self.add_player(player, playerinfo['Region'].values[0], playerinfo['Platform'].values[0], playerinfo['Sheet MMR'].values[0],
+                                    playerinfo['Team'].values[0], playerinfo['League'].values[0], int(playerinfo['Discord ID'].values[0]), ids=playerinfo['Unique IDs'].tolist())
+                    logger.info(f'{player} added')
+
+            info = players.find_one({'username': player})['info']
+            if info['region'] != sheetdata.loc[player, 'Region']:
+                players.update_one({'username': player}, {
+                                   "$set": {'info': {'region': sheetdata.loc[player, 'Region']}}})
+                logger.info(f"{player} updated")
+            if info['platform'] != sheetdata.loc[player, 'Platform']:
+                players.update_one({'username': player}, {
+                                   "$set": {'info': {'region': sheetdata.loc[player, 'Platform']}}})
+                logger.info(f"{player} updated")
+            if info['mmr'] != sheetdata.loc[player, 'Sheet MMR']:
+                players.update_one({'username': player}, {
+                                   "$set": {'info': {'region': sheetdata.loc[player, 'Sheet MMR']}}})
+                logger.info(f"{player} updated")
+            if info['team'] != teamIds[sheetdata.loc[player, 'Team']]:
+                players.update_one({'username': player}, {
+                                   "$set": {'info': {'region': teamIds[sheetdata.loc[player, 'Team']]}}})
+                logger.info(f"{player} updated")
+            if info['league'] != sheetdata.loc[player, 'League']:
+                players.update_one({'username': player}, {
+                                   "$set": {'info': {'region': sheetdata.loc[player, 'League']}}})
+                logger.info(f"{player} updated")
+            if info['discord_id'] != sheetdata.loc[player, 'Discord ID']:
+                players.update_one({'username': player}, {
+                                   "$set": {'info': {'region': sheetdata.loc[player, 'Discord ID']}}})
+                logger.info(f"{player} updated")
+
+        logger.info("Done checking players.")
+
+
+class Identifier:
+    def __init__(self, session: Session = None, p4sheet: Sheet = None):
+        if not p4sheet:
+            self.p4sheet = Sheet(sheet_p4)
+        else:
+            self.p4sheet = p4sheet
+        if not session:
+            self.session = Session()
+        else:
+            self.session = session
+        self.ids = {}
+        self.leagues = {}
+        self.tracker_ids = {}
+
+    def identify(self, id: str) -> str:
+        """
+        Determines which player matches a given ID
+
+        Parameters
+        ----------
+        id : str
+            The unique Rocket Leauge ID of any given player.
+
+        Returns
+        -------
+        str
+            The name of the player as spelled on the RLPC Spreadsheet.
+
+        """
+        if self.ids.get(id):
+            return self.ids.get(id)
+
+        player = self.session.players.find_one({'info': {'id': id}})
+        self.ids[id] = player['Username']
+        return player['Username']
+
+    def find_team(self, names: list, id_players: bool = False, choices: list = None) -> str:
+        """
+        Determines which team most likely matches a given set of three players
+
+        Parameters
+        ----------
+        names : list
+            List of player names (should be verified as the same on the sheet before using find_team()).
+        id_players : bool
+            Whether or not this function should identify players first (if given a list of ids rather than names)
+        choices : list
+            A list of possible teams that this can be. This is used to find the correct team in case of subs or call downs
+
+        Returns
+        -------
+        str
+            Team name.
+
+        """
+
+        if id_players:
+            new_names = []
+            for id in names:
+                name = self.identify(id)
+                if not name:
                     continue
-                if playerid in flatten([players.loc[x, 'id'] for x in players.index if players.loc[x, 'id'] != None]):
-                    for username in players.index:
-                        if players.loc[username, 'id'] == None:
-                            players.loc[username, 'id'] = ['']
-                        if playerid in players.loc[username, 'id']: # Change player's name in database
-                            change_name(username, player, playerid)
-                            print(f'{username} has changed their name to {player}')
-                            fixed = True
-                            break
-                    break
-            if not fixed:
-                add_player(player, sheetdata.loc[player, 'Region'], sheetdata.loc[player, 'Platform'], sheetdata.loc[player, 'Sheet MMR'], sheetdata.loc[player, 'Team'], sheetdata.loc[player, 'League'])            
-                print(f'{player} added')
-        
-        else: # If they do appear in the database, check Region, Platform, MMR, Team, and League
-            if sheetdata.loc[player, 'Region'] != players.loc[player, 'Region']:
-                engine.execute(f"""update players set "Region" = '{sheetdata.loc[player, 'Region']}' where "Username" = '{player}'""")
-                print(f'{player} updated')
-            if sheetdata.loc[player, 'Platform'] != players.loc[player, 'Platform']:
-                engine.execute(f"""update players set "Platform" = '{sheetdata.loc[player, 'Platform']}' where "Username" = '{player}'""")
-                print(f'{player} updated')
-            if int(sheetdata.loc[player, 'Sheet MMR']) != players.loc[player, 'MMR']:
-                engine.execute(f"""update players set "MMR" = '{sheetdata.loc[player, 'Sheet MMR']}' where "Username" = '{player}'""")
-                print(f'{player} updated')
-            if sheetdata.loc[player, 'Team'] != players.loc[player, 'Team']:
-                engine.execute(f"""update players set "Team" = '{sheetdata.loc[player, 'Team']}' where "Username" = '{player}'""")
-                print(f'{player} updated')
-            if sheetdata.loc[player, 'League'] != players.loc[player, 'League']:
-                engine.execute(f"""update players set "League" = '{sheetdata.loc[player, 'League']}' where "Username" = '{player}'""")
-                print(f'{player} updated')
-    print("Done checking players.")
-    
-def change_name(old, new, playerid):
-    # Change name in players database
-    engine.execute(f"""update players set "Username" = '{new}' where '{playerid}' = any("id")""")
-    
-    # Change name on fantasy teams
-    engine.execute(f"""update fantasy_players set players = array_replace("players", '{old}', '{new}')""")
-    
-def tracker_identify(name):
-    sheetdata = p4sheet.to_df('Players!A1:AE')
-    player = sheetdata.loc[sheetdata['Tracker'].str.contains(name.split()[0]), 'Username']
-    try:
-        player = player.values[0]
-        return player
-    except:
-        return None
+                new_names.append(name)
+            names = new_names
+
+        found_teams = []
+        teams = self.p4sheet.to_df("Teams!F1:P129")
+
+        for player in names:
+            doc = self.session.players.find_one({'Username': player})
+            team: str = doc['info']['Team']
+
+            if choices:
+                choice_league = self.find_league(choices[0])
+                team_league = self.find_league(team)
+                affiliate_columns = {
+                    'Major': 'Major Affiliate',
+                    'AAA': 'AAA Affiliate',
+                    'AA': 'AA Affiliate',
+                    'A': 'A Affiliate',
+                    'Independent': 'Major Affiliate',
+                    'Maverick': 'AAA Affiliate',
+                    'Renegade': 'AA Affiliate',
+                    'Paladin': 'A Affiliate'
+                }
+                team = teams.loc[teams['Team'] == team_league,
+                                 affiliate_columns[choice_league]]
+
+            found_teams.append(team)
+
+        for team in found_teams:
+            if found_teams.count(team) > 1:
+                return team  # This will return if any two players are on the same team
+
+        return "Undetermined"  # If every player belongs to a different team
+
+    def find_league(self, team: str) -> str:
+        """
+        Finds out what league a team plays in
+
+        Parameters
+        ----------
+        team : str
+            Name of the team.
+
+        Returns
+        -------
+        str
+            Name of the league.
+
+        """
+
+        team = team.title()
+
+        if self.leagues.get(team):
+            return self.leagues.get(team)
+
+        doc = self.session.teams.find_one({"team": team})
+        self.leagues[team] = doc['league']
+        return doc['league']
+
+    def tracker_identify(self, name: str) -> str:
+        """
+        Finds a player's username based on the name used in-game by seeing if it matches any rltracker links
+
+        Parameters
+        ----------
+        name : str
+            The in-game name of a player.
+
+        Returns
+        -------
+        str
+            The name of the player as spelled on the RLPC Spreadsheet.
+
+        """
+        sheetdata = self.p4sheet.to_df('Players!A1:AE')
+        player = sheetdata.loc[sheetdata['Tracker'].str.contains(name.split()[
+                                                                 0]), 'Username']
+        try:
+            return player.values[0]
+        except:
+            return None

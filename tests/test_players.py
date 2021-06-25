@@ -1,4 +1,4 @@
-from rlpc.players_rewrite import Session, Players, Identifier
+from rlpc.players import Session, Players, Identifier
 import pymongo
 import unittest
 

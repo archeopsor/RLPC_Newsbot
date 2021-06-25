@@ -55,7 +55,7 @@ playersStructure = {
         "team": None, # Team ObjectId
         "league": None,
         "id": [],
-        "discord_id": 0,
+        "discord_id": "",
     },
     "fantasy": {
         "fantasy_value": 0,
@@ -266,13 +266,13 @@ fantasyStructure = {
     "username": None,
     "discord_id": 0,
     "account_league": "",
-    "players": {
-        # 1: ObjectId() | None,
-        # 2: ObjectId() | None,
-        # 3: ObjectId() | None,
-        # 4: ObjectId() | None,
-        # 5: ObjectId() | None,
-    },
+    "players": [
+        # ObjectId() | None,
+        # ObjectId() | None,
+        # ObjectId() | None,
+        # ObjectId() | None,
+        # ObjectId() | None,
+    ],
     "player_history": [
         # {
         #     "Player": ObjectId(),    
