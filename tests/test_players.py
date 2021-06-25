@@ -13,6 +13,10 @@ class TestPlayers(unittest.TestCase):
         
     def test_identify(self):
         self.assertEqual("bdong", identifier.identify("76561199015415785"))
+
+    def test_checks(self):
+        players.check_players()
+        players.download_ids()
         
 if __name__ == '__main__':
     unittest.main()
