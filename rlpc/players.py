@@ -1,6 +1,7 @@
 import pandas as pd
 import logging
 import time
+from bson import ObjectId
 
 from tools.mongo import Session, teamIds
 from tools.sheet import Sheet
@@ -111,7 +112,7 @@ class Players:
                         continue  # No ids are available, so just ignore
                     else:
                         doc = self.session.players.find_one_and_update(
-                            {'info': {'id': playerid}}, {'$set': {'username': player}})
+                            {'info.id': playerid}, {'$set': {'username': player}})
                         if not doc:
                             continue  # There were no players in database with this id
                         old_username = doc['username']
@@ -140,7 +141,7 @@ class Players:
                     ids = sheet_ids.union(db_ids)
                     doc['info']['ids'] = ids
                     self.session.players.update_one(
-                        {"username": player}, {"$set": {"info.ids": ids}})
+                        {"username": player}, {"$set": {"info.id": ids}})
                     logger.info(f"{player} ids updated")
 
         logger.info("Done downloading ids.")
@@ -184,7 +185,7 @@ class Players:
                         continue  # No ids are available, so just ignore
                     else:
                         doc = self.session.players.find_one_and_update(
-                            {'info': {'id': playerid}}, {'$set': {'username': player}})
+                            {'info.id': playerid}, {'$set': {'username': player}})
                         if not doc:
                             continue  # There were no players in database with this id
                         old_username = doc['username']
@@ -261,9 +262,12 @@ class Identifier:
         if self.ids.get(id):
             return self.ids.get(id)
 
-        player = self.session.players.find_one({'info': {'id': id}})
-        self.ids[id] = player['Username']
-        return player['Username']
+        player = self.session.players.find_one({'info.id': id})
+        if not player:
+            return None
+        else:
+            self.ids[id] = player['username']
+            return player['username']
 
     def find_team(self, names: list, id_players: bool = False, choices: list = None) -> str:
         """
@@ -298,8 +302,9 @@ class Identifier:
         teams = self.p4sheet.to_df("Teams!F1:P129")
 
         for player in names:
-            doc = self.session.players.find_one({'Username': player})
-            team: str = doc['info']['Team']
+            doc = self.session.players.find_one({'username': player})
+            teamId: ObjectId = doc['info']['team']
+            team = self.session.teams.find_one({'_id': teamId})['team']
 
             if choices:
                 choice_league = self.find_league(choices[0])
@@ -374,4 +379,4 @@ class Identifier:
             return None
 
 if __name__ == "__main__":
-    Players().check_players()
+    Identifier().find_team(['SpadL', 'Computer', 'Zero'])
