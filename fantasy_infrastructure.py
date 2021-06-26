@@ -3,11 +3,12 @@ from datetime import datetime
 import pytz
 import re
 from difflib import SequenceMatcher
+import random
 
 #from tools.database import engine, select, Session, Fantasy_players, Players, Transfer_log
-from tools.mongo import Session, ObjectId
+from tools.mongo import Session, ObjectId, teamIds
 
-from settings import prefix
+from settings import prefix, leagues
 
 
 class FantasyHandler:
@@ -61,7 +62,7 @@ class FantasyHandler:
             return f"You don't currently have an account! Use {prefix}new to make an account"
 
         # Try to get player (case insensitive), and return if player doesn't exist
-        player_info = self.session.players.find_one({'username': re.compile("^"+re.escape(player)+"$", re.IGNORECASE)})
+        player_info = self.session.players.find_one({'$text': {'$search': player}})
         if not player_info:
             return "That player couldn't be found in the database. Make sure you spelled their name correctly"
 
@@ -121,7 +122,7 @@ class FantasyHandler:
             return f"You don't currently have an account! Use {prefix}new to make an account"
 
         # Make sure player is actually on the team
-        player_info = self.session.players.find_one({'username': re.compile("^"+re.escape(player)+"$", re.IGNORECASE)})
+        player_info = self.session.players.find_one({'$text': {'$search': player}})
         if player_info['_id'] not in account['players']:
             return f"{player} isn't on your team!"
         else:
@@ -156,160 +157,116 @@ class FantasyHandler:
 
         return f'Success! {player} has been dropped from your team. You have {self.SALARY_CAP - new_salary} left before you reach the salary cap.'
 
-    
-# Display a player's team
-def show_team(person: str) -> pd.Series:
-    """
-    Gets a person's fantasy team
+    def show_team(self, discord_id: str) -> dict:
+        """Gets a person's fantasy account for use by the discord bot. This is a useless function.
 
-    Parameters
-    ----------
-    person : str
-        Name of the person's account (discord username).
+        Args:
+            discord_id (str): player's discord id
 
-    Returns
-    -------
-    Series containing info about the person's team, for use by the discord bot.
+        Returns:
+            dict: document containing info for player's fantasy account
+        """
+        doc = self.session.fantasy.find_one({'discord_id': discord_id})
+        return doc
 
-    """
-    fantasy_teams = select("fantasy_players")
-    fantasy_teams['username'] = fantasy_teams['username'].str.upper()
-    person = person.upper()
-    fantasy_teams = fantasy_teams.set_index("username")
-    return(fantasy_teams.loc[person])
+    def info(self, player: str, pg: bool = False) -> dict:
+        """Gets info about an RLPC player. This is also a useless function except for pg.
 
-def info(player: str, pg: bool = False) -> pd.Series:
-    """
-    Gets info about an RLPC player
+        Args:
+            player (str): player's username
+            pg (bool, optional): Whether or not to divide points by series played. Defaults to False.
 
-    Parameters
-    ----------
-    player : str
-        The player's name.
+        Returns:
+            dict: player info
+        """
+        doc = self.session.players.find_one({'$text': {'$search': player}})
+        if not doc:
+            return
 
-    Returns
-    -------
-    Series containing info about the player, for use by the discord bot.
+        if pg:
+            doc['fantasy']['fantasy_points'] = round(doc['fantasy']['fantasy_points'] / doc['stats']['general']['Series Played'], 1)
 
-    """
-    players = select("players")
-    lower_players = players['Username'].str.lower()
-    if player.casefold() in lower_players.values:
-        pindex = lower_players[lower_players == player.casefold()].index[0]
-        player = players.loc[pindex][0]
-    for row in players.index:
-        players.loc[row,'Username'] = players.loc[row,'Username'].upper()
-    if pg:
-        players['Fantasy Points'] = round(players['Fantasy Points']/players['Series Played'], 1).fillna(value=0)
-    player = player.upper()
-    players = players.set_index("Username")
-    return(players.loc[player])
+        return doc
 
-def search(minsalary: int=0, maxsalary: int=800, league: str="all", team: str="all", name: str="none", maxdistance: float=0.75) -> pd.DataFrame:
-    """
-    Searches through all RLPC players to find five that meet the specified parameters
+    def search(self, minsalary: int = 0, maxsalary: int = 800, league: str = "all", team: str = "all", name: str = "none", maxdistance: float = 0.75) -> list:
+        """Returns up to 5 players matching a set of parameters
 
-    Parameters
-    ----------
-    minsalary : int, optional
-        Minimum desired salary. The default is 0.
-    maxsalary : int, optional
-        Maximum desired salary. The default is 800.
-    league : str, optional
-        Specified desired league. The default is "all".
-    team : str, optional
-        Specified desired team. The default is "all".
-    name : str, optional
-        Approximate name of the player. The default is "none".
-    maxdistance : float, optional
-        How specific the name parameter should be. The default is 0.75.
+        Args:
+            minsalary (int, optional): Minimum Salary. Defaults to 0.
+            maxsalary (int, optional): Maximum Salary. Defaults to 800.
+            league (str, optional): Which league, if any, to limit to. Defaults to "all".
+            team (str, optional): Which team, if any, to limit to. Defaults to "all".
+            name (str, optional): Looking for a specific name. Defaults to "none".
+            maxdistance (float, optional): How close the name needs to be to the specified name. Defaults to 0.75.
 
-    Returns
-    -------
-    Dataframe with info for five players meeting all of those parameters.
-
-    """
-    players = select("players")
-    players = players.sort_values(by='Username')
-    players = players.reset_index(drop=True)
-    
-    if team.casefold() in ["all","none","no","idc"]:
-        team = "all"
-    if league.casefold() in ["all","none","no","idc"]:
-        league = "all"
-    if league.casefold() not in ['major','aaa','aa','a','independent', 'maverick', 'indy', 'mav', 'all']:
-        return("League could not be understood")
-    if league.casefold() == "indy":
-        league = "Independent"
-    elif league.casefold() == "mav":
-        league = "Maverick"
-    elif league.casefold() in ['major', 'independent', 'maverick']:
-        league = league.title()
-    elif league.casefold() in ['aaa','aa','a']:
-        league = league.upper()
-    
-    for row in players.index:
-        salary = int(players.loc[row,'Fantasy Value'])
-        players.loc[row,'Fantasy Value'] = salary
-    
-    players = players.loc[players['Fantasy Value'] >= minsalary]
-    players = players.loc[players['Fantasy Value'] <= maxsalary]
-    if league != "all":
-        players = players.loc[players['League'].str.lower() == league.casefold()]
-    if team != "all":
-        players = players.loc[players['Team'].str.lower() == team.casefold()]
-        
-    if len(players.index) == 0:
-        return("There were no players that matched those parameters")
-    
-    if name == "none":
-        if len(players.index) > 4:
-            return(players.sample(5))
+        Returns:
+            list: List of dictionaries with player information
+        """
+        if team.casefold() in ["all","none","no","idc"]:
+            team = "all"
+        if league.casefold() in ["all","none","no","idc"]:
+            league = "all"
+        if league.casefold() not in ['major','aaa','aa','a','independent', 'maverick', 'indy', 'mav', 'all']:
+            return("League could not be understood")
         else:
-            num = len(players.index)
-            return(players.sample(num))
-    
-    # Search names by assigning an editdistance value 
-    players['editdistance'] = 0
-    for row in players.index:
-        username = players.loc[row,'Username']
-        username = username.casefold()
-        name = name.casefold()
-        distance = SequenceMatcher(a=name, b=username).ratio()
-        length = abs(len(name)-len(username))
-        players.loc[row,'editdistance'] = (distance-length)/2
-    
-    if name != "none":
-        players = players.sort_values(by='editdistance', ascending=False)
-        players = players.loc[players['editdistance'] <= maxdistance]
-        players = players.drop('editdistance',axis=1)
-        return(players.head(5))
-    
-def player_lb(league: str = None, sortby: str="Fantasy Points", num: int=10, pergame: bool=False) -> pd.DataFrame:
-    """
-    Sorts the list of rlpc players
-
-    Parameters
-    ----------
-    league : str, optional
-        Which league to include players from. The default is None.
-    sortby : str, optional
-        Which column to sort by. The default is "Fantasy Points".
-    num : int, optional
-        How many players to return. The default is 10.
-
-    Returns
-    -------
-    Sorted dataframe of RLPC players.
-
-    """
-    players = select("players").set_index("Username")
-    
-    if league != None:
-        players = players[players['League'].str.lower() == league.casefold()]
-    
-    if pergame:
-        players['Fantasy Points'] = round(players['Fantasy Points']/players['Series Played'], 1).fillna(value=0)
-    lb = players['Fantasy Points'].sort_values(ascending=False)
+            league = leagues[league.lower()]
         
-    return lb.head(num)
+        filter = {
+            "fantasy.fantasy_value": {'$gte': minsalary, '$lte': maxsalary}
+        }
+
+        if league != "all":
+            filter['info.league'] = league
+        if team != "all":
+            filter['info.team'] = teamIds[team.title()]
+        if name != "none":
+            filter['username'] = name
+    
+        # Get 5 (or fewer) random players from the query
+        count = self.session.players.count_documents(filter)
+        cursor = self.session.players.find(filter)
+        players = []
+        for i in range(5 if count >= 5 else count):
+            players.append(cursor.skip(round(random.random()*count)).next())
+            cursor.rewind()
+
+        return players
+
+    def player_lb(self, league: str = None, sortby: str = "Fantasy Points", num: int = 10, pergame: bool = False) -> list:
+        filter = {}
+        if league:
+            filter['info.league'] = leagues[league.lower()]
+        
+        players = self.session.players.find(filter).sort()
+        # TODO: Finish this
+
+        
+    
+# def player_lb(league: str = None, sortby: str="Fantasy Points", num: int=10, pergame: bool=False) -> pd.DataFrame:
+#     """
+#     Sorts the list of rlpc players
+
+#     Parameters
+#     ----------
+#     league : str, optional
+#         Which league to include players from. The default is None.
+#     sortby : str, optional
+#         Which column to sort by. The default is "Fantasy Points".
+#     num : int, optional
+#         How many players to return. The default is 10.
+
+#     Returns
+#     -------
+#     Sorted dataframe of RLPC players.
+
+#     """
+#     players = select("players").set_index("Username")
+    
+#     if league != None:
+#         players = players[players['League'].str.lower() == league.casefold()]
+    
+#     if pergame:
+#         players['Fantasy Points'] = round(players['Fantasy Points']/players['Series Played'], 1).fillna(value=0)
+#     lb = players['Fantasy Points'].sort_values(ascending=False)
+        
+#     return lb.head(num)
