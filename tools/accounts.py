@@ -1,46 +1,41 @@
-from tools.database import engine, select
+from tools.mongo import Session
 
-from settings import prefix
+from settings import prefix, leagues
 
-def create_account(person: str, league: str = "none") -> None:
+def create_account(username: str, discord_id: str, league: str = None) -> str:
     """
 
     Parameters
     ----------
-    person : str
+    username : str
         Name of the account being created (discord username).
+    discord_id : str
+        Discord Id for the account.
     league : str
         Which league the account will be registered under.
 
     Returns
     -------
-    None
+    str
         Creates an account for someone who wants to play, and sets their team of 5 all 
         to "Not Picked".
 
     """
-    if league.casefold() not in ["major","aaa","aa","a","independent", "indy", "maverick", "mav", "none"]:
-        return f"{league} could not be understood"
+    if league:
+        league = leagues[league.lower()]
     
-    if league.casefold() == "indy":
-        league = "independent"
-    elif league.casefold() == "mav":
-        league = "maverick"
-    
-    if league.casefold() in ["major", "independent", "maverick", "none"]:
-        league = league.title()
-    else:
-        league = league.upper()
-    
-    players = select("fantasy_players")
-    
-    player_check = players[players['username']==person].index.values
-    
-    if len(player_check)!=0:
-        return "You already have an account!"
-    
-    command = "insert into fantasy_players (username, account_league, players, points, transfers_left, salary, total_points)"
-    values = f"""values ('{person}', '{league}', '{{Not Picked, Not Picked, Not Picked, Not Picked, Not Picked}}', '{{0, 0, 0, 0, 0}}', 2, 0, 0)"""
-    engine.execute(f"{command} {values}")
-    
-    return f"Success! Your account has been created, with an ID of {person}. To add players, use {prefix}pick" 
+    with Session() as session:
+        if session.fantasy.find_one({'discord_id': discord_id}):
+            return "You already have an account!"
+        else:
+            doc = session.structures['fantasy']
+            doc['username'] = username
+            doc['discord_id'] = username
+            if league:
+                doc['account_league'] = league
+
+            session.fantasy.insert_one(doc)
+
+            return f"Success! Your account has been created. To add players, use {prefix}pick." 
+
+        
