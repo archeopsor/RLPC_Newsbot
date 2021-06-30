@@ -307,14 +307,14 @@ class Stats(commands.Cog):
             
             league: str = find_league(team, select("players"))
             sheet: Sheet = p4sheet if league.lower() in ['major', 'aaa', 'aa', 'a'] else indysheet
-            all_games: pd.DataFrame = sheet.to_df(f"{league} Schedule!N4:V")
-            if not all_games:
+            all_games: pd.DataFrame = sheet.to_df(f"{league} Schedule!O4:X")
+            if all_games.empty:
                 return await ctx.send("Schedules couldn't be found, possibly because they aren't on the sheet. Contact arco if you believe this is an error.")
 
-            all_games.columns.values[2] = "Team 1"
-            all_games.columns.values[4] = "Team 2"
-            all_games.columns.values[7] = "Logs"
-            all_games.drop(columns=["Playoff", "Game Logs Processed"], inplace=True)
+            all_games.columns.values[3] = "Team 1"
+            all_games.columns.values[5] = "Team 2"
+            all_games.columns.values[8] = "Logs"
+            all_games.drop(columns=["Preseason", "Playoff", "Game Logs Processed", ], inplace=True)
 
             schedule: pd.DataFrame = all_games.loc[(all_games['Team 1'] == team) | (all_games["Team 2"] == team)]
             schedule.set_index("Day", drop=True, inplace=True)
