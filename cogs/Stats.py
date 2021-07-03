@@ -299,7 +299,7 @@ class Stats(commands.Cog):
             return await ctx.send(error)
 
     @commands.command(aliases=("schedules", "scheduling",))
-    async def schedule(self, ctx, team: str):
+    async def schedule(self, ctx, *, team: str):
         async with ctx.typing():
             team: str = team.title()
             if team not in divisions.keys():
