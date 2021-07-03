@@ -9,4 +9,4 @@ The bot currently has too many commands to list them all at the same time. Pleas
  - Links: N/A
  - Reddit: getreddit, get, newest
  - StatsCog: valid, pr, mmr, stats, gdstats, top
- - Other: ping, alerts
+ - Other: ping, alerts, schedule
