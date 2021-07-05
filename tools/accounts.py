@@ -30,12 +30,12 @@ def create_account(username: str, discord_id: str, league: str = None) -> str:
         else:
             doc = session.structures['fantasy']
             doc['username'] = username
-            doc['discord_id'] = username
+            doc['discord_id'] = discord_id
             if league:
                 doc['account_league'] = league
 
             session.fantasy.insert_one(doc)
 
-            return f"Success! Your account has been created. To add players, use {prefix}pick." 
+    return f"Success! Your account has been created. To add players, use {prefix}pick." 
 
         

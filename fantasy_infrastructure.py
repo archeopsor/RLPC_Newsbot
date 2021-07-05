@@ -93,7 +93,7 @@ class FantasyHandler:
         # Add player to player_history (Even if there's an entry there for this player already)
         history = {
             "Player": player_info['_id'],
-            "Date in": datetime.now(tz=pytz.timezone("US/Eastern")).date(),
+            "Date in": datetime.now(tz=pytz.timezone("US/Eastern")),
             "Date out": None,
             "Points": 0,
         }
@@ -106,7 +106,7 @@ class FantasyHandler:
             "Type": "in",
             "Player": {
                 "id": player_info['_id'],
-                "salary": player_info['fantasy']['salary'],
+                "salary": player_info['fantasy']['fantasy_value'],
             },
         }
         self.session.fantasy.update_one({"_id": account['_id']}, {
@@ -146,7 +146,7 @@ class FantasyHandler:
             "Type": "out",
             "Player": {
                 "id": player_info['_id'],
-                "salary": player_info['fantasy']['salary'],
+                "salary": player_info['fantasy']['fantasy_value'],
                 "points": points
             },
         }
@@ -156,7 +156,7 @@ class FantasyHandler:
         # Update player's info in player_history
         updates = {
             '$set': {
-                'player_history.Date out': datetime.now(tz=pytz.timezone("US/Eastern")).date()
+                'player_history.$.Date out': datetime.now(tz=pytz.timezone("US/Eastern"))
             }
         }
         self.session.fantasy.find_one_and_update(
@@ -166,8 +166,12 @@ class FantasyHandler:
         new_salary = self.SALARY_CAP - player_info['fantasy']['fantasy_value']
         self.session.fantasy.find_one_and_update(
             {'_id': account['_id']}, {'$set': {'salary': new_salary}})
+        
+        # Remove one transaction
+        self.session.fantasy.find_one_and_update(
+            {'_id': account['_id']}, {'$inc': {'transactions_left': -1}})
 
-        return f'Success! {player} has been dropped from your team. You have {self.SALARY_CAP - new_salary} left before you reach the salary cap.'
+        return f'Success! {player} has been dropped from your team. You have {new_salary} left before you reach the salary cap.'
 
     def show_team(self, discord_id: str) -> dict:
         """Gets a person's fantasy account for use by the discord bot. This is a useless function.
@@ -196,8 +200,11 @@ class FantasyHandler:
             return
 
         if pg:
-            doc['fantasy']['fantasy_points'] = round(
-                doc['fantasy']['fantasy_points'] / doc['stats']['general']['Series Played'], 1)
+            try:
+                doc['fantasy']['fantasy_points'] = round(
+                    doc['fantasy']['fantasy_points'] / doc['stats']['general']['Series Played'], 1)
+            except:
+                pass # Avoid dividing by zero
 
         return doc
 
@@ -221,8 +228,10 @@ class FantasyHandler:
             league = "all"
         if league.casefold() not in ['major', 'aaa', 'aa', 'a', 'independent', 'maverick', 'indy', 'mav', 'all']:
             return("League could not be understood")
-        else:
+        elif league.lower() != "all":
             league = leagues[league.lower()]
+        else:
+            league = "all"
 
         filter = {
             "fantasy.fantasy_value": {'$gte': minsalary, '$lte': maxsalary}
@@ -239,9 +248,13 @@ class FantasyHandler:
         count = self.session.players.count_documents(filter)
         cursor = self.session.players.find(filter)
         players = []
-        for i in range(5 if count >= 5 else count):
-            players.append(cursor.skip(round(random.random()*count)).next())
-            cursor.rewind()
+        if count < 5:
+            while cursor.alive:
+                players.append(cursor.next())
+        else:
+            for i in range(5):
+                players.append(cursor.skip(round(random.random()*count)).next())
+                cursor.rewind()
 
         return players
 
@@ -273,7 +286,10 @@ class FantasyHandler:
                 doc = player['stats']
 
             if pergame:
-                stat = round(doc[sortby] / player['stats']['Games Played'], 1)
+                try:
+                    stat = round(doc[sortby] / player['stats']['Games Played'], 1)
+                except:
+                    stat = doc[sortby] # Avoid dividing by 0
             else:
                 stat = doc[sortby]
 

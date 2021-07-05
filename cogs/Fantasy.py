@@ -11,10 +11,11 @@ from tools.mongo import Session
 
 from settings import prefix, sheet_p4
 
-client = commands.Bot(command_prefix = prefix)
+client = commands.Bot(command_prefix=prefix)
+
 
 class Fantasy(commands.Cog):
-    
+
     def __init__(self, client, session: Session = None, fantasy: FantasyHandler = None, p4_sheet: Sheet = None):
         self.client = client
         if not p4_sheet:
@@ -29,49 +30,38 @@ class Fantasy(commands.Cog):
             self.fantasy = FantasyHandler(self.session)
         else:
             self.fantasy = fantasy
-        
-    @commands.command(aliases=("createaccount","create_account","newplayer", "new_player","newaccount","new_account","add_fantasy_player","new", "signup"))
-    async def new_fantasy_player(self, ctx: Context, league="none"):
+
+    @commands.command(aliases=("createaccount", "create_account", "newplayer", "new_player", "newaccount", "new_account", "add_fantasy_player", "new", "signup"))
+    async def new_fantasy_player(self, ctx: Context, league: str = None):
         async with ctx.typing():
-            if league.casefold() not in ["major","aaa","aa","a","independent", "indy", "maverick", "mav", "none"]:
-                await ctx.send(f"{league} could not be understood")
-                return
-            else:
+            if not league:
                 pass
+            elif league.casefold() not in ["major", "aaa", "aa", "a", "independent", "indy", "maverick", "mav"]:
+                return await ctx.send(f"{league} could not be understood")
+
             author = ctx.message.author.name
-            answer = accounts.create_account(author,league)
-        await ctx.send(answer)
-        
+            id = ctx.message.author.id
+            answer = accounts.create_account(author, id, league=league)
+        return await ctx.send(answer)
+
     @new_fantasy_player.error
     async def new_fantasy_player_error(self, ctx: Context, error):
-        if isinstance(error,commands.MissingRequiredArgument):
+        if isinstance(error, commands.MissingRequiredArgument):
             await ctx.send(f'Please include the league you play in. If you are not a player, use "{prefix}new none"')
-        
-    @commands.command(aliases=("pick", "pickplayer", "addplayer", "add_player",))
-    async def pick_player(self, ctx: Context, *, message):
+
+    @commands.command(aliases=("pick", "pickplayer", "addplayer", "add_player", "buy"))
+    async def pick_player(self, ctx: Context, *, player: str):
         async with ctx.typing():
-            message = message.split()
-            try: slot = int(message[-1])    
-            except: slot = 0
-            player = ""
-            if slot != 0:
-                for i in range(len(message)-1):
-                    player = player + " " + message[i]
-            elif len(message) > 1:
-                for i in message:
-                    player = player + " " + i
-            else:
-                player = message[0]
-            player = player.lstrip()
+            player = player.strip()
             answer = self.fantasy.pick_player(ctx.author.id, player)
         await ctx.send(answer)
-        
+
     @pick_player.error
     async def pick_player_error(self, ctx: Context, error):
-        if isinstance(error,commands.MissingRequiredArgument):
+        if isinstance(error, commands.MissingRequiredArgument):
             await ctx.send('Please include a player')
-            
-    @commands.command(aliases=("drop","dropplayer","removeplayer","remove_player",))
+
+    @commands.command(aliases=("drop", "dropplayer", "removeplayer", "remove_player", "sell"))
     async def drop_player(self, ctx: Context, player: str):
         async with ctx.typing():
             try:
@@ -79,55 +69,71 @@ class Fantasy(commands.Cog):
             except:
                 return "There was an error dropping " + player + ". Contact arco if you think this is a bug."
         await ctx.send(answer)
-        
+
     @drop_player.error
     async def drop_player_error(self, ctx: Context, error):
-        if isinstance(error,commands.MissingRequiredArgument):
+        if isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("Please include the player you would like dropped")
-            
-    @commands.command(aliases=("leaderboard","lb","standings",))
+
+    @commands.command(aliases=("leaderboard", "lb", "standings",))
     async def generate_leaderboard(self, ctx: Context):
         async with ctx.typing():
             answer = self.fantasy.fantasy_lb()
-            leaderboard=discord.Embed(title="Fantasy Leaderboard", color=0xffff00)
+            leaderboard = discord.Embed(
+                title="Fantasy Leaderboard", color=0xffff00)
             for i, player in enumerate(answer.index):
-                leaderboard.add_field(name=f'{i+1}: {player}', value=answer.loc[player], inline=False)
+                leaderboard.add_field(
+                    name=f'{i+1}: {player}', value=answer.loc[player], inline=False)
         await ctx.send(embed=leaderboard)
-        
-    @commands.command(aliases=("show","team","showteam",))
-    async def show_team(self, ctx: Context, *, author: str ="none"):
+
+    @commands.command(aliases=("show", "team", "showteam",))
+    async def show_team(self, ctx: Context, *, author: str = "none"):
         async with ctx.typing():
             if author == "none":
                 author = ctx.author.name
-            
+
             try:
-                author_id = self.session.fantasy.find_one({'username': author})['discord_id']
+                author_id = self.session.fantasy.find_one(
+                    {'username': author})['discord_id']
             except:
                 return await ctx.send(f"Couldn't find a fantasy account for {author}")
 
             answer = self.fantasy.show_team(author_id)
-            team=discord.Embed(title=f"{author}'s team", color=0x008080)
-            team.add_field(name="Account League", value=answer['account_league'], inline=True)
+            team = discord.Embed(title=f"{author}'s team", color=0x008080)
 
-            for i in range(5): # Get players and points and add to embed
+            if answer['account_league'] != '':
+                team.add_field(name="Account League",
+                               value=answer['account_league'], inline=True)
+            else:
+                team.add_field(name="Account League",
+                               value="None", inline=True)
+
+            for i in range(5):  # Get players and points and add to embed
                 try:
                     player_id = answer['players'][i]
-                    player: dict = self.session.players.find_one({'_id': player_id})
-                    player_history: list = [x for x in answer['player_history'] if x['Player'] == player_id]
-                    points: int = player_history[-1]['Points'] # Gets points of most recent entry of player
+                    player: dict = self.session.players.find_one(
+                        {'_id': player_id})
+                    player_history: list = [
+                        x for x in answer['player_history'] if x['Player'] == player_id]
+                    # Gets points of most recent entry of player
+                    points: int = player_history[-1]['Points']
 
-                    team.add_field(name=f"Player {i+1}", value = f"{player['username']} ({points})", inline=True)
+                    team.add_field(
+                        name=f"Player {i+1}", value=f"{player['username']} ({points})", inline=True)
 
                 except IndexError:
-                    team.add_field(name=f"Player {i+1}", value = "Not Picked", inline=True)
+                    team.add_field(
+                        name=f"Player {i+1}", value="Not Picked", inline=True)
 
-            team.add_field(name="Transfers Left", value=answer['transfers_left'], inline=True)
+            team.add_field(name="Transfers Left",
+                           value=answer['transfers_left'], inline=True)
             team.add_field(name="Salary", value=answer['salary'], inline=True)
-            team.add_field(name="Total Points", value=answer['points'], inline=False)
+            team.add_field(name="Total Points",
+                           value=answer['points'], inline=True)
         await ctx.send(embed=team)
-    
+
     # TODO: Add field to show how many teams the player is on
-    @commands.command(aliases=("player","playerinfo","info",))
+    @commands.command(aliases=("player", "playerinfo", "info",))
     async def player_info(self, ctx: Context, *, player):
         async with ctx.typing():
             pg = False
@@ -137,34 +143,44 @@ class Fantasy(commands.Cog):
             if 'me' in player.lower().split(' '):
                 waitingMsg = await ctx.send("One second, retreiving discord ID and stats")
                 msg = str(ctx.author.id)
-                ids = self.p4_sheet.to_df('PlayerIDs!A1:B').set_index('Discord ID')
+                ids = self.p4_sheet.to_df(
+                    'PlayerIDs!A1:B').set_index('Discord ID')
                 try:
                     player = ids.loc[msg, 'Username']
                 except:
                     return await ctx.send("You don't appear to have an up-to-date discord id on record. Try using the name that shows up on the RLPC spreadsheet.")
                 await waitingMsg.delete(delay=3)
-                
+
             answer = self.fantasy.info(player, pg=pg)
-            player_card=discord.Embed(title=f"{player}'s player info", color=0xff0000)
-            player_card.add_field(name="Region", value=answer['info']['region'], inline=True)
-            player_card.add_field(name="Platform", value=answer['info']['platform'], inline=True)
-            player_card.add_field(name="MMR", value=answer['info']['mmr'], inline=True)
+            player_card = discord.Embed(
+                title=f"{player}'s player info", color=0xff0000)
+            player_card.add_field(
+                name="Region", value=answer['info']['region'], inline=True)
+            player_card.add_field(
+                name="Platform", value=answer['info']['platform'], inline=True)
+            player_card.add_field(
+                name="MMR", value=answer['info']['mmr'], inline=True)
             if answer['info']['team'] == None:
-                player_card.add_field(name="Team", value = "None")
+                player_card.add_field(name="Team", value="None")
             else:
-                team = self.session.teams.find_one({'_id': answer['info']['team']})['team']
+                team = self.session.teams.find_one(
+                    {'_id': answer['info']['team']})['team']
                 player_card.add_field(name="Team", value=team, inline=True)
-            player_card.add_field(name="League", value=answer['info']['league'], inline=True)
-            player_card.add_field(name="Fantasy Value", value=answer['fantasy']['fantasy_value'], inline=True)
-            player_card.add_field(name="Allowed?", value=answer['fantasy']['allowed'], inline=True)
-            player_card.add_field(name="Fantasy Points", value=answer['fantasy']['fantasy_points'], inline=True)
+            player_card.add_field(
+                name="League", value=answer['info']['league'], inline=True)
+            player_card.add_field(
+                name="Fantasy Value", value=answer['fantasy']['fantasy_value'], inline=True)
+            player_card.add_field(
+                name="Allowed?", value=answer['fantasy']['allowed'], inline=True)
+            player_card.add_field(
+                name="Fantasy Points", value=answer['fantasy']['fantasy_points'], inline=True)
         await ctx.send(embed=player_card)
-    
+
     @player_info.error
     async def player_info_error(self, ctx: Context, error):
-        if isinstance(error,commands.MissingRequiredArgument):
+        if isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("Please include a player")
-            
+
     @commands.command(aliases=("playerlb", "player_lb", "playerslb",))
     async def players(self, ctx: Context, *, message=None):
         async with ctx.typing():
@@ -172,12 +188,12 @@ class Fantasy(commands.Cog):
             num = 10
             pergame = False
             if message != None:
-                
+
                 for i in ['Major', 'AAA', 'AA', 'A', 'Indy', 'Independent', 'Mav', 'Maverick', 'Ren', 'Renegade', 'Pal', 'Paladin']:
                     if i.casefold() in message.casefold().split():
                         league = i
                         break
-                
+
                 if league == "Indy":
                     league = "Independent"
                 elif league == "Mav":
@@ -186,30 +202,32 @@ class Fantasy(commands.Cog):
                     league = "Renegade"
                 elif league == "Pal":
                     league = "Paladin"
-                    
+
                 for word in message.split():
                     try:
                         int(word)
                         num = int(word)
                     except:
                         pass
-                    
+
                 if "pergame" in message or "pg" in message:
                     pergame = True
-            
-            lb = self.fantasy.player_lb(league = league, num = num, pergame = pergame)
-            
+
+            lb = self.fantasy.player_lb(
+                league=league, num=num, pergame=pergame)
+
             message = f"**1)** {lb.index[0]} ({lb[lb.index[0]]})"
             for i in range(1, num):
-                message = message + f"\n**{i+1})** {lb.index[i]} ({lb[lb.index[i]]})"
-        
-        await ctx.send(f"**Player Leaderboard for fantasy points**\n*Add 'pg' to the end of the command to divide points by the # of series played*") 
+                message = message + \
+                    f"\n**{i+1})** {lb.index[i]} ({lb[lb.index[i]]})"
+
+        await ctx.send(f"**Player Leaderboard for fantasy points**\n*Add 'pg' to the end of the command to divide points by the # of series played*")
         try:
             await ctx.send(message)
         except:
             await ctx.send("That exceeds discord's 2000 character limit. Please try again with fewer players.")
-        
-    @commands.command(aliases=("fantasy","fhelp","f_help",))
+
+    @commands.command(aliases=("fantasy", "fhelp", "f_help",))
     async def fantasy_help(self, ctx: Context):
         answer = f"""
 Welcome to RLPC Fantasy! This is a just-for-fun fantasy league in which people can build a team of RLPC players and compete against other fantasy teams.
@@ -243,7 +261,7 @@ Welcome to RLPC Fantasy! This is a just-for-fun fantasy league in which people c
     *Example: {prefix}players major*
         """
         await ctx.send(answer)
-        
+
     @commands.command(aliases=("searchplayers",))
     async def search(self, ctx: Context, arg1="", arg2="", arg3="", arg4="", arg5="", arg6="", arg7="", arg8="", arg9="", arg10="", arg11="", arg12=""):
         async with ctx.typing():
@@ -257,82 +275,56 @@ Welcome to RLPC Fantasy! This is a just-for-fun fantasy league in which people c
             arguments = [arg2, arg4, arg6, arg8, arg10, arg12]
             for arg in argument_labels:
                 index = argument_labels.index(arg)
-                if arg.casefold() in ["name","username","player","name:","username:","player:"]:
+                if arg.casefold() in ["name", "username", "player", "name:", "username:", "player:"]:
                     name = arguments[index]
-                elif arg.casefold() in ["min","min:","minimum","minimum:","minsalary","minsalary:","min_salary","min_salary:","minimumsalary","minimumsalary:","minimum_salary:","minimum_salary"]:
+                elif arg.casefold() in ["min", "min:", "minimum", "minimum:", "minsalary", "minsalary:", "min_salary", "min_salary:", "minimumsalary", "minimumsalary:", "minimum_salary:", "minimum_salary"]:
                     minsalary = int(arguments[index])
-                elif arg.casefold() in ["max","max:","maximum","maximum:","maxsalary","maxsalary:","max_salary","max_salary:","maximumsalary","maximumsalary:","maximum_salary:","maximum_salary"]:
+                elif arg.casefold() in ["max", "max:", "maximum", "maximum:", "maxsalary", "maxsalary:", "max_salary", "max_salary:", "maximumsalary", "maximumsalary:", "maximum_salary:", "maximum_salary"]:
                     maxsalary = int(arguments[index])
-                elif arg.casefold() in ["team","team:"]:
+                elif arg.casefold() in ["team", "team:"]:
                     team = arguments[index]
-                elif arg.casefold() in ["league","league:"]:
+                elif arg.casefold() in ["league", "league:"]:
                     league = arguments[index]
-                elif arg.casefold() in ["maxdistance","difference","difference:","maxdistance:","strictness","strictness:"]:
+                elif arg.casefold() in ["maxdistance", "difference", "difference:", "maxdistance:", "strictness", "strictness:"]:
                     maxdistance = int(arguments[index])
-            
-            answer = self.fantasy.search(minsalary=minsalary,maxsalary=maxsalary,league=league,team=team,name=name,maxdistance=maxdistance)
+
+            answer = self.fantasy.search(minsalary=minsalary, maxsalary=maxsalary,
+                                         league=league, team=team, name=name, maxdistance=maxdistance)
 
             embeds = []
-            
-            if len(answer.index) > 0:
-                embed1 = discord.Embed(title=answer.iloc[0,0], color=0x000080)
-                embed1.add_field(name="Username:", value=answer.iloc[0,0], inline=True)
-                embed1.add_field(name="MMR:", value=answer.iloc[0,3], inline=True)
-                embed1.add_field(name="Team:", value=answer.iloc[0,4], inline=True)
-                embed1.add_field(name="League:", value=answer.iloc[0,5], inline=True)
-                embed1.add_field(name="Fantasy Value:", value=answer.iloc[0,6], inline=True)
-                embed1.add_field(name="Allowed?", value=answer.iloc[0,7], inline=True)
-                embeds.append(embed1)
-            
-            if len(answer.index) > 1:
-                embed2 = discord.Embed(title=answer.iloc[1,0], color=0x000080)
-                embed2.add_field(name="Username:", value=answer.iloc[1,0], inline=True)
-                embed2.add_field(name="MMR:", value=answer.iloc[1,3], inline=True)
-                embed2.add_field(name="Team:", value=answer.iloc[1,4], inline=True)
-                embed2.add_field(name="League:", value=answer.iloc[1,5], inline=True)
-                embed2.add_field(name="Fantasy Value:", value=answer.iloc[1,6], inline=True)
-                embed2.add_field(name="Allowed?", value=answer.iloc[1,7], inline=True)
-                embeds.append(embed2)
-            
-            if len(answer.index) > 2:
-                embed3 = discord.Embed(title=answer.iloc[2,0], color=0x000080)
-                embed3.add_field(name="Username:", value=answer.iloc[2,0], inline=True)
-                embed3.add_field(name="MMR:", value=answer.iloc[2,3], inline=True)
-                embed3.add_field(name="Team:", value=answer.iloc[2,4], inline=True)
-                embed3.add_field(name="League:", value=answer.iloc[2,5], inline=True)
-                embed3.add_field(name="Fantasy Value:", value=answer.iloc[2,6], inline=True)
-                embed3.add_field(name="Allowed?", value=answer.iloc[2,7], inline=True)
-                embeds.append(embed3)
-            
-            if len(answer.index) > 3:
-                embed4 = discord.Embed(title=answer.iloc[3,0], color=0x000080)
-                embed4.add_field(name="Username:", value=answer.iloc[3,0], inline=True)
-                embed4.add_field(name="MMR:", value=answer.iloc[3,3], inline=True)
-                embed4.add_field(name="Team:", value=answer.iloc[3,4], inline=True)
-                embed4.add_field(name="League:", value=answer.iloc[3,5], inline=True)
-                embed4.add_field(name="Fantasy Value:", value=answer.iloc[3,6], inline=True)
-                embed4.add_field(name="Allowed?", value=answer.iloc[3,7], inline=True)
-                embeds.append(embed4)
-            
-            if len(answer.index) > 4:
-                embed5 = discord.Embed(title=answer.iloc[4,0], color=0x000080)
-                embed5.add_field(name="Username:", value=answer.iloc[4,0], inline=True)
-                embed5.add_field(name="MMR:", value=answer.iloc[4,3], inline=True)
-                embed5.add_field(name="Team:", value=answer.iloc[4,4], inline=True)
-                embed5.add_field(name="League:", value=answer.iloc[4,5], inline=True)
-                embed5.add_field(name="Fantasy Value:", value=answer.iloc[4,6], inline=True)
-                embed5.add_field(name="Allowed?", value=answer.iloc[4,7], inline=True)
-                embeds.append(embed5)
-        
+
+            for player in answer:
+                embed = discord.Embed(title=player['username'], color=0x000080)
+                embed.add_field(name="Username",
+                                value=player['username'], inline=True)
+                embed.add_field(
+                    name="MMR", value=player['info']['mmr'], inline=True)
+                try:
+                    team = self.session.teams.find_one(
+                        {'_id': player['info']['team']})['team']
+                except TypeError:
+                    team = player['info']['team']
+                    team = team if team else "None"  # Ensure team can't end up as NoneType
+                embed.add_field(name="Team", value=team, inline=True)
+                embed.add_field(
+                    name="League", value=player['info']['league'], inline=True)
+                embed.add_field(
+                    name="Fantasy Value", value=player['fantasy']['fantasy_value'], inline=True)
+                embed.add_field(
+                    name="Allowed?", value=player['fantasy']['allowed'], inline=True)
+                embeds.append(embed)
+
         if len(embeds) == 0:
-            await ctx.send("There were no players matching those parameters")
-            return
+            return await ctx.send("There were no players matching those parameters")
         elif len(embeds) == 1:
             await ctx.send("Here's the only player matching those parameters")
-        else: 
-            await ctx.send(f"Here are {len(answer.index)} players matching those parameters:")
+        else:
+            await ctx.send(f"Here are {len(embeds)} players matching those parameters:")
         for i in embeds:
             await ctx.send(embed=i)
-        
+
+        return
+
+
 def setup(client):
     client.add_cog(Fantasy(client))
