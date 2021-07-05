@@ -308,11 +308,14 @@ fantasyStructure = {
 gamesStructure = {
     "gameday": "",
     "league": "",
-    "teams": {
-        "team1": {
+    "playoff": False,
+    "teams": [
+        {
+            "team": None, # Team ObjectId
             "players": [
                 {
                     "username": "",
+                    "id": None # Player ObjectId
                     "stats": {
                         "general": {
                             "Series Played": 0,
@@ -365,8 +368,8 @@ gamesStructure = {
             "score": 0,
             "won": False,
         }
-    },
-    "playoff": False,
+    ],
+    "games": 0,
 }
 
 teamIds = {

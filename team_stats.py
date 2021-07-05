@@ -3,46 +3,57 @@ from typing import Union
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy.stats import poisson
-from sqlalchemy.sql.expression import false
 
-from tools.database import Session, Teams, Game_Data
+from tools.mongo import Session, teamIds
 
 from settings import leagues
 
 
 class PoissonDataHandler:
-    def __init__(self, league: str, team1: str, team2: str):
+    def __init__(self, league: str, team1: str, team2: str, session: Session = None):
         self.league: str = leagues[league.lower()]
         self.team1: str = team1
         self.team2: str = team2
-        self.session = Session().session
+        if not session:
+            self.session = Session()
+        else:
+            self.session = session
 
     def getAverageGoals(self) -> float:
-        data = self.session.query(Game_Data).filter(Game_Data.league == self.league)
+        data = self.session.games.find({'league': self.league})
+        count = self.session.games.count_documents({'league': self.league})
+
+        if count == 0:
+            raise IOError("No data for league " + self.league)
         
         goals_sum = 0
         games_sum = 0
-        for game in data.all():
-            games_sum += game.games
-            goals_sum += sum(game.goals)
+        for i in range(count):
+            game = data.next()
+            games_sum += game["games"]
+            goals_sum += game['teams'][0]['score']
+            goals_sum += game['teams'][1]['score']
 
         return goals_sum / (2 * games_sum)
 
     def getTeamGoals(self, team: str) -> float:
         team = team.title()
-        data = self.session.query(Game_Data).filter(team == Game_Data.teams.any_())
+        teamId = teamIds[team]
+        data = self.session.games.find({'teams': {'team': teamIds(team)}})
+        count = self.session.games.count_documents({'teams': {'team': teamId}})
 
-        if data.count() == 0:
+        if count == 0:
             raise IOError("No data for team " + team)
         
         goals_sum = 0
         games_sum = 0
-        for game in data.all():
-            games_sum += game.games
-            if game.teams[0] == team:
-                goals_sum += sum(game.goals[0:3])
+        for game in range(count):
+            game = data.next()
+            games_sum += game['games']
+            if game['teams'][0]['team'] == teamId:
+                goals_sum += game['teams'][0]['score']
             else:
-                goals_sum += sum(game.goals[-3:])
+                goals_sum += game['teams'][1]['score']
 
         return goals_sum / games_sum
 
@@ -52,16 +63,19 @@ class PoissonDataHandler:
 
     def getTeamGA(self, team: str) -> float:
         team = team.title()
-        data = self.session.query(Game_Data).filter(team == Game_Data.teams.any_())
+        teamId = teamIds[team]
+        data = self.session.games.find({'teams': {'team': teamIds(team)}})
+        count = self.session.games.count_documents({'teams': {'team': teamId}})
         
         goals_sum = 0
         games_sum = 0
-        for game in data.all():
-            games_sum += game.games
-            if game.teams[1] == team:
-                goals_sum += sum(game.goals[0:2])
+        for game in range(count):
+            game = data.next()
+            games_sum += game['games']
+            if game['teams'][1]['team'] == teamId: # This is the only line different from getTeamGoals
+                goals_sum += game['teams'][0]['score']
             else:
-                goals_sum += sum(game.goals[3:5])
+                goals_sum += game['teams'][1]['score']
                 
         return goals_sum / games_sum
 
