@@ -24,8 +24,11 @@ class Help(commands.Cog):
         elif specified not in ['none', 'predict', 'rank', 'forecast', 'new', 'pick', 'drop', 'lb', 'team', 'info', 'players', 'search', 'getreddit', 'get', 'newest', 'valid', 'pr', 'mmr', 'stats', 'gdstats', 'top', 'ping', 'alerts']:
             await ctx.send(f"Couldn't understand {specified.title()}")
             specified = "none"
+
+        if specified == "none":
+            specified = "Base"
         
-        path = '\\'.join(os.getcwd().split('\\')[:-1]) + 'help_text\\'
+        path = '\\'.join(os.getcwd().split('\\')) + '\\help_text\\'
         with open(path+specified+'.txt') as f:
             text = f.read()
             text = text.replace('{prefix}', prefix)

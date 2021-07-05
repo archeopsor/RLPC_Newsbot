@@ -164,7 +164,10 @@ class Stats(commands.Cog):
             except:
                 return await ctx.send(f"Could not find {msg}'s stats. Contact arco if you think this is a bug")
             for i, col in enumerate(answer.columns[1:]):
-                embed.add_field(name=col, value=answer.values[0][i+1])
+                value = answer.values[0][i+1]
+                if not value:
+                    value = 0
+                embed.add_field(name=col, value=value)
         await ctx.send(embed=embed)
 
     @commands.command(aliases=("topstats", "statslb", "stats_lb",))
@@ -345,7 +348,7 @@ class Stats(commands.Cog):
             return await ctx.send(error)
 
     @commands.command(aliases=("schedules", "scheduling",))
-    async def schedule(self, ctx: Context, team: str):
+    async def schedule(self, ctx, *, team: str):
         async with ctx.typing():
             team: str = team.title()
             if team not in divisions.keys():
@@ -354,6 +357,7 @@ class Stats(commands.Cog):
             league: str = self.identifier.find_league(team)
             sheet: Sheet = self.p4sheet if league.lower(
             ) in ['major', 'aaa', 'aa', 'a'] else self.indysheet
+
             all_games: pd.DataFrame = sheet.to_df(f"{league} Schedule!O4:X")
             if all_games.empty:
                 return await ctx.send("Schedules couldn't be found, possibly because they aren't on the sheet. Contact arco if you believe this is an error.")

@@ -39,40 +39,40 @@ def get_creds():
     creds = service_account.Credentials.from_service_account_info(CREDS)
     return build("sheets", "v4", credentials = creds)
 
-    creds = None
+    # creds = None
 
-    creds_json = json.loads(CREDS, strict=False)
+    # creds_json = json.loads(CREDS, strict=False)
 
-    with open("creds.json", "w") as fp:
-        json.dump(creds_json, fp)
+    # with open("creds.json", "w") as fp:
+    #     json.dump(creds_json, fp)
 
-    creds = ServiceAccountCredentials.from_json(creds_json)
+    # creds = ServiceAccountCredentials.from_json(creds_json)
 
-    # creds = ServiceAccountCredentials.from_json_keyfile_name()
+    # # creds = ServiceAccountCredentials.from_json_keyfile_name()
     
-    # creds = service_account.Credentials.from_service_account_file(
-    #     "creds.json", scopes=SCOPES)
+    # # creds = service_account.Credentials.from_service_account_file(
+    # #     "creds.json", scopes=SCOPES)
 
-    os.remove(os.path.abspath("creds.json"))
+    # os.remove(os.path.abspath("creds.json"))
     
-    return build("sheets", "v4", credentials=creds)
-
-    # if os.path.exists(TOKEN_PATH):
-    #     with open(TOKEN_PATH, 'rb') as token:
-    #         creds = pickle.load(token)
-
-    # if not creds or not creds.valid:
-    #     logger.warning("Sheet creds invalid or missing")
-    #     if creds and creds.expired and creds.refresh_token:
-    #         creds.refresh(Request())
-    #     else:
-    #         flow = InstalledAppFlow.from_client_config(json.loads(CREDS), SCOPES)
-    #         creds = flow.run_local_server()
-
-    #     with open(TOKEN_PATH, 'wb') as token:
-    #         pickle.dump(creds, token)
-
     # return build("sheets", "v4", credentials=creds)
+
+    # # if os.path.exists(TOKEN_PATH):
+    # #     with open(TOKEN_PATH, 'rb') as token:
+    # #         creds = pickle.load(token)
+
+    # # if not creds or not creds.valid:
+    # #     logger.warning("Sheet creds invalid or missing")
+    # #     if creds and creds.expired and creds.refresh_token:
+    # #         creds.refresh(Request())
+    # #     else:
+    # #         flow = InstalledAppFlow.from_client_config(json.loads(CREDS), SCOPES)
+    # #         creds = flow.run_local_server()
+
+    # #     with open(TOKEN_PATH, 'wb') as token:
+    # #         pickle.dump(creds, token)
+
+    # # return build("sheets", "v4", credentials=creds)
 
 
 class Sheet:
@@ -269,3 +269,7 @@ def df_to_sheet(sheet_id: str, range_name: str, df: pd.DataFrame, dimension: str
     except Exception as error:
         logger.error("DF TO SHEET ERROR: %s", error)
         return
+
+
+if __name__ == "__main__":
+    print(Sheet("17tPXpZACXlqrCS3gYo59C5gbZyp3oguVdjwsgWQJkcA").to_df("Major Schedule!N4:V"))
