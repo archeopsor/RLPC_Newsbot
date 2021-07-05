@@ -2,18 +2,20 @@ import discord
 from discord.ext import commands
 import os
 
+from discord.ext.commands.context import Context
+
 from settings import prefix
 
 client = commands.Bot(command_prefix = prefix)
 
 class Help(commands.Cog):
     
-    def __init__(self,client):
+    def __init__(self, client):
         self.client = client
         
         
     @commands.command(pass_context=True)
-    async def help(self, ctx, specified="none"):
+    async def help(self, ctx: Context, specified="none"):
         author = ctx.message.author
         specified = specified.lower()
         

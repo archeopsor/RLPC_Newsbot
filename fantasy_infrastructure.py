@@ -1,356 +1,299 @@
 import pandas as pd
 from datetime import datetime
 import pytz
+import re
 from difflib import SequenceMatcher
+import random
 
-from tools.database import engine, select, Session, Fantasy_players, Players, Transfer_log
-from tools.sheet import Sheet
+from tools.mongo import Session, teamIds
 
-from settings import prefix
+from settings import prefix, leagues
 
-session = Session().session
 
-def fantasy_lb() -> pd.DataFrame:
-    """
-
-    Returns DataFrame
-    -------
-    Dataframe with all fantasy accounts, sorted by number of points.
-
-    """
-    fantasy_players = select("fantasy_players")
-    fantasy_players = fantasy_players[['username','total_points']]
-    fantasy_players['total_points'] = fantasy_players['total_points'].map(lambda a: int(a))
-    lb = fantasy_players.sort_values(by=['total_points'],ascending=False).rename(columns={"total_points": "Total Points", "username": "Username"})
-    lb = lb.reset_index(drop=True)
-    lb = lb.loc[lb['Total Points'] != 0]
-    return(lb)
- 
-def pick_player(person: str , player: str, slot: int=0) -> str:
-    """
-    Adds an RLPC player to a fantasy account
-
-    Parameters
-    ----------
-    person : str
-        Name of the account to which the player is being added.
-    player : str
-        Username (as shown on the sheet) of the player being picked.
-    slot : int, optional
-        Which player slot to put the player in. The default is 0.
-
-    Returns
-    -------
-    str
-        Either a success message or an error message.
-
-    """
-    
-    if slot not in [0, 1, 2, 3, 4, 5]:
-        return "Please pick a slot between 1 and 5."
-    
-    # Don't allow transfers if admin table says it's not ready yet
-    # admin = select("admin_things").set_index("row_id")
-    # if admin.loc[1, 'allow_transfers'] == False:
-    #     return "You're not allowed to make transfers right now, probably because there are games currently happening or the previous games have not yet been entered into the database. Please contact arco if you think this is an error."
-    
-    if datetime.now(tz=pytz.timezone("US/Eastern")).weekday() in [1, 3]:
-        if datetime.now(tz=pytz.timezone("US/Eastern")).time().hour > 16:
-            return "You're not allowed to make transfers right now, probably because there are games currently happening or the previous games have not yet been entered into the database. Please contact arco if you think this is an error."
-    elif datetime.now(tz=pytz.timezone("US/Eastern")).weekday() in [2, 4]:
-        if datetime.now(tz=pytz.timezone("US/Eastern")).time().hour < 10:
-            return "You're not allowed to make transfers right now, probably because there are games currently happening or the previous games have not yet been entered into the database. Please contact arco if you think this is an error."
-    
-    # Get dataframes with all the player and fantasy data in them
-    fantasy_players = select("fantasy_players").set_index('username')
-    rlpc_players = select("players")
-    lower_players = rlpc_players['Username'].str.lower()
-    
-    row = session.query(Fantasy_players).get(person)
-    if row == None:
-        return(f"You don't currently have an account! Use {prefix}new to make an account")
-    
-    if slot == 0:
-        if fantasy_players.loc[person, "players"][0] == "Not Picked":
-            slot = 1
-        elif fantasy_players.loc[person, "players"][1] == "Not Picked":
-            slot = 2
-        elif fantasy_players.loc[person, "players"][2] == "Not Picked":
-            slot = 3
-        elif fantasy_players.loc[person, "players"][3] == "Not Picked":
-            slot = 4
-        elif fantasy_players.loc[person, "players"][4] == "Not Picked":
-            slot = 5
-        else: return("Please pick a slot to replace, your team is full")
-    
-    # If "None" is chosen, drop the player in the selected slot
-    drop = False
-    if player.casefold() in ["none","not picked","nobody","drop","empty"]:
-        drop = True
-    
-    # Make it not case sensitive, and return if the player doesn't exist
-    if player.casefold() in lower_players.values and drop == False:
-        pindex = lower_players[lower_players == player.casefold()].index[0]
-        player = rlpc_players.loc[pindex][0]
-    elif drop == False:
-        return("That player couldn't be found in the database. Make sure you spelled their name correctly")
-    
-    account_check = fantasy_players.loc[person].index
-    current_occupant = fantasy_players.loc[person,"players"][slot-1]
-    
-    if drop == False:
-        player_check = rlpc_players[rlpc_players['Username']==player]
-        permission_check = rlpc_players.loc[rlpc_players['Username']==player,'Allowed?'].values
-        cap_check = rlpc_players.loc[rlpc_players['Username']==player,'Fantasy Value'].values
-        cap_check = int(cap_check) + int(fantasy_players.loc[person,'salary'])
-    elif drop == True:
-        player_check = []
-        permission_check = "Yes"
-        cap_check = 0
-    
-    # Check if this is a transfer
-    transfer = False
-    transfers_left = 0
-    if current_occupant != "Not Picked":
-        transfer = True
-        transfers_left = fantasy_players.loc[person,'transfers_left']
-        transfers_left = int(transfers_left)
-        
-    if (transfer == True or drop == True) and transfers_left == 0:
-        return("You have already used your two transfers for this week!")
-    
-    # Check to make sure the account exists, the specified player exists, and they are allowed to be picked
-    if len(account_check) == 0:
-        return("You don't currently have an account! Use {prefix}new to create an account")
-    else:
-        pass
-    
-    if len(player_check) == 0 and drop != True:
-        return("That player isn't in the database! Make sure to enter the name exactly as spelled on the sheet. If you think this is an error, please contact @arco.")
-    else:
-        pass
-    
-    if permission_check != "Yes" and drop != True:
-        return("This player has requested to be excluded from the fantasy league")
-    else:
-        pass
-    
-    # Check to make sure this player isn't already on the fantasy team
-    existing_check = fantasy_players.loc[person, "players"]
-    if player in existing_check:
-        return("You already have this player on your team!")
-    else:
-        pass
-    
-    # Check to make sure it doesn't break the salary cap
-    salary_cap = 700
-    if cap_check > salary_cap and transfer == False:
-        return(f"This player would cause you to exceed the salary cap of {salary_cap}. Please choose a different player, or drop a player by picking 'None' in the desired slot")
-    elif transfer == True:
-        old_player_salary = rlpc_players.loc[rlpc_players['Username']==current_occupant,'Fantasy Value'].values[0]
-        cap_check = cap_check - int(old_player_salary)
-        if cap_check > salary_cap:
-            return(f"This player would cause you to exceed the salary cap of {salary_cap}.")
-    
-    if transfer == True and transfers_left > 0:
-        row.transfers_left = (transfers_left - 1)
-        # engine.execute(f"update fantasy_players set transfers_left = {transfers_left - 1} where username = '{person}'")
-    
-    # Log the changes just in case
-    timestamp = str(datetime.now())
-    player_in = player
-    if drop == True:
-        player_in = "DROP"
-        player_out = current_occupant
-    else:
-        player_out = current_occupant    
-    # command = """insert into transfer_log ("Timestamp", "Account", "Player_in", "Player_out")"""
-    # values = f"values ('{timestamp}', '{person}', '{player_in}', '{player_out}')"
-    # engine.execute(f"{command} {values}")
-    session.add(Transfer_log(timestamp, person, player_in, player_out))
-    
-    if drop == True:
-        # engine.execute(f"""update fantasy_players set players[{slot}] = 'Not Picked' where "username" = '{person}'""")
-        row.players[slot] = "Not Picked"
-        new_salary = fantasy_players.loc[person, 'salary'] - rlpc_players.loc[rlpc_players['Username']==player_out,'Fantasy Value'].values[0]
-        # engine.execute(f"""update fantasy_players set "salary" = {new_salary} where "username" = '{person}'""")
-        row.salary = new_salary
-        return(f'You have dropped {current_occupant}')
-    else:
-        row.players[slot] = player
-        row.salary = cap_check
-        # engine.execute(f"""update fantasy_players set players[{slot}] = '{player}' where "username" = '{person}'""")
-        # engine.execute(f"""update fantasy_players set "salary" = {cap_check} where "username" = '{person}'""")
-    
-    session.commit()
-    
-    # Check to make sure the player isn't in the same league as the account
-    # if rlpc_players.loc[rlpc_players['Username']==player,'League'].values[0] == fantasy_players.loc[fantasy_players['Username']==person,'Account League'].values[0]:
-    #     return("You must select a player in a league other than your own")
-    # else:
-    #     pass
-    
-    # Check to make sure the specified slot is empty, otherwise say a player was replaced
-    if current_occupant == "Not Picked":
-        return(f'Success! {player} has been added to your team')
-    elif current_occupant != "Not Picked":
-        return(f'Success! {current_occupant} has been replaced with {player}')
-    else:
-        return(f"You already have {fantasy_players.loc[person,'players'][slot-1]} in this slot. They have been replaced by {player}.")
-    
-# Display a player's team
-def show_team(person: str) -> pd.Series:
-    """
-    Gets a person's fantasy team
-
-    Parameters
-    ----------
-    person : str
-        Name of the person's account (discord username).
-
-    Returns
-    -------
-    Series containing info about the person's team, for use by the discord bot.
-
-    """
-    fantasy_teams = select("fantasy_players")
-    fantasy_teams['username'] = fantasy_teams['username'].str.upper()
-    person = person.upper()
-    fantasy_teams = fantasy_teams.set_index("username")
-    return(fantasy_teams.loc[person])
-
-def info(player: str, pg: bool = False) -> pd.Series:
-    """
-    Gets info about an RLPC player
-
-    Parameters
-    ----------
-    player : str
-        The player's name.
-
-    Returns
-    -------
-    Series containing info about the player, for use by the discord bot.
-
-    """
-    players = select("players")
-    lower_players = players['Username'].str.lower()
-    if player.casefold() in lower_players.values:
-        pindex = lower_players[lower_players == player.casefold()].index[0]
-        player = players.loc[pindex][0]
-    for row in players.index:
-        players.loc[row,'Username'] = players.loc[row,'Username'].upper()
-    if pg:
-        players['Fantasy Points'] = round(players['Fantasy Points']/players['Series Played'], 1).fillna(value=0)
-    player = player.upper()
-    players = players.set_index("Username")
-    return(players.loc[player])
-
-def search(minsalary: int=0, maxsalary: int=800, league: str="all", team: str="all", name: str="none", maxdistance: float=0.75) -> pd.DataFrame:
-    """
-    Searches through all RLPC players to find five that meet the specified parameters
-
-    Parameters
-    ----------
-    minsalary : int, optional
-        Minimum desired salary. The default is 0.
-    maxsalary : int, optional
-        Maximum desired salary. The default is 800.
-    league : str, optional
-        Specified desired league. The default is "all".
-    team : str, optional
-        Specified desired team. The default is "all".
-    name : str, optional
-        Approximate name of the player. The default is "none".
-    maxdistance : float, optional
-        How specific the name parameter should be. The default is 0.75.
-
-    Returns
-    -------
-    Dataframe with info for five players meeting all of those parameters.
-
-    """
-    players = select("players")
-    players = players.sort_values(by='Username')
-    players = players.reset_index(drop=True)
-    
-    if team.casefold() in ["all","none","no","idc"]:
-        team = "all"
-    if league.casefold() in ["all","none","no","idc"]:
-        league = "all"
-    if league.casefold() not in ['major','aaa','aa','a','independent', 'maverick', 'indy', 'mav', 'all']:
-        return("League could not be understood")
-    if league.casefold() == "indy":
-        league = "Independent"
-    elif league.casefold() == "mav":
-        league = "Maverick"
-    elif league.casefold() in ['major', 'independent', 'maverick']:
-        league = league.title()
-    elif league.casefold() in ['aaa','aa','a']:
-        league = league.upper()
-    
-    for row in players.index:
-        salary = int(players.loc[row,'Fantasy Value'])
-        players.loc[row,'Fantasy Value'] = salary
-    
-    players = players.loc[players['Fantasy Value'] >= minsalary]
-    players = players.loc[players['Fantasy Value'] <= maxsalary]
-    if league != "all":
-        players = players.loc[players['League'].str.lower() == league.casefold()]
-    if team != "all":
-        players = players.loc[players['Team'].str.lower() == team.casefold()]
-        
-    if len(players.index) == 0:
-        return("There were no players that matched those parameters")
-    
-    if name == "none":
-        if len(players.index) > 4:
-            return(players.sample(5))
+class FantasyHandler:
+    def __init__(self, session: Session = None):
+        if not session:
+            self.session = Session()
         else:
-            num = len(players.index)
-            return(players.sample(num))
-    
-    # Search names by assigning an editdistance value 
-    players['editdistance'] = 0
-    for row in players.index:
-        username = players.loc[row,'Username']
-        username = username.casefold()
-        name = name.casefold()
-        distance = SequenceMatcher(a=name, b=username).ratio()
-        length = abs(len(name)-len(username))
-        players.loc[row,'editdistance'] = (distance-length)/2
-    
-    if name != "none":
-        players = players.sort_values(by='editdistance', ascending=False)
-        players = players.loc[players['editdistance'] <= maxdistance]
-        players = players.drop('editdistance',axis=1)
-        return(players.head(5))
-    
-def player_lb(league: str = None, sortby: str="Fantasy Points", num: int=10, pergame: bool=False) -> pd.DataFrame:
-    """
-    Sorts the list of rlpc players
+            self.session = session
 
-    Parameters
-    ----------
-    league : str, optional
-        Which league to include players from. The default is None.
-    sortby : str, optional
-        Which column to sort by. The default is "Fantasy Points".
-    num : int, optional
-        How many players to return. The default is 10.
+        self.SALARY_CAP = 700
 
-    Returns
-    -------
-    Sorted dataframe of RLPC players.
+    def fantasy_lb(self) -> pd.Series:
+        """Gets a sorted series with all fantasy accounts and their points
 
-    """
-    players = select("players").set_index("Username")
-    
-    if league != None:
-        players = players[players['League'].str.lower() == league.casefold()]
-    
-    if pergame:
-        players['Fantasy Points'] = round(players['Fantasy Points']/players['Series Played'], 1).fillna(value=0)
-    lb = players['Fantasy Points'].sort_values(ascending=False)
+        Returns:
+            pd.Series: Series with username as index and points as value
+        """
+        fantasy = self.session.fantasy
+        lb = pd.Series(dtype="float64")
+        cursor = fantasy.find({"points": {"$gt": 0}}).sort(
+            "points", -1)  # Get all accounts with more than 0 points
+
+        for i in range(fantasy.count_documents({"points": {"$gt": 0}})):
+            info = cursor.next()
+            lb[info['username']] = info['points']
+
+        return lb
+
+    def pick_player(self, discord_id: str, player: str) -> str:
+        """Adds an RLPC player to a fantasy account
+
+        Args:
+            discord_id (str): discord id of the account to which the player is being added
+            player (str): Username of the player being picked
+
+        Returns:
+            str: Success or error message to send in discord.
+        """
+
+        # Ensure that it's a valid time to make transfers
+        if datetime.now(tz=pytz.timezone("US/Eastern")).weekday() in [1, 3]:
+            if datetime.now(tz=pytz.timezone("US/Eastern")).time().hour > 16:
+                return "You're not allowed to make transfers right now, probably because there are games currently happening or the previous games have not yet been entered into the database. Please contact arco if you think this is an error."
+        elif datetime.now(tz=pytz.timezone("US/Eastern")).weekday() in [2, 4]:
+            if datetime.now(tz=pytz.timezone("US/Eastern")).time().hour < 10:
+                return "You're not allowed to make transfers right now, probably because there are games currently happening or the previous games have not yet been entered into the database. Please contact arco if you think this is an error."
+
+        fantasy = self.session.fantasy
+        players = self.session.players
+        account: dict = fantasy.find_one({"discord_id": discord_id})
+        if not account:
+            return f"You don't currently have an account! Use {prefix}new to make an account"
+
+        # Try to get player (case insensitive), and return if player doesn't exist
+        player_info = self.session.players.find_one(
+            {'$text': {'$search': player}})
+        if not player_info:
+            return "That player couldn't be found in the database. Make sure you spelled their name correctly"
+
+        # Make sure there are less than 5 players
+        if len(account['players']) >= 5:
+            return "You already have 5 players on your team. Please drop someone before picking your next player"
+
+        # Make sure the player is allowed to be picked
+        if not player_info['fantasy']['allowed']:
+            return "This player is not available to be picked."
+
+        # Make sure this doesn't exceed salary cap
+        new_salary = account['salary'] + \
+            player_info['fantasy']['fantasy_value']
+        if new_salary > self.SALARY_CAP:
+            return f"This player would cause you to exceed the salary cap of {self.SALARY_CAP}. Please choose a different player, or drop someone on your team."
+
+        # Make sure this player isn't already on the fantasy team
+        _id = player_info["_id"]
+        if _id in account["players"]:
+            return "You already have this player on your team!"
+
+        # Add player to list
+        self.session.fantasy.update_one({'_id': account['_id']}, {
+                                        '$push': {'players': player_info['_id']}})
+
+        # Add player to player_history (Even if there's an entry there for this player already)
+        history = {
+            "Player": player_info['_id'],
+            "Date in": datetime.now(tz=pytz.timezone("US/Eastern")),
+            "Date out": None,
+            "Points": 0,
+        }
+        self.session.fantasy.update_one({"_id": account['_id']}, {
+                                        '$push': {'player_history': history}})
+
+        # Add transaction to transaction_log
+        transaction = {
+            "Timestamp": datetime.now(tz=pytz.timezone("US/Eastern")),
+            "Type": "in",
+            "Player": {
+                "id": player_info['_id'],
+                "salary": player_info['fantasy']['fantasy_value'],
+            },
+        }
+        self.session.fantasy.update_one({"_id": account['_id']}, {
+                                        '$push': {'transfer_log': transaction}})
+
+        # Change salary
+        self.session.fantasy.update_one({'_id': account['_id']}, {
+                                        '$set': {"salary": new_salary}})
+
+        return f'Success! {player} has been added to your team. You have {self.SALARY_CAP - new_salary} left before you reach the salary cap.'
+
+    def drop_player(self, discord_id: str, player: str):
+        fantasy = self.session.fantasy
+        players = self.session.players
+
+        # Make sure account exists
+        account: dict = fantasy.find_one({"discord_id": discord_id})
+        if not account:
+            return f"You don't currently have an account! Use {prefix}new to make an account"
+
+        # Make sure player is actually on the team
+        player_info = self.session.players.find_one(
+            {'$text': {'$search': player}})
+        if player_info['_id'] not in account['players']:
+            return f"{player} isn't on your team!"
+        else:
+            points = [x for x in account['player_history']
+                      if x['Player'] == player_info['_id']][-1]['Points']
+
+        # Remove player from list
+        self.session.fantasy.update_one({'_id': account['_id']}, {
+                                        '$pull': {'players': player_info['_id']}})
+
+        # Add transaction to transaction_log
+        transaction = {
+            "Timestamp": datetime.now(tz=pytz.timezone("US/Eastern")),
+            "Type": "out",
+            "Player": {
+                "id": player_info['_id'],
+                "salary": player_info['fantasy']['fantasy_value'],
+                "points": points
+            },
+        }
+        self.session.fantasy.update_one({"_id": account['_id']}, {
+                                        '$push': {'transfer_log': transaction}})
+
+        # Update player's info in player_history
+        updates = {
+            '$set': {
+                'player_history.$.Date out': datetime.now(tz=pytz.timezone("US/Eastern"))
+            }
+        }
+        self.session.fantasy.find_one_and_update(
+            {'_id': account['_id'], 'player_history.Player': player_info['_id']}, updates)
+
+        # Change salary
+        new_salary = self.SALARY_CAP - player_info['fantasy']['fantasy_value']
+        self.session.fantasy.find_one_and_update(
+            {'_id': account['_id']}, {'$set': {'salary': new_salary}})
         
-    return lb.head(num)
+        # Remove one transaction
+        self.session.fantasy.find_one_and_update(
+            {'_id': account['_id']}, {'$inc': {'transactions_left': -1}})
+
+        return f'Success! {player} has been dropped from your team. You have {new_salary} left before you reach the salary cap.'
+
+    def show_team(self, discord_id: str) -> dict:
+        """Gets a person's fantasy account for use by the discord bot. This is a useless function.
+
+        Args:
+            discord_id (str): player's discord id
+
+        Returns:
+            dict: document containing info for player's fantasy account
+        """
+        doc = self.session.fantasy.find_one({'discord_id': discord_id})
+        return doc
+
+    def info(self, player: str, pg: bool = False) -> dict:
+        """Gets info about an RLPC player. This is also a useless function except for pg.
+
+        Args:
+            player (str): player's username
+            pg (bool, optional): Whether or not to divide points by series played. Defaults to False.
+
+        Returns:
+            dict: player info
+        """
+        doc = self.session.players.find_one({'$text': {'$search': player}})
+        if not doc:
+            return
+
+        if pg:
+            try:
+                doc['fantasy']['fantasy_points'] = round(
+                    doc['fantasy']['fantasy_points'] / doc['stats']['general']['Series Played'], 1)
+            except:
+                pass # Avoid dividing by zero
+
+        return doc
+
+    def search(self, minsalary: int = 0, maxsalary: int = 800, league: str = "all", team: str = "all", name: str = "none", maxdistance: float = 0.75) -> list:
+        """Returns up to 5 players matching a set of parameters
+
+        Args:
+            minsalary (int, optional): Minimum Salary. Defaults to 0.
+            maxsalary (int, optional): Maximum Salary. Defaults to 800.
+            league (str, optional): Which league, if any, to limit to. Defaults to "all".
+            team (str, optional): Which team, if any, to limit to. Defaults to "all".
+            name (str, optional): Looking for a specific name. Defaults to "none".
+            maxdistance (float, optional): How close the name needs to be to the specified name. Defaults to 0.75.
+
+        Returns:
+            list: List of dictionaries with player information
+        """
+        if team.casefold() in ["all", "none", "no", "idc"]:
+            team = "all"
+        if league.casefold() in ["all", "none", "no", "idc"]:
+            league = "all"
+        if league.casefold() not in ['major', 'aaa', 'aa', 'a', 'independent', 'maverick', 'indy', 'mav', 'all']:
+            return("League could not be understood")
+        elif league.lower() != "all":
+            league = leagues[league.lower()]
+        else:
+            league = "all"
+
+        filter = {
+            "fantasy.fantasy_value": {'$gte': minsalary, '$lte': maxsalary}
+        }
+
+        if league != "all":
+            filter['info.league'] = league
+        if team != "all":
+            filter['info.team'] = teamIds[team.title()]
+        if name != "none":
+            filter['username'] = name
+
+        # Get 5 (or fewer) random players from the query
+        count = self.session.players.count_documents(filter)
+        cursor = self.session.players.find(filter)
+        players = []
+        if count < 5:
+            while cursor.alive:
+                players.append(cursor.next())
+        else:
+            for i in range(5):
+                players.append(cursor.skip(round(random.random()*count)).next())
+                cursor.rewind()
+
+        return players
+
+    def player_lb(self, league: str = None, sortby: str = "fantasy_points", num: int = 10, pergame: bool = False) -> pd.Series:
+        """Returns rlpc players sorted by a stat, usually fantasy points
+
+        Args:
+            league (str, optional): Which league to include players from.. Defaults to None.
+            sortby (str, optional): Which field to sort by. Defaults to "fantasy_points".
+            num (int, optional): How many players to return. Defaults to 10.
+            pergame (bool, optional): Whether to divide by the number of games played. Defaults to False.
+
+        Returns:
+            pd.Series: Sorted series with Username: value pairs.
+        """
+        filter = {}
+        if league:
+            filter['info.league'] = leagues[league.lower()]
+
+        players = self.session.players.find(filter)
+        count = self.session.players.count_documents(filter)
+        lb = pd.Series(dtype="float64")
+        for i in range(count):
+            player = players.next()
+
+            if sortby.lower() in ['fantasy_points', 'fantasy points']:
+                doc = player['fantasy']
+            else:
+                doc = player['stats']
+
+            if pergame:
+                try:
+                    stat = round(doc[sortby] / player['stats']['Games Played'], 1)
+                except:
+                    stat = doc[sortby] # Avoid dividing by 0
+            else:
+                stat = doc[sortby]
+
+            lb[player['username']] = stat
+
+        lb.sort_values(ascending=False, inplace=True)
+        return lb.head(num)
