@@ -377,6 +377,3 @@ class Identifier:
             return player.values[0]
         except:
             return None
-
-if __name__ == "__main__":
-    Identifier().find_team(['SpadL', 'Computer', 'Zero'])
