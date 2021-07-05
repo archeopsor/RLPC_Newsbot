@@ -315,7 +315,7 @@ gamesStructure = {
             "players": [
                 {
                     "username": "",
-                    "id": None # Player ObjectId
+                    "id": None, # Player ObjectId
                     "stats": {
                         "general": {
                             "Series Played": 0,
