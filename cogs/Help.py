@@ -28,7 +28,7 @@ class Help(commands.Cog):
         if specified == "none":
             specified = "Base"
         
-        path = '\\'.join(os.getcwd().split('\\')) + '\\help_text\\'
+        path = '/'.join(os.getcwd().split('\\')) + '/help_text/'
         with open(path+specified+'.txt') as f:
             text = f.read()
             text = text.replace('{prefix}', prefix)
