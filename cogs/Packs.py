@@ -1,5 +1,6 @@
 from discord.ext import commands
 import discord
+from discord.ext.commands.context import Context
 import numpy as np
 import os
 import sqlite3
@@ -13,16 +14,16 @@ path = './Image_templates/Player Cards'
 
 class Packs(commands.Cog):
     
-    def __init__(self,client):
+    def __init__(self, client):
         self.client = client
         
     @commands.command(aliases=("card",))
-    async def random_card(self, ctx):
+    async def random_card(self, ctx: Context):
         file = discord.File(path+'/'+np.random.choice(os.listdir(path)))
         await ctx.send(file=file)
         
     @commands.command(aliases=("open",))
-    async def open_pack(self, ctx):
+    async def open_pack(self, ctx: Context):
         async with ctx.typing():
             # Single card pack
             with engine.connect() as conn, conn.begin():
@@ -31,8 +32,3 @@ class Packs(commands.Cog):
 
 def setup(client):
     client.add_cog(Packs(client))
-    
-    
-# with engine.connect() as conn, conn.begin():
-#     data = pd.read_sql_table('cards', conn).set_index("players")    
-# data.to_sql('cards', engine, if_exists='replace')

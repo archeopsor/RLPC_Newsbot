@@ -1,12 +1,14 @@
-import os
 from discord.ext.commands.errors import MissingRequiredArgument
 from discord.ext.commands.context import Context
-import pandas as pd
-from tools.mongo import Session
 import discord
 from discord.ext import commands
+
+import os
+import pandas as pd
 import numpy as np
 import dataframe_image as dfi
+
+from tools.mongo import Session
 
 from rlpc import mmr
 from rlpc.stats import StatsHandler
@@ -309,19 +311,23 @@ class Stats(commands.Cog):
 
             if pergame:
                 statsSeries[3:-1] = statsSeries[3:-
-                                    1].apply(lambda x: float(x)) / int(statsSeries['Games Played'])
-                statsSeries[3:-1] = statsSeries[3:-1].apply(lambda x: round(x, 2))
+                                                1].apply(lambda x: float(x)) / int(statsSeries['Games Played'])
+                statsSeries[3:-1] = statsSeries[3:-
+                                                1].apply(lambda x: round(x, 2))
 
             if stat == None:
                 embed = discord.Embed(
                     title=f"{player}'s Stats on Gameday {day}", color=0x3333ff)
                 embed.add_field(name='Games Played',
                                 value=f'{statsSeries.loc["Games Played"]}')
-                embed.add_field(name="Goals", value=f"{statsSeries.loc['Goals']}")
+                embed.add_field(
+                    name="Goals", value=f"{statsSeries.loc['Goals']}")
                 embed.add_field(
                     name="Assists", value=f"{statsSeries.loc['Assists']}")
-                embed.add_field(name="Saves", value=f"{statsSeries.loc['Saves']}")
-                embed.add_field(name="Shots", value=f"{statsSeries.loc['Shots']}")
+                embed.add_field(
+                    name="Saves", value=f"{statsSeries.loc['Saves']}")
+                embed.add_field(
+                    name="Shots", value=f"{statsSeries.loc['Shots']}")
                 embed.add_field(name="Fantasy Points",
                                 value=f"{statsSeries.loc['Fantasy Points']}")
 
