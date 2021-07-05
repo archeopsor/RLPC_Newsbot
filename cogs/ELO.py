@@ -7,13 +7,13 @@ import dataframe_image as dfi
 import os
 import matplotlib.pyplot as plt
 
-from settings import prefix, forecast_sheet
+from settings import prefix, forecast_sheet, leagues
 
-from rlpc.players import find_league
-from rlpc.elo import exp_score, rank_teams
+from rlpc.players import Identifier
+from rlpc.elo import EloHandler
 
 from tools.sheet import Sheet
-from tools.database import select
+from tools.mongo import Session
 
 client = commands.Bot(command_prefix = prefix)
 
@@ -21,14 +21,31 @@ fc_sheet = Sheet(forecast_sheet)
 
 class ELO(commands.Cog):
     
-    def __init__(self,client):
+    def __init__(self, client: commands.Bot, session: Session = None, identifier: Identifier = None, fc_sheet: Sheet = None, elo: EloHandler = None):
         self.client = client
+
+        if not session:
+            self.session = Session()
+        else:
+            self.session = session
+        if not identifier:
+            self.identifier = Identifier(self.session)
+        else:
+            self.identifier = identifier
+        if not fc_sheet:
+            self.fc_sheet = Sheet(forecast_sheet)
+        else: 
+            self.fc_sheet = fc_sheet
+        if not elo:
+            self.elo = EloHandler(session = self.session, identifier = self.identifier)
+        else:
+            self.elo = elo
         
     @commands.command(aliases=("scorepredict","predictscore","score_predict","predict_score",))
     async def predict(self, ctx, team1: str, team2: str, bestof: float=5.0):
         async with ctx.typing():
             bestof = float(bestof)
-            answer = exp_score(team1,team2,bestof)
+            answer = self.elo.predict(team1, team2, bestof)
         await ctx.send(answer)
         
     @predict.error
@@ -41,23 +58,12 @@ class ELO(commands.Cog):
     @commands.command(aliases=("rank",))
     async def rankteams(self, ctx, league):
         async with ctx.typing():
-            answer = rank_teams(league, previous=True)
-            if league.casefold() == "major":
-                league = "Major"
-            elif league.casefold() in ["indy", "independent"]:
-                league = "Independent"
-            elif league.casefold() in ['mav', 'maverick']:
-                league = "Maverick"
-            elif league.casefold() in ['ren', 'renegade']:
-                league = "Renegade"
-            elif league.casefold() in ['pal', 'paladin']:
-                league = "Paladin"
-            else:
-                league = league.upper()
+            answer = self.elo.rank_teams(league)
+            league = leagues[league]
             standings = discord.Embed(title=f"{league} Rankings",color=0x000080,description=f"Computer-generated rankings for the {league} league, based on an internal Elo system. For the official, human-made rankings, use $pr")
             value_response = ""
             for row in answer.index:
-                value_response += f"{row+1}: {answer.loc[row, 'Team']} ({answer.loc[row, 'elo']}) [{answer.loc[row, 'elo'] - answer.loc[row, 'Previous']}]\n"
+                value_response += f"{row+1}: {answer.loc[row, 'Team']} ({answer.loc[row, 'Elo']}) [{answer.loc[row, 'Elo'] - answer.loc[row, 'Previous']}]\n"
             standings.add_field(name="Rankings", value=value_response)
         await ctx.send(embed=standings)
         
@@ -103,7 +109,7 @@ class ELO(commands.Cog):
                 return
             elif league == "none" and team != "none":
                 waitingMsg = await ctx.send(f'Finding league for team "{team}"...', )
-                league = find_league(team.title(), select("players")).lower()
+                league = self.identifier.find_league(team.title()).lower()
                 waitingMsg.delete(delay=3)
             elif league == "major":
                 datarange = "Most Recent!A2:F18"
@@ -124,10 +130,7 @@ class ELO(commands.Cog):
             
             data = fc_sheet.to_df(datarange).set_index('Teams')
     
-            if league in ['aaa', 'aa', 'a']:
-                league = league.upper()
-            else:
-                league = league.title()
+            league = leagues[league]
             
             if team == "none" and part == "none": 
                 
@@ -202,7 +205,7 @@ class ELO(commands.Cog):
                 return await ctx.send("See all of the data here: <https://docs.google.com/spreadsheets/d/1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ/edit?usp=sharing>")
         
     @forecast.error
-    async def probabilities_error(self,ctx,error):
+    async def forecast_error(self,ctx,error):
         if isinstance(error,commands.MissingRequiredArgument):
             await ctx.send("You haven't chosen a league. You can also see all of the data here: https://docs.google.com/spreadsheets/d/1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ/edit?usp=sharing")
 
@@ -212,12 +215,11 @@ class ELO(commands.Cog):
             team1 = team1.title()
             team2 = team2.title()
 
-            players = select("players")
             try:
-                league = find_league(team1, players)
+                league = self.identifier.find_league(team1)
             except:
                 return await ctx.send("Could not find the correct league")
-            if league != find_league(team2, players):
+            if league != self.identifier.find_league(team2):
                 return await ctx.send("Teams must be from the same league")
 
             if numGames > 15:

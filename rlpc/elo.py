@@ -125,9 +125,10 @@ class EloHandler:
             print(wins1, wins2, firstto)
             return "Something went catastrophically wrong, nothing seems to exist."
 
-    def rank_teams(self, league: str) -> pd.Series:
+    def rank_teams(self, league: str) -> pd.DataFrame:
         league = leagues[league.lower()]
-        lb = pd.Series(dtype="float64")
+        lb = pd.DataFrame(columns=['Team', 'Elo', 'Previous'])
+        lb.set_index('Team', inplace=True)
         teams = self.session.teams.find({'league': league})
         count = self.session.teams.count_documents({'league': league})
 
@@ -136,9 +137,9 @@ class EloHandler:
 
         for i in range(count):
             team = teams.next()
-            lb[team["team"]] = team['elo']['elo']
+            lb.loc[team['team']] = [team['elo']['elo'], team['elo']['previous']]
 
-        lb.sort_values(ascending=False, inplace=True)
+        lb.sort_values(by='Elo', ascending=False, inplace=True)
         return lb
 
     def autoparse(self, games: str) -> None:
