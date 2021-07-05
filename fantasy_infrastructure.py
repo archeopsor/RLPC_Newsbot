@@ -5,8 +5,7 @@ import re
 from difflib import SequenceMatcher
 import random
 
-#from tools.database import engine, select, Session, Fantasy_players, Players, Transfer_log
-from tools.mongo import Session, ObjectId, teamIds
+from tools.mongo import Session, teamIds
 
 from settings import prefix, leagues
 

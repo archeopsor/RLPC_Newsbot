@@ -5,10 +5,6 @@ from tools.mongo import Session, findCategory, teamIds, statsCategories
 
 from settings import valid_stats, leagues, sheet_p4, sheet_indy, power_rankings_sheet
 
-p4sheet = Sheet(sheet_p4)
-indysheet = Sheet(sheet_indy)
-powerrankings = Sheet(power_rankings_sheet)
-
 class StatsHandler:
     def __init__(self, session: Session = None, p4sheet: Sheet = None, indysheet: Sheet = None, powerrankings: Sheet = None):
         if not session:
@@ -76,7 +72,7 @@ class StatsHandler:
         elif stat.lower() in ['shpg','shots per game',' shots pg', 'shots per']:
             stat = "Shots Per Game"
 
-        players = p4sheet.to_df('Players!A1:I')
+        players = self.p4sheet.to_df('Players!A1:I')
         lower_players = players['Username'].str.lower()
         if player.lower() in lower_players.values:
             pindex = lower_players[lower_players == player.lower()].index[0]
@@ -85,7 +81,7 @@ class StatsHandler:
         league = players.loc[player, "League"]
         if type(league) == pd.Series:
             league = league[0]
-        stats = p4sheet.to_df(f"{league} League Stat Database!C3:R")
+        stats = self.p4sheet.to_df(f"{league} League Stat Database!C3:R")
         if stat not in list(stats) and stat.lower() != "all":
             return("That stat could not be understood.")
         stats = stats.loc[stats['Player']==player]
@@ -115,7 +111,7 @@ class StatsHandler:
         
         start_rows = {'Major': 2, 'AAA': 21, 'AA': 40, 'A': 59, 'Independent': 78, 'Maverick': 97, 'Renegade': 116, 'Paladin': 135}
         data_range = f'Rankings History!A{start_rows[league]}:M{start_rows[league]+16}'
-        data = powerrankings.to_df(data_range).set_index('')
+        data = self.powerrankings.to_df(data_range).set_index('')
         column = 1
         for i in range(12):
             if data.iloc[:, i].values[0] == '':
@@ -217,9 +213,9 @@ class StatsHandler:
         else: 
             # This is redundant for now but sheet ids can be different just in case something changes in the future
             if league.lower() in ['major', 'aaa', 'aa', 'a']: 
-                data = p4sheet.to_df('{league} League Stat Database!C3:R')
+                data = self.p4sheet.to_df('{league} League Stat Database!C3:R')
             elif league.lower() in ['independent', 'maverick', 'renegade', 'paladin']:
-                data = indysheet.to_df('{league} League Stat Database!C3:R')
+                data = self.indysheet.to_df('{league} League Stat Database!C3:R')
             data.set_index("Player", inplace=True)
             data.replace(to_replace='', value='0', inplace=True)        
             # Turn number strings into ints and floats

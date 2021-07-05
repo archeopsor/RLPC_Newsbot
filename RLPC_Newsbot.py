@@ -4,8 +4,9 @@ from random import choice
 import discord
 from discord.ext import commands
 from discord.ext.commands import has_permissions
+from discord.ext.commands.context import Context
 
-from rlpc import elo
+from rlpc.elo import EloHandler
 
 from tools.mongo import Session
 from tools.sheet import Sheet
@@ -16,6 +17,7 @@ client = commands.Bot(command_prefix = prefix)
 client.remove_command('help')
 
 pr_sheet = Sheet(power_rankings_sheet)
+elo = EloHandler()
 
 @client.event
 async def on_ready():
@@ -26,28 +28,28 @@ async def on_ready():
     await client.change_presence(activity=discord.Game(f'{prefix}help for commands'))
 
 @client.command()
-async def ping(ctx):
+async def ping(ctx: Context):
     await ctx.send(f'Pong! {round(client.latency * 1000)}ms')
     
 @client.command()
-async def load(ctx, extension):
+async def load(ctx: Context, extension):
     client.load_extension(f'cogs.{extension}')
     await ctx.send(f"{extension} loaded")
     
 @client.command()
-async def reload(ctx, extension):
+async def reload(ctx: Context, extension):
     client.unload_extension(f'cogs.{extension}')
     client.load_extension(f'cogs.{extension}')
     await ctx.send(f"{extension} reloaded")
     
 @client.command()
-async def unload(ctx, extension):
+async def unload(ctx: Context, extension):
     client.unload_extension(f'cogs.{extension}')
     await ctx.send(f"{extension} unloaded")
     
 @client.command(aliases=("alert","subscribe",))
 @has_permissions(manage_channels=True)
-async def alerts(ctx):
+async def alerts(ctx: Context):
     async with ctx.typing():
         with Session().admin as session:
             channels = session['channels']['upset_alerts']
@@ -66,12 +68,12 @@ async def alerts(ctx):
     return
 
 @alerts.error
-async def alerts_error(ctx, error):
+async def alerts_error(ctx: Context, error):
     if isinstance(error, commands.CheckFailure):
         await ctx.send("You don't have admin perms for this server.")
 
 @client.event
-async def on_message(message):
+async def on_message(message: discord.Message):
     channels = {598237603254239238: "Major", 598237794762227713: "AAA", 598237830824591490: "AA", 598237861837537304: "A", 715549072936796180: "Indy", 715551351236722708: "Mav", 757714221759987792: "Ren", 757719107041755286: "Pal"}
     if int(message.channel.id) in list(channels):
         
@@ -117,9 +119,8 @@ async def on_message(message):
         team2_wins = int(records.loc[team2, 'Wins'])
         
         if criteria == "rating":
-            ratings = elo.recall_data(league).set_index("Team")
-            team1_rating = int(ratings.loc[team1, 'elo'])
-            team2_rating = int(ratings.loc[team2, 'elo'])
+            team1_rating = elo.get_elo(team1)
+            team2_rating = elo.get_elo(team2)
             
         upset = False
         if criteria == "record" and team2_wins - team1_wins >= threshold:
@@ -135,9 +136,7 @@ async def on_message(message):
         descriptors = ["have taken down","have defeated","beat","were victorious over", "thwarted", "have upset", "have overpowered", "got the better of", "overcame", "triumphed over"]
         
         if upset:
-            alert_message = f"""**UPSET ALERT**
-{team1} {team1_record} {choice(descriptors)} {team2} {team2_record} with a score of {team1_score} - {team2_score}
-            """
+            alert_message = f"""**UPSET ALERT**\n{team1} {team1_record} {choice(descriptors)} {team2} {team2_record} with a score of {team1_score} - {team2_score}"""
             # Send the message out to subscribed channels
             await client.wait_until_ready()
             with Session().admin as session:

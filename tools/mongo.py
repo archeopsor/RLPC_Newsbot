@@ -44,6 +44,7 @@ class Session:
         self.teams = self.db['teams']
         self.players = self.db['players']
         self.games = self.db['games']
+        self.admin = self.db['admin']
 
     def ensure_recent(self, minutes=5):
         if (time.time() - self.time_loaded) > (60*minutes):

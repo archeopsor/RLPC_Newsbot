@@ -1,24 +1,37 @@
 from discord.ext import commands
-import fantasy_infrastructure as fantasy
 import discord
+from discord.ext.commands.context import Context
+
+from fantasy_infrastructure import FantasyHandler
 
 from rlpc import mmr
 from tools import accounts
 from tools.sheet import Sheet
+from tools.mongo import Session
 
 from settings import prefix, sheet_p4
-
-p4_sheet = Sheet(sheet_p4)
 
 client = commands.Bot(command_prefix = prefix)
 
 class Fantasy(commands.Cog):
     
-    def __init__(self,client):
+    def __init__(self, client, session: Session = None, fantasy: FantasyHandler = None, p4_sheet: Sheet = None):
         self.client = client
+        if not p4_sheet:
+            self.p4_sheet = Sheet(sheet_p4)
+        else:
+            self.p4_sheet = p4_sheet
+        if not session:
+            self.session = Session()
+        else:
+            self.session = session
+        if not fantasy:
+            self.fantasy = FantasyHandler(self.session)
+        else:
+            self.fantasy = fantasy
         
     @commands.command(aliases=("createaccount","create_account","newplayer", "new_player","newaccount","new_account","add_fantasy_player","new", "signup"))
-    async def new_fantasy_player(self,ctx,league="none"):
+    async def new_fantasy_player(self, ctx: Context, league="none"):
         async with ctx.typing():
             if league.casefold() not in ["major","aaa","aa","a","independent", "indy", "maverick", "mav", "none"]:
                 await ctx.send(f"{league} could not be understood")
@@ -30,12 +43,12 @@ class Fantasy(commands.Cog):
         await ctx.send(answer)
         
     @new_fantasy_player.error
-    async def new_fantasy_player_error(self,ctx,error):
+    async def new_fantasy_player_error(self, ctx: Context, error):
         if isinstance(error,commands.MissingRequiredArgument):
             await ctx.send(f'Please include the league you play in. If you are not a player, use "{prefix}new none"')
         
     @commands.command(aliases=("pick", "pickplayer", "addplayer", "add_player",))
-    async def pick_player(self,ctx,*,message):
+    async def pick_player(self, ctx: Context, *, message):
         async with ctx.typing():
             message = message.split()
             try: slot = int(message[-1])    
@@ -50,67 +63,72 @@ class Fantasy(commands.Cog):
             else:
                 player = message[0]
             player = player.lstrip()
-            author = ctx.message.author.name
-            person = author
-            answer = fantasy.pick_player(person,player,slot)
+            answer = self.fantasy.pick_player(ctx.author.id, player)
         await ctx.send(answer)
         
     @pick_player.error
-    async def pick_player_error(self,ctx,error):
+    async def pick_player_error(self, ctx: Context, error):
         if isinstance(error,commands.MissingRequiredArgument):
             await ctx.send('Please include a player')
             
     @commands.command(aliases=("drop","dropplayer","removeplayer","remove_player",))
-    async def drop_player(self,ctx,slot):
+    async def drop_player(self, ctx: Context, player: str):
         async with ctx.typing():
-            author = ctx.message.author.name
-            try: slot = int(slot)
-            except: 
-                await ctx.send("Please choose a slot (1-5) rather than a player")
-                return
-            answer = fantasy.pick_player(author,"drop",slot)
+            try:
+                answer = self.fantasy.drop_player(ctx.author.id, player)
+            except:
+                return "There was an error dropping " + player + ". Contact arco if you think this is a bug."
         await ctx.send(answer)
         
     @drop_player.error
-    async def drop_player_error(self,ctx,error):
+    async def drop_player_error(self, ctx: Context, error):
         if isinstance(error,commands.MissingRequiredArgument):
-            await ctx.send("Please include the slot you would like dropped")
+            await ctx.send("Please include the player you would like dropped")
             
     @commands.command(aliases=("leaderboard","lb","standings",))
-    async def generate_leaderboard(self,ctx):
+    async def generate_leaderboard(self, ctx: Context):
         async with ctx.typing():
-            answer = fantasy.fantasy_lb()
+            answer = self.fantasy.fantasy_lb()
             leaderboard=discord.Embed(title="Fantasy Leaderboard", color=0xffff00)
-            for row in answer.index:
-                leaderboard.add_field(name=f'{row+1}: {answer.loc[row,"Username"]}', value=answer.loc[row,"Total Points"], inline=False)
+            for i, player in enumerate(answer.index):
+                leaderboard.add_field(name=f'{i+1}: {player}', value=answer.loc[player], inline=False)
         await ctx.send(embed=leaderboard)
         
     @commands.command(aliases=("show","team","showteam",))
-    async def show_team(self,ctx,*,author="none"):
+    async def show_team(self, ctx: Context, *, author: str ="none"):
         async with ctx.typing():
             if author == "none":
-                author = ctx.message.author.name
-            answer = fantasy.show_team(author)
+                author = ctx.author.name
+            
+            try:
+                author_id = self.session.fantasy.find_one({'username': author})['discord_id']
+            except:
+                return await ctx.send(f"Couldn't find a fantasy account for {author}")
+
+            answer = self.fantasy.show_team(author_id)
             team=discord.Embed(title=f"{author}'s team", color=0x008080)
-            team.add_field(name="Account League", value=answer[0], inline=True)
-            team.add_field(name="Player 1", value=answer[1][0], inline=True)
-            team.add_field(name="Player 2", value=answer[1][1], inline=True)
-            team.add_field(name="Player 3", value=answer[1][2], inline=True)
-            team.add_field(name="Player 4", value=answer[1][3], inline=True)
-            team.add_field(name="Player 5", value=answer[1][4], inline=True)
-            team.add_field(name="Transfers Left", value=answer[3], inline=True)
-            team.add_field(name="Salary", value=answer[4], inline=True)
-            team.add_field(name="Player 1 Points", value=answer[2][0], inline=True)
-            team.add_field(name="Player 2 Points", value=answer[2][1], inline=True)
-            team.add_field(name="Player 3 Points", value=answer[2][2], inline=True)
-            team.add_field(name="Player 4 Points", value=answer[2][3], inline=True)
-            team.add_field(name="Player 5 Points", value=answer[2][4], inline=True)
-            team.add_field(name="Total Points", value=answer[5], inline=False)
+            team.add_field(name="Account League", value=answer['account_league'], inline=True)
+
+            for i in range(5): # Get players and points and add to embed
+                try:
+                    player_id = answer['players'][i]
+                    player: dict = self.session.players.find_one({'_id': player_id})
+                    player_history: list = [x for x in answer['player_history'] if x['Player'] == player_id]
+                    points: int = player_history[-1]['Points'] # Gets points of most recent entry of player
+
+                    team.add_field(name=f"Player {i+1}", value = f"{player['username']} ({points})", inline=True)
+
+                except IndexError:
+                    team.add_field(name=f"Player {i+1}", value = "Not Picked", inline=True)
+
+            team.add_field(name="Transfers Left", value=answer['transfers_left'], inline=True)
+            team.add_field(name="Salary", value=answer['salary'], inline=True)
+            team.add_field(name="Total Points", value=answer['points'], inline=False)
         await ctx.send(embed=team)
     
     # TODO: Add field to show how many teams the player is on
     @commands.command(aliases=("player","playerinfo","info",))
-    async def player_info(self,ctx,*,player):
+    async def player_info(self, ctx: Context, *, player):
         async with ctx.typing():
             pg = False
             if 'pg' in player:
@@ -119,39 +137,36 @@ class Fantasy(commands.Cog):
             if 'me' in player.lower().split(' '):
                 waitingMsg = await ctx.send("One second, retreiving discord ID and stats")
                 msg = str(ctx.author.id)
-                ids = p4_sheet.to_df('PlayerIDs!A1:B').set_index('Discord ID')
+                ids = self.p4_sheet.to_df('PlayerIDs!A1:B').set_index('Discord ID')
                 try:
                     player = ids.loc[msg, 'Username']
                 except:
                     return await ctx.send("You don't appear to have an up-to-date discord id on record. Try using the name that shows up on the RLPC spreadsheet.")
                 await waitingMsg.delete(delay=3)
                 
-            answer = fantasy.info(player, pg=pg)
+            answer = self.fantasy.info(player, pg=pg)
             player_card=discord.Embed(title=f"{player}'s player info", color=0xff0000)
-            player_card.add_field(name="Region", value=answer[0], inline=True)
-            player_card.add_field(name="Platform", value=answer[1], inline=True)
-            
-            try: 
-                standard = int(mmr.playlist('steam', player, 'standard').replace(',', ''))
-                doubles = int(mmr.playlist('steam', player, 'doubles').replace(',', ''))
-                player_card.add_field(name="MMR", value=max(standard, doubles), inline=True)
-            except: 
-                player_card.add_field(name="MMR", value=answer[2], inline=True)
-            
-            player_card.add_field(name="Team", value=answer[3], inline=True)
-            player_card.add_field(name="League", value=answer[4], inline=True)
-            player_card.add_field(name="Fantasy Value", value=answer[5], inline=True)
-            player_card.add_field(name="Allowed?", value=answer[6], inline=True)
-            player_card.add_field(name="Fantasy Points", value=answer[7], inline=True)
+            player_card.add_field(name="Region", value=answer['info']['region'], inline=True)
+            player_card.add_field(name="Platform", value=answer['info']['platform'], inline=True)
+            player_card.add_field(name="MMR", value=answer['info']['mmr'], inline=True)
+            if answer['info']['team'] == None:
+                player_card.add_field(name="Team", value = "None")
+            else:
+                team = self.session.teams.find_one({'_id': answer['info']['team']})['team']
+                player_card.add_field(name="Team", value=team, inline=True)
+            player_card.add_field(name="League", value=answer['info']['league'], inline=True)
+            player_card.add_field(name="Fantasy Value", value=answer['fantasy']['fantasy_value'], inline=True)
+            player_card.add_field(name="Allowed?", value=answer['fantasy']['allowed'], inline=True)
+            player_card.add_field(name="Fantasy Points", value=answer['fantasy']['fantasy_points'], inline=True)
         await ctx.send(embed=player_card)
     
     @player_info.error
-    async def player_info_error(self,ctx,error):
+    async def player_info_error(self, ctx: Context, error):
         if isinstance(error,commands.MissingRequiredArgument):
             await ctx.send("Please include a player")
             
     @commands.command(aliases=("playerlb", "player_lb", "playerslb",))
-    async def players(self,ctx, *, message=None):
+    async def players(self, ctx: Context, *, message=None):
         async with ctx.typing():
             league = None
             num = 10
@@ -182,12 +197,10 @@ class Fantasy(commands.Cog):
                 if "pergame" in message or "pg" in message:
                     pergame = True
             
-            lb = fantasy.player_lb(league=league, num=num, pergame=pergame)
-            
-            
+            lb = self.fantasy.player_lb(league = league, num = num, pergame = pergame)
             
             message = f"**1)** {lb.index[0]} ({lb[lb.index[0]]})"
-            for i in range(1,num):
+            for i in range(1, num):
                 message = message + f"\n**{i+1})** {lb.index[i]} ({lb[lb.index[i]]})"
         
         await ctx.send(f"**Player Leaderboard for fantasy points**\n*Add 'pg' to the end of the command to divide points by the # of series played*") 
@@ -197,7 +210,7 @@ class Fantasy(commands.Cog):
             await ctx.send("That exceeds discord's 2000 character limit. Please try again with fewer players.")
         
     @commands.command(aliases=("fantasy","fhelp","f_help",))
-    async def fantasy_help(self,ctx):
+    async def fantasy_help(self, ctx: Context):
         answer = f"""
 Welcome to RLPC Fantasy! This is a just-for-fun fantasy league in which people can build a team of RLPC players and compete against other fantasy teams.
 **To get started, type {prefix}new to create a new fantasy account.**
@@ -232,7 +245,7 @@ Welcome to RLPC Fantasy! This is a just-for-fun fantasy league in which people c
         await ctx.send(answer)
         
     @commands.command(aliases=("searchplayers",))
-    async def search(self,ctx,arg1="",arg2="",arg3="",arg4="",arg5="",arg6="",arg7="",arg8="",arg9="",arg10="",arg11="",arg12=""):
+    async def search(self, ctx: Context, arg1="", arg2="", arg3="", arg4="", arg5="", arg6="", arg7="", arg8="", arg9="", arg10="", arg11="", arg12=""):
         async with ctx.typing():
             name = "none"
             minsalary = 0
@@ -257,8 +270,8 @@ Welcome to RLPC Fantasy! This is a just-for-fun fantasy league in which people c
                 elif arg.casefold() in ["maxdistance","difference","difference:","maxdistance:","strictness","strictness:"]:
                     maxdistance = int(arguments[index])
             
-            answer = fantasy.search(minsalary=minsalary,maxsalary=maxsalary,league=league,team=team,name=name,maxdistance=maxdistance)
-            
+            answer = self.fantasy.search(minsalary=minsalary,maxsalary=maxsalary,league=league,team=team,name=name,maxdistance=maxdistance)
+
             embeds = []
             
             if len(answer.index) > 0:
