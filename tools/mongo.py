@@ -21,6 +21,7 @@ class Session:
         self.teams = self.db['teams']
         self.players = self.db['players']
         self.games = self.db['games']
+        self.admin = self.db['admin']
 
         self.structures = {
             "players": playersStructure,

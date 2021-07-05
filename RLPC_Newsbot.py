@@ -7,10 +7,11 @@ from discord.ext.commands import has_permissions
 
 from rlpc import elo
 
-from tools.database import engine, select
+from tools.mongo import Session
 from tools.sheet import Sheet
 
 from settings import prefix, power_rankings_sheet
+
 client = commands.Bot(command_prefix = prefix)
 client.remove_command('help')
 
@@ -48,20 +49,21 @@ async def unload(ctx, extension):
 @has_permissions(manage_channels=True)
 async def alerts(ctx):
     async with ctx.typing():
-        channels = select("select id from alerts_channels")['id'].to_list()
+        with Session().admin as session:
+            channels = session['channels']['upset_alerts']
         
-        if isinstance(ctx.channel, discord.channel.DMChannel):
+        if isinstance(ctx.channel, discord.channel.DMChannel): # I don't really think this is necessary
             pass
-        
+
         if ctx.channel.id in channels:
-            engine.execute(f"delete from alerts_channels where id={ctx.channel.id}")
-            await ctx.send("This channel will no longer receive alerts.")
-            return "finished"
+            with Session().admin as session:
+                session.find_one_and_update({'purpose': 'channels'}, {'$pull': {'channels.upset_alerts': ctx.channel.id}})
+            return await ctx.send("This channel will no longer receive alerts.")
         else:
-            engine.execute(f"insert into alerts_channels (id) values ({ctx.channel.id})")
-            await ctx.send("This channel will now receive alerts!")
-            return "finished"
-    return "finished"
+            with Session().admin as session:
+                session.find_one_and_update({'purpose': 'channels'}, {'$push': {'channels.upset_alerts': ctx.channel.id}})
+            return await ctx.send("This channel will now receive alerts!")
+    return
 
 @alerts.error
 async def alerts_error(ctx, error):
@@ -138,7 +140,8 @@ async def on_message(message):
             """
             # Send the message out to subscribed channels
             await client.wait_until_ready()
-            send_to = select("alerts_channels").values
+            with Session().admin as session:
+                send_to = session.find_one({'purpose': 'channels'})['upset_alerts']
             for channel in send_to:
                 try:
                      channel = client.get_channel(channel[0])
