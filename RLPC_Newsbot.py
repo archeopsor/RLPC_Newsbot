@@ -163,7 +163,7 @@ async def on_message(message: discord.Message):
 # Load cogs
 cogs = []
 cogs.append(ELO(client, session=session, identifier=identifier, fc_sheet=fc_sheet, elo=elo))
-cogs.append(Fantasy(client, session=session, fantasy=fantasy_handler, p4sheet=p4sheet))
+cogs.append(Fantasy(client, session=session, fantasy=fantasy_handler, p4_sheet=p4sheet))
 cogs.append(Help(client))
 cogs.append(Links(client))
 cogs.append(Reddit(client))
