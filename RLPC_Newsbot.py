@@ -1,23 +1,44 @@
+from rlpc.stats import StatsHandler
+from fantasy_infrastructure import FantasyHandler
 import os
 from random import choice
+from rlpc.players import Identifier, Players
 
 import discord
 from discord.ext import commands
 from discord.ext.commands import has_permissions
 from discord.ext.commands.context import Context
 
+# Cogs
+from cogs.ELO import ELO
+from cogs.Fantasy import Fantasy
+from cogs.Help import Help
+from cogs.Links import Links
+from cogs.Reddit import Reddit
+from cogs.Stats import Stats
+
 from rlpc.elo import EloHandler
 
 from tools.mongo import Session
 from tools.sheet import Sheet
 
-from settings import prefix, power_rankings_sheet
+from settings import prefix, power_rankings_sheet, sheet_p4, sheet_indy, forecast_sheet, gdstats_sheet
 
 client = commands.Bot(command_prefix = prefix)
 client.remove_command('help')
 
+# Instances of util and helper classes so only one exists for the entire bot
+session = Session()
+p4sheet = Sheet(sheet_p4)
+fc_sheet = Sheet(forecast_sheet)
+indysheet = Sheet(sheet_indy)
+gdsheet = Sheet(gdstats_sheet)
 pr_sheet = Sheet(power_rankings_sheet)
-elo = EloHandler()
+identifier = Identifier(session, p4sheet)
+elo = EloHandler(session, identifier)
+fantasy_handler = FantasyHandler(session)
+players = Players(session, p4sheet)
+stats = StatsHandler(session, p4sheet, indysheet, pr_sheet)
 
 @client.event
 async def on_ready():
@@ -31,28 +52,12 @@ async def on_ready():
 async def ping(ctx: Context):
     await ctx.send(f'Pong! {round(client.latency * 1000)}ms')
     
-@client.command()
-async def load(ctx: Context, extension):
-    client.load_extension(f'cogs.{extension}')
-    await ctx.send(f"{extension} loaded")
-    
-@client.command()
-async def reload(ctx: Context, extension):
-    client.unload_extension(f'cogs.{extension}')
-    client.load_extension(f'cogs.{extension}')
-    await ctx.send(f"{extension} reloaded")
-    
-@client.command()
-async def unload(ctx: Context, extension):
-    client.unload_extension(f'cogs.{extension}')
-    await ctx.send(f"{extension} unloaded")
-    
 @client.command(aliases=("alert","subscribe",))
 @has_permissions(manage_channels=True)
 async def alerts(ctx: Context):
     async with ctx.typing():
         with Session().admin as session:
-            channels = session['channels']['upset_alerts']
+            channels = session.find_one({'purpose': 'channels'})['channels']['upset_alerts']
         
         if isinstance(ctx.channel, discord.channel.DMChannel): # I don't really think this is necessary
             pass
@@ -155,9 +160,39 @@ async def on_message(message: discord.Message):
     await client.process_commands(message)
 
 
-for filename in os.listdir('./cogs'):
-    if filename.endswith('.py'):
-        client.load_extension(f'cogs.{filename[:-3]}')
+# Load cogs
+cogs = []
+cogs.append(ELO(client, session=session, identifier=identifier, fc_sheet=fc_sheet, elo=elo))
+cogs.append(Fantasy(client, session=session, fantasy=fantasy_handler, p4sheet=p4sheet))
+cogs.append(Help(client))
+cogs.append(Links(client))
+cogs.append(Reddit(client))
+cogs.append(Stats(client, session=session, p4sheet=p4sheet, indysheet=indysheet, gdsheet=gdsheet, identifier=identifier, players=players, stats=stats))
+for cog in cogs:
+    client.add_cog(cog)
+
+@client.command()
+async def load(ctx: Context, extension: str):
+    for cog in cogs:
+        if cog.__name__ == extension:
+            client.add_cog(cog)
+            return await ctx.send(f"{extension} loaded")
+    return await ctx.send(f"Couldn't find an extension named {extension}")
+    
+@client.command()
+async def reload(ctx: Context, extension: str):
+    cog = client.get_cog(extension)
+    if cog == None:
+        return await ctx.send(f"Couldn't find an extension named {extension}")
+    else:
+        client.remove_cog(cog)
+        client.add_cog(cog)
+        return await ctx.send(f"{extension} reloaded")
+    
+@client.command()
+async def unload(ctx: Context, extension: str):
+    client.remove_cog(extension)
+    await ctx.send(f"{extension} unloaded")
 
 try:
     from passwords import BOT_TOKEN
