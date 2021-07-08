@@ -85,7 +85,7 @@ class Newsbot(commands.Bot):
 
     async def on_message(self, message: discord.Message):
         channels = {598237603254239238: "Major", 598237794762227713: "AAA", 598237830824591490: "AA", 598237861837537304: "A",
-                715549072936796180: "Indy", 715551351236722708: "Mav", 757714221759987792: "Ren", 757719107041755286: "Pal"}
+                    715549072936796180: "Indy", 715551351236722708: "Mav", 757714221759987792: "Ren", 757719107041755286: "Pal"}
         if int(message.channel.id) in list(channels):
 
             # Criteria is either 'record' or 'rating', followed by the threshold for an upset
@@ -142,11 +142,11 @@ class Newsbot(commands.Bot):
             await gamescores_channel.send(f'**{league} result**\n{team1} {team1_record}: {team1_score}\n{team2} {team2_record}: {team2_score}')
 
             descriptors = ["have taken down", "have defeated", "beat", "were victorious over", "thwarted",
-                        "have upset", "have overpowered", "got the better of", "overcame", "triumphed over"]
+                           "have upset", "have overpowered", "got the better of", "overcame", "triumphed over"]
 
             if upset:
                 UPSET_ALERT_MESSAGE = f"""**UPSET ALERT**\n{team1} {team1_record} {choice(descriptors)} {team2} {team2_record} with a score of {team1_score} - {team2_score}"""
-                
+
                 # Send the message out to subscribed channels
                 await self.wait_until_ready()
                 with Session().admin as session:
@@ -155,7 +155,7 @@ class Newsbot(commands.Bot):
 
                 for channel in send_to:
                     channel: discord.TextChannel = self.get_channel(channel[0])
-                    
+
                     if channel == None:
                         continue
 
@@ -167,7 +167,7 @@ class Newsbot(commands.Bot):
                     await channel.send(new_message)
 
         await self.process_commands(message)
-    
+
     @commands.command(aliases=("upset", "upsets",))
     @has_permissions(manage_channels=True)
     async def upset_alerts(self, ctx: Context) -> str:
@@ -185,11 +185,11 @@ class Newsbot(commands.Bot):
 
             if ctx.channel.id in channels:
                 self.session.admin.find_one_and_update({'purpose': 'channels'}, {
-                                            '$pull': {'channels.upset_alerts': ctx.channel.id}})
+                    '$pull': {'channels.upset_alerts': ctx.channel.id}})
                 return await ctx.send("This channel will no longer receive alerts.")
             else:
                 self.session.admin.find_one_and_update({'purpose': 'channels'}, {
-                                                '$push': {'channels.upset_alerts': ctx.channel.id}})
+                    '$push': {'channels.upset_alerts': ctx.channel.id}})
                 return await ctx.send("This channel will now receive alerts!")
         return
 

@@ -1,10 +1,5 @@
-from webbrowser import get
 from googleapiclient.discovery import build
-from google_auth_oauthlib.flow import InstalledAppFlow
-from google.auth.transport.requests import Request
-from google.cloud import storage
 from google.oauth2 import service_account
-from oauth2client.service_account import ServiceAccountCredentials
 
 import os.path
 import pickle
@@ -269,7 +264,3 @@ def df_to_sheet(sheet_id: str, range_name: str, df: pd.DataFrame, dimension: str
     except Exception as error:
         logger.error("DF TO SHEET ERROR: %s", error)
         return
-
-
-if __name__ == "__main__":
-    print(Sheet("17tPXpZACXlqrCS3gYo59C5gbZyp3oguVdjwsgWQJkcA").to_df("Major Schedule!N4:V"))
