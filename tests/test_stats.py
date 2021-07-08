@@ -8,7 +8,7 @@ statsHandler = StatsHandler()
 class TestStats(unittest.TestCase):
     def test_player_stats(self):
         stats = statsHandler.get_player_stats("Zayo")
-        self.assertIsInstance(stats, pd.DataFrame)
+        self.assertEqual(stats.shape, (1, 16))
 
     def test_power_rankings(self):
         rankings = statsHandler.power_rankings("major")

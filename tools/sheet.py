@@ -1,4 +1,5 @@
 from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
 from google.oauth2 import service_account
 
 import os.path
@@ -8,9 +9,11 @@ import json
 import logging
 import time
 
+from errors.sheets_errors import *
+
 try:
     from passwords import CREDS
-except:
+except: # pragma: no cover
     CREDS = dict()
     CREDS["type"] = os.environ.get('GOOGLE_TYPE')
     CREDS["project_id"] = os.environ.get('GOOGLE_PROJECT_ID')
@@ -102,9 +105,10 @@ class Sheet:
                     spreadsheetId=self.sheet_id, range=data_range).execute()
                 self.ranges[data_range] = gsheet
                 return gsheet
-            except Exception as error:
+            except HttpError as error: 
                 logger.error("GET SHEET ERROR: %s", error)
-                return
+                print("permission" in error._get_reason())
+                raise GetSheetError("Couldn't access sheet, either b", self.sheet_id, data_range)
         else:
             return gsheet
 
@@ -134,10 +138,12 @@ class Sheet:
             header = gsheet.get('values', [])[0]
             values = gsheet.get('values', [])[1:]  # Everything else is data.
         except AttributeError as error:
-            logger.error("SHEET TO DF ERROR: %s", error)
+            logger.error("SHEET TO DF ERROR: %s", error) # TODO: Figure out when this happens, specify error handling
+            raise SheetToDfError("Error converting range to df", self.sheet_id, data_range)
         if not values:
             logger.error("SHEET TO DF ERROR: %s",
                          self.sheet_id + ' ' + data_range)
+            raise SheetToDfError("Error converting range to df", self.sheet_id, data_range)
         else:
             all_data = []
             for col_id, col_name in enumerate(header):
@@ -173,8 +179,9 @@ class Sheet:
         body = {"values": [[value]]}
         try:
             return self.service.spreadsheets().values().update(spreadsheetId=self.sheet_id, range=cell, body=body, valueInputOption="USER_ENTERED").execute()
-        except Exception as error:
+        except Exception as error: # TODO: Figure out when this happens, and make it more specific
             logger.error("UPDATE CELL ERROR: %s", error)
+            raise 
 
     def append(self, data_range: str, values: list, insertDataOption: str = "INSERT_ROWS", majorDimension: str = "ROWS") -> dict:
         """

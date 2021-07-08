@@ -1,4 +1,6 @@
 import unittest
+
+from googleapiclient.errors import InvalidJsonError
 from tools.sheet import Sheet
 import settings
 
@@ -15,15 +17,18 @@ class TestSheet(unittest.TestCase):
         df = p4.to_df("Players!A1:H")
         self.assertEqual(df.columns.to_list(), ['Username', 'Region', 'Platform', 'Sheet MMR', 'Team', 'League', 'Conf', 'Div'])
 
+    def test_invalid_perms_append(self):
+        self.assertRaises(p4.append("Major Rosters!A1:B", [['a', 'b']]), InvalidJsonError)
+
     def test_0_update(self):
-        self.assertEqual(type(test.update_cell('Sheet1!A4', 20)), dict)
+        self.assertEqual(type(test.update_cell('testing!A4', 20)), dict)
         
     def test_append(self):
         values = [[1, 2, 3, 4], ['a', 'b', 'c', 'd'], [1.0, 1.1, 1.2, 1.3]]
-        self.assertEqual(test.append('Sheet1!A1:D3', values)['updates']['updatedCells'], 12)
+        self.assertEqual(test.append('testing!A1:D3', values)['updates']['updatedCells'], 12)
         
     def test_clear(self):
-        self.assertEqual(type(test.clear('Sheet1!A1:D4')), dict)
+        self.assertEqual(type(test.clear('testing!A1:D8')), dict)
 
-if __name__ == '__main__':
-    unittest.main()
+if __name__ == '__main__': # pragma: no cover
+    unittest.main() 
