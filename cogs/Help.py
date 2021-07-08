@@ -6,12 +6,12 @@ from discord.ext.commands.context import Context
 
 from settings import prefix
 
-client = commands.Bot(command_prefix = prefix)
+bot = commands.Bot(command_prefix = prefix)
 
 class Help(commands.Cog):
     
-    def __init__(self, client):
-        self.client = client
+    def __init__(self, bot):
+        self.bot = bot
         
         
     @commands.command(pass_context=True)
@@ -40,5 +40,5 @@ class Help(commands.Cog):
             return await ctx.send(text)
         
         
-def setup(client):
-    client.add_cog(Help(client))
+def setup(bot):
+    bot.add_cog(Help(bot))

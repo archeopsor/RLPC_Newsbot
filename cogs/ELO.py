@@ -18,13 +18,13 @@ from rlpc.elo import EloHandler
 from tools.sheet import Sheet
 from tools.mongo import Session
 
-client = commands.Bot(command_prefix=prefix)
+bot = commands.Bot(command_prefix=prefix)
 
 
 class ELO(commands.Cog):
 
-    def __init__(self, client: commands.Bot, session: Session = None, identifier: Identifier = None, fc_sheet: Sheet = None, elo: EloHandler = None):
-        self.client = client
+    def __init__(self, bot: commands.Bot, session: Session = None, identifier: Identifier = None, fc_sheet: Sheet = None, elo: EloHandler = None):
+        self.bot = bot
 
         if not session:
             self.session = Session()
@@ -285,5 +285,5 @@ class ELO(commands.Cog):
             await ctx.send(f"An error occurred. You may have provided an invalid number of games, or an extra argument other than true or false at the end.")
 
 
-def setup(client):
-    client.add_cog(ELO(client))
+def setup(bot):
+    bot.add_cog(ELO(bot))

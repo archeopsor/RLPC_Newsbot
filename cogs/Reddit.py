@@ -6,13 +6,13 @@ from tools import reddit
 
 from settings import prefix
 
-client = commands.Bot(command_prefix=prefix)
+bot = commands.Bot(command_prefix=prefix)
 
 
 class Reddit(commands.Cog):
 
-    def __init__(self, client):
-        self.client = client
+    def __init__(self, bot):
+        self.bot = bot
 
     @commands.command(aliases=('listreddit',))
     async def getreddit(self, ctx: Context, sort='new', limit=5):
@@ -116,5 +116,5 @@ class Reddit(commands.Cog):
         await ctx.send(post[4])
 
 
-def setup(client):
-    client.add_cog(Reddit(client))
+def setup(bot):
+    bot.add_cog(Reddit(bot))

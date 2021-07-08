@@ -51,7 +51,7 @@ class Newsbot(commands.Bot):
             self.session, self.p4sheet, self.indysheet, self.pr_sheet)
 
         self.token = token
-
+        
         self.COGS = [
             ELO(self, session=self.session, identifier=self.identifier,
                 fc_sheet=self.fc_sheet, elo=self.elo),

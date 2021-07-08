@@ -18,13 +18,13 @@ from tools.sheet import Sheet
 
 from settings import prefix, valid_stats, leagues, sheet_p4, sheet_indy, gdstats_sheet, divisions
 
-client: commands.Bot = commands.Bot(command_prefix=prefix)
+bot: commands.Bot = commands.Bot(command_prefix=prefix)
 
 
 class Stats(commands.Cog):
 
-    def __init__(self, client: commands.Bot, session: Session = None, p4sheet: Sheet = None, indysheet: Sheet = None, gdsheet: Sheet = None, identifier: Identifier = None, players: Players = None, stats: StatsHandler = None):
-        self.client = client
+    def __init__(self, bot: commands.Bot, session: Session = None, p4sheet: Sheet = None, indysheet: Sheet = None, gdsheet: Sheet = None, identifier: Identifier = None, players: Players = None, stats: StatsHandler = None):
+        self.bot = bot
 
         if not session:
             self.session = Session()
@@ -388,5 +388,5 @@ class Stats(commands.Cog):
         pass
 
 
-def setup(client: commands.Bot):
-    client.add_cog(Stats(client))
+def setup(bot: commands.Bot):
+    bot.add_cog(Stats(bot))

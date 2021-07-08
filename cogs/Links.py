@@ -2,12 +2,12 @@ from discord.ext import commands
 from discord.ext.commands.context import Context
 
 from settings import prefix
-client = commands.Bot(command_prefix = prefix)
+bot = commands.Bot(command_prefix = prefix)
 
 class Links(commands.Cog):
     
-    def __init__(self, client):
-        self.client = client
+    def __init__(self, bot):
+        self.bot = bot
         
     @commands.command(aliases=('rlpc','leaguelink',))
     async def rlpclink(self, ctx: Context):
@@ -27,7 +27,7 @@ class Links(commands.Cog):
         
     @commands.command(aliases=('bot', 'botinvite', 'bot_invite', 'invitebot', 'invite_bot',))
     async def invite(self, ctx: Context):
-        await ctx.send("Invite this bot to your own server: https://discord.com/api/oauth2/authorize?client_id=635188576446840858&permissions=85056&scope=bot")
+        await ctx.send("Invite this bot to your own server: https://discord.com/api/oauth2/authorize?bot_id=635188576446840858&permissions=85056&scope=bot")
 
-def setup(client):
-    client.add_cog(Links(client))
+def setup(bot):
+    bot.add_cog(Links(bot))

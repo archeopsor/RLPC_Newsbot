@@ -11,13 +11,13 @@ from tools.mongo import Session
 
 from settings import prefix, sheet_p4
 
-client = commands.Bot(command_prefix=prefix)
+bot = commands.Bot(command_prefix=prefix)
 
 
 class Fantasy(commands.Cog):
 
-    def __init__(self, client, session: Session = None, fantasy: FantasyHandler = None, p4_sheet: Sheet = None):
-        self.client = client
+    def __init__(self, bot, session: Session = None, fantasy: FantasyHandler = None, p4_sheet: Sheet = None):
+        self.bot = bot
         if not p4_sheet:
             self.p4_sheet = Sheet(sheet_p4)
         else:
@@ -331,5 +331,5 @@ Welcome to RLPC Fantasy! This is a just-for-fun fantasy league in which people c
         return
 
 
-def setup(client):
-    client.add_cog(Fantasy(client))
+def setup(bot):
+    bot.add_cog(Fantasy(bot))

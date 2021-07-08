@@ -8,12 +8,12 @@ from settings import prefix
 
 class Misc(commands.Cog):
 
-    def __init__(self, client):
-        self.client = client
+    def __init__(self, bot):
+        self.bot = bot
 
     @commands.command()
     async def ping(self, ctx: Context):
-        await ctx.send(f'Pong! {round(self.client.latency * 1000)}ms')
+        await ctx.send(f'Pong! {round(self.bot.latency * 1000)}ms')
 
     @commands.command(aliases=("upset", "upsets",))
     @has_permissions(manage_channels=True)
@@ -27,15 +27,15 @@ class Misc(commands.Cog):
             str: response sent in discord
         """
         async with ctx.typing():
-            channels = self.client.session.admin.find_one({'purpose': 'channels'})[
+            channels = self.bot.session.admin.find_one({'purpose': 'channels'})[
                 'channels']['upset_alerts']
 
             if ctx.channel.id in channels:
-                self.client.session.admin.find_one_and_update({'purpose': 'channels'}, {
+                self.bot.session.admin.find_one_and_update({'purpose': 'channels'}, {
                     '$pull': {'channels.upset_alerts': ctx.channel.id}})
                 return await ctx.send("This channel will no longer receive alerts.")
             else:
-                self.client.session.admin.find_one_and_update({'purpose': 'channels'}, {
+                self.bot.session.admin.find_one_and_update({'purpose': 'channels'}, {
                     '$push': {'channels.upset_alerts': ctx.channel.id}})
                 return await ctx.send("This channel will now receive alerts!")
         return
