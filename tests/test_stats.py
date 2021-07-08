@@ -1,6 +1,5 @@
 import unittest
 import pandas as pd
-import sqlalchemy
 
 from rlpc.stats import StatsHandler
 

@@ -1,3 +1,5 @@
+from asyncio import events
+from threading import Event
 from typing_extensions import Literal
 import os
 from random import choice
@@ -14,6 +16,7 @@ from cogs.Help import Help
 from cogs.Links import Links
 from cogs.Reddit import Reddit
 from cogs.Stats import Stats
+from cogs.Misc import Misc
 
 from fantasy_infrastructure import FantasyHandler
 from rlpc.elo import EloHandler
@@ -58,7 +61,8 @@ class Newsbot(commands.Bot):
             Links(self),
             Reddit(self),
             Stats(self, session=self.session, p4sheet=self.p4sheet, indysheet=self.indysheet,
-                  gdsheet=self.gdsheet, identifier=self.identifier, players=self.players, stats=self.stats)
+                  gdsheet=self.gdsheet, identifier=self.identifier, players=self.players, stats=self.stats),
+            Misc(self)
         ]
 
         self.load_cogs()
@@ -165,38 +169,7 @@ class Newsbot(commands.Bot):
                         if role.name.casefold() == "upset alerts":
                             new_message += f'\n{channel.guild.get_role(role.id).mention}'
                     await channel.send(new_message)
-
         await self.process_commands(message)
-
-    @commands.command(aliases=("upset", "upsets",))
-    @has_permissions(manage_channels=True)
-    async def upset_alerts(self, ctx: Context) -> str:
-        """Subscribes the given channel to upset alerts
-
-        Args:
-            ctx (Context): discord context object
-
-        Returns:
-            str: response sent in discord
-        """
-        async with ctx.typing():
-            channels = self.session.admin.find_one({'purpose': 'channels'})[
-                'channels']['upset_alerts']
-
-            if ctx.channel.id in channels:
-                self.session.admin.find_one_and_update({'purpose': 'channels'}, {
-                    '$pull': {'channels.upset_alerts': ctx.channel.id}})
-                return await ctx.send("This channel will no longer receive alerts.")
-            else:
-                self.session.admin.find_one_and_update({'purpose': 'channels'}, {
-                    '$push': {'channels.upset_alerts': ctx.channel.id}})
-                return await ctx.send("This channel will now receive alerts!")
-        return
-
-    @upset_alerts.error
-    async def upset_alerts_error(self, ctx: Context, error: commands.CommandError):
-        if isinstance(error, commands.CheckFailure):
-            return await ctx.send("You don't have admin perms for this server.")
 
     @commands.command()
     async def load(self, ctx: Context, extension: str):
