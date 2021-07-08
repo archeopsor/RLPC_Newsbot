@@ -72,13 +72,16 @@ class Newsbot(commands.Bot):
             self.add_cog(cog)
 
     # TODO: Add more error handling
-    async def on_command_error(self, ctx, error):
+    async def on_command_error(self, ctx: Context, error: discord.errors.DiscordException):
         if isinstance(error, commands.NoPrivateMessage):
             await ctx.send('This command cannot be used in private messages.')
         elif isinstance(error, commands.DisabledCommand):
             await ctx.send('Sorry. This command is disabled and cannot be used.')
         elif isinstance(error, commands.CommandInvokeError):
             await ctx.send('There was an unexpected error using this command.')
+            error_channel: discord.TextChannel = self.get_channel(862730357371305995)
+            await error_channel.send(type(error) + " in " + ctx.channel)
+            await error_channel.send(error)
 
     async def on_ready(self):
         print('Logged in as')
