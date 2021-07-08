@@ -41,7 +41,9 @@ class Fantasy(commands.Cog):
 
             author = ctx.message.author.name
             id = ctx.message.author.id
-            answer = accounts.create_account(author, id, league=league)
+
+            answer = accounts.create_account(
+                author, id, league=league, session=self.session)
         return await ctx.send(answer)
 
     @new_fantasy_player.error

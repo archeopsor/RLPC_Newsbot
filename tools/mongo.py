@@ -37,6 +37,8 @@ class Session:
         self.close()
 
     def refresh(self):
+        self.close()
+        
         self.client = pymongo.MongoClient(MONGO_URL)
         self.db = self.client['rlpc-news']
 

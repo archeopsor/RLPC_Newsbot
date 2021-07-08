@@ -2,7 +2,7 @@ from tools.mongo import Session
 
 from settings import prefix, leagues
 
-def create_account(username: str, discord_id: str, league: str = None) -> str:
+def create_account(username: str, discord_id: str, league: str = None, session: Session = None) -> str:
     """
 
     Parameters
@@ -24,17 +24,17 @@ def create_account(username: str, discord_id: str, league: str = None) -> str:
     if league:
         league = leagues[league.lower()]
     
-    with Session() as session:
-        if session.fantasy.find_one({'discord_id': discord_id}):
-            return "You already have an account!"
-        else:
-            doc = session.structures['fantasy']
-            doc['username'] = username
-            doc['discord_id'] = discord_id
-            if league:
-                doc['account_league'] = league
-
-            session.fantasy.insert_one(doc)
+    if session.fantasy.find_one({'discord_id': discord_id}):
+        return "You already have an account!"
+    else:
+        doc = session.structures['fantasy']
+        doc['username'] = username
+        doc['discord_id'] = discord_id
+        if league:
+            doc['account_league'] = league
+            
+        session.refresh()
+        session.fantasy.insert_one(doc)
 
     return f"Success! Your account has been created. To add players, use {prefix}pick." 
 
