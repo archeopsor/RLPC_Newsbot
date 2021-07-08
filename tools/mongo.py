@@ -6,9 +6,9 @@ from pandas.io.pytables import GenericTable
 import pymongo
 
 try:
-    MONGO_URL = os.environ['MONGO_URL']
-except:
     from passwords import MONGO_URL
+except:
+    MONGO_URL = os.environ['MONGO_URL']
 
 
 class Session:
@@ -38,7 +38,7 @@ class Session:
 
     def refresh(self):
         self.close()
-        
+
         self.client = pymongo.MongoClient(MONGO_URL)
         self.db = self.client['rlpc-news']
 

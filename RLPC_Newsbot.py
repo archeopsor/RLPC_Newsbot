@@ -78,7 +78,7 @@ class Newsbot(commands.Bot):
         elif isinstance(error, commands.DisabledCommand):
             await ctx.send('Sorry. This command is disabled and cannot be used.')
         elif isinstance(error, commands.CommandInvokeError):
-            await ctx.send('There was an unknown error using this command.')
+            await ctx.send('There was an unexpected error using this command.')
 
     async def on_ready(self):
         print('Logged in as')
@@ -170,29 +170,6 @@ class Newsbot(commands.Bot):
                             new_message += f'\n{channel.guild.get_role(role.id).mention}'
                     await channel.send(new_message)
         await self.process_commands(message)
-
-    @commands.command()
-    async def load(self, ctx: Context, extension: str):
-        for cog in self.COGS:
-            if cog.__name__ == extension:
-                self.add_cog(cog)
-                return await ctx.send(f"{extension} loaded")
-        return await ctx.send(f"Couldn't find an extension named {extension}")
-
-    @commands.command()
-    async def reload(self, ctx: Context, extension: str):
-        cog = self.get_cog(extension)
-        if cog == None:
-            return await ctx.send(f"Couldn't find an extension named {extension}")
-        else:
-            self.remove_cog(cog)
-            self.add_cog(cog)
-            return await ctx.send(f"{extension} reloaded")
-
-    @commands.command()
-    async def unload(self, ctx: Context, extension: str):
-        self.remove_cog(extension)
-        await ctx.send(f"{extension} unloaded")
 
     async def close(self):
         await super().close()

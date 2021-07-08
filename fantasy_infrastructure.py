@@ -56,14 +56,13 @@ class FantasyHandler:
                 return "You're not allowed to make transfers right now, probably because there are games currently happening or the previous games have not yet been entered into the database. Please contact arco if you think this is an error."
 
         fantasy = self.session.fantasy
-        players = self.session.players
         account: dict = fantasy.find_one({"discord_id": discord_id})
         if not account:
             return f"You don't currently have an account! Use {prefix}new to make an account"
 
         # Try to get player (case insensitive), and return if player doesn't exist
         player_info = self.session.players.find_one(
-            {'$text': {'$search': player}})
+            {'$text': {'$search': f"\"{player}\""}})
         if not player_info:
             return "That player couldn't be found in the database. Make sure you spelled their name correctly"
 
@@ -195,9 +194,9 @@ class FantasyHandler:
         Returns:
             dict: player info
         """
-        doc = self.session.players.find_one({'$text': {'$search': player}})
+        doc = self.session.players.find_one({'$text': {'$search': f"\"{player}\""}})
         if not doc:
-            return
+            raise Exception #TODO: make custom error class for this
 
         if pg:
             try:

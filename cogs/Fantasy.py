@@ -54,7 +54,6 @@ class Fantasy(commands.Cog):
     @commands.command(aliases=("pick", "pickplayer", "addplayer", "add_player", "buy"))
     async def pick_player(self, ctx: Context, *, player: str):
         async with ctx.typing():
-            player = player.strip()
             answer = self.fantasy.pick_player(ctx.author.id, player)
         await ctx.send(answer)
 
@@ -153,7 +152,11 @@ class Fantasy(commands.Cog):
                     return await ctx.send("You don't appear to have an up-to-date discord id on record. Try using the name that shows up on the RLPC spreadsheet.")
                 await waitingMsg.delete(delay=3)
 
-            answer = self.fantasy.info(player, pg=pg)
+            try:
+                answer = self.fantasy.info(player, pg=pg)
+            except Exception: # TODO: replace with custom error
+                return await ctx.send(f"Couldn't find a player named {player}.")
+
             player_card = discord.Embed(
                 title=f"{player}'s player info", color=0xff0000)
             player_card.add_field(
