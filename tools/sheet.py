@@ -105,10 +105,11 @@ class Sheet:
                     spreadsheetId=self.sheet_id, range=data_range).execute()
                 self.ranges[data_range] = gsheet
                 return gsheet
-            except HttpError as error: 
-                logger.error("GET SHEET ERROR: %s", error)
-                print("permission" in error._get_reason())
-                raise GetSheetError("Couldn't access sheet, either b", self.sheet_id, data_range)
+            except HttpError as error:
+                if "permission" in error.error_details:
+                    raise NoPermissionError("You do not have permission to access this sheet", self.sheet_id)
+                else:
+                    raise GetSheetError("Couldn't get values from sheet", self.sheet_id, data_range)
         else:
             return gsheet
 
@@ -137,12 +138,9 @@ class Sheet:
             # Assumes first line is header!
             header = gsheet.get('values', [])[0]
             values = gsheet.get('values', [])[1:]  # Everything else is data.
-        except AttributeError as error:
-            logger.error("SHEET TO DF ERROR: %s", error) # TODO: Figure out when this happens, specify error handling
+        except AttributeError as error: # TODO: Figure out when this happens, specify error handling
             raise SheetToDfError("Error converting range to df", self.sheet_id, data_range)
         if not values:
-            logger.error("SHEET TO DF ERROR: %s",
-                         self.sheet_id + ' ' + data_range)
             raise SheetToDfError("Error converting range to df", self.sheet_id, data_range)
         else:
             all_data = []
@@ -180,8 +178,7 @@ class Sheet:
         try:
             return self.service.spreadsheets().values().update(spreadsheetId=self.sheet_id, range=cell, body=body, valueInputOption="USER_ENTERED").execute()
         except Exception as error: # TODO: Figure out when this happens, and make it more specific
-            logger.error("UPDATE CELL ERROR: %s", error)
-            raise 
+            raise UpdateCellError("Couldn't update cell", self.sheet_id, cell)
 
     def append(self, data_range: str, values: list, insertDataOption: str = "INSERT_ROWS", majorDimension: str = "ROWS") -> dict:
         """
@@ -207,8 +204,11 @@ class Sheet:
         try:
             body = {'majorDimension': majorDimension, 'values': values}
             return self.service.spreadsheets().values().append(spreadsheetId=self.sheet_id, range=data_range, valueInputOption="USER_ENTERED", insertDataOption=insertDataOption, body=body).execute()
-        except Exception as error:
-            logger.error("SHEET APPEND ERROR: %s", error)
+        except HttpError as error:
+                if "permission" in error.error_details:
+                    raise NoPermissionError("You do not have permission to access this sheet", self.sheet_id)
+                else:
+                    raise AppendError("Couldn't append values", self.sheet_id, data_range) # TODO: Make this more specific
 
     def clear(self, data_range: str) -> dict:
         """
@@ -227,8 +227,8 @@ class Sheet:
         """
         try:
             return self.service.spreadsheets().values().clear(spreadsheetId=self.sheet_id, range=data_range, body={}).execute()
-        except Exception as error:
-            logger.error("SHEET CLEAR ERROR: %s", error)
+        except HttpError as error:
+            raise ClearValuesError("Couldn't clear values", self.sheet_id, data_range)
 
     def refresh(self):
         self.ranges = {}
@@ -238,36 +238,37 @@ class Sheet:
         if (time.time() - self.last_refreshed) > (60*minutes):
             self.refresh
 
+    def push_df(self, range: str, df: pd.DataFrame, dimension: str = "COLUMNS") -> dict:
+        """
+        Appends values in a dataframe to the specified range
 
-def df_to_sheet(sheet_id: str, range_name: str, df: pd.DataFrame, dimension: str = "COLUMNS") -> dict:
-    """
-    Appends values in a dataframe to the specified range
+        Parameters
+        ----------
+        sheet_id : str
+            Spreadsheet ID.
+        range_name : str
+            Sheet range to append to, such as 'Sheet1!A1:B2'.
+        df : pd.DataFrame
+            Dataframe to append.
+        dimension : str, optional
+            Major Dimension of the dataframe. The default is "COLUMNS".
 
-    Parameters
-    ----------
-    sheet_id : str
-        Spreadsheet ID.
-    range_name : str
-        Sheet range to append to, such as 'Sheet1!A1:B2'.
-    df : pd.DataFrame
-        Dataframe to append.
-    dimension : str, optional
-        Major Dimension of the dataframe. The default is "COLUMNS".
+        Returns
+        -------
+        response : dict
+            Google API response.
 
-    Returns
-    -------
-    response : dict
-        Google API response.
-
-    """
-    values = []
-    for column in df.columns:
-        col_values = df[column].to_list()
-        values.append(col_values)
-    sheet = Sheet(sheet_id)
-    try:
-        response = sheet.append(range_name, values, majorDimension=dimension)
-        return response
-    except Exception as error:
-        logger.error("DF TO SHEET ERROR: %s", error)
-        return
+        """
+        values = []
+        for column in df.columns:
+            col_values = df[column].to_list()
+            values.append(col_values)
+        try:
+            response = self.append(range, values, majorDimension=dimension)
+            return response
+        except Exception as error:
+            raise PushDfError("Couldn't push dataframe to sheet", self.sheet_id, range, df)
+        # except AppendError:
+        #     raise PushDfError("Couldn't push df to sheet, most likely because of an invalid range")
+        # except NoPermissionError:
+        #     raise PushDfError("You don't have access to this sheet")
