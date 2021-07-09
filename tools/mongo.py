@@ -475,6 +475,8 @@ teamIds = {
     'Mages': ObjectId('60d3e0cdf44f81cfb194dd9b'),
     'Free Agent': 'Free Agent',
     'Draftee': 'Draftee',
+    'Not Playing': 'Not Playing',
+    'Departed': 'Departed'
 }
 
 statsCategories = {

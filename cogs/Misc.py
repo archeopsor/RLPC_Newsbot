@@ -127,6 +127,6 @@ class Misc(commands.Cog):
             embed.add_field(name="**Roster**", value = "\n".join(self.teams.get_roster(team)))
             embed.add_field(name="**League**", value=self.teams.get_league(data), inline=True)
             
-            return await ctx.send(embed=embed)
+        return await ctx.send(embed=embed)
 
 

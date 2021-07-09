@@ -164,12 +164,15 @@ class Players:
             lambda x: x.split(","))
         sheetdata = sheetdata.drop_duplicates(subset='Username')
         sheetdata = sheetdata.loc[sheetdata['Username'] != ""]
+        sheetdata = sheetdata.loc[sheetdata['Team'] != "N/A"] # This should never happen unless sheets team puts it here, /shrug
         sheetdata = sheetdata.loc[sheetdata['Departed'] == "FALSE"]
+        sheetdata = sheetdata.loc[sheetdata['Not Playing'] == "FALSE"]
         sheetdata = sheetdata.set_index('Username')
 
         players = self.session.players
 
         for player in sheetdata.index:
+            print(player)
             if sheetdata.loc[player, 'Team'] in ['Not Playing', 'Ineligible', 'Future Star', 'Departed', 'Banned', 'Waitlist', 'Below MMR']:
                 # See if player's document exists and/or needs to be updated
                 players.find_one_and_update(
@@ -229,7 +232,40 @@ class Players:
                                    "$set": {'info.discord_id': sheetdata.loc[player, 'Discord ID']}})
                 logger.info(f"{player} updated")
 
+        self.remove_not_playing()
         logger.info("Done checking players.")
+
+    def remove_not_playing(self):
+        """Changes team of anyone listed on the sheet as "Not Playing"
+
+        Returns:
+            None
+        """
+        sheetdata = self.p4sheet.to_df("Players!A1:AG")
+
+        sheetdata = sheetdata.drop_duplicates(subset='Username')
+        sheetdata = sheetdata.loc[sheetdata['Username'] != ""]
+        sheetdata.set_index("Username", inplace=True)
+        not_playing = sheetdata.loc[sheetdata['Not Playing'] == "TRUE"]
+        departed = sheetdata.loc[sheetdata['Departed'] == "TRUE"]
+
+        for player in not_playing.index:
+            print("NOT PLAYING: " + player)
+            doc = self.session.players.find_one({'username': player})
+            if doc == None:
+                continue
+            if doc['info']['team'] != "Not Playing":
+                self.session.players.update_one({'username': player}, {'$set': {'info.team': "Not Playing"}})
+        
+        for player in departed.index:
+            print("DEPARTED: " + player)
+            doc = self.session.players.find_one({'username': player})
+            if doc == None:
+                continue
+            if doc['info']['team'] != "Departed":
+                self.session.players.update_one({'username': player}, {'$set': {'info.team': "Departed"}})
+
+
 
 
 class Identifier:
@@ -381,7 +417,6 @@ class Identifier:
             return None
 
 
-# TODO: Create team enum for this and other uses
 class Teams: 
     def __init__(self, refresh_cooldown: int = 30, session: Session = None):
         self.cooldown = refresh_cooldown
@@ -446,3 +481,8 @@ class Teams:
 
         roster = list(players['Username'].values)
         return roster
+
+
+if __name__ == "__main__":
+    players = Players()
+    players.remove_not_playing()
