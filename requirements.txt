@@ -9,6 +9,10 @@ praw==7.3.0
 dnspython==2.1.0
 lxml==4.6.3
 
+# POTENTIAL FUTURE REQUIREMENTS
+selenium==3.141.0
+
+# OLD REQUIREMENTS
 # discord.py==1.3.4
 # pytz==2020.1
 # google-auth-oauthlib==0.4.1
