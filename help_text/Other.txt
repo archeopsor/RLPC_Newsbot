@@ -8,3 +8,5 @@
 **{prefix}alerts**: Subscribes the current channel to Upset Alerts. Only usable if you have Manage_Channel perms in the server.
 
 **{prefix}schedule** [team]: Shows the season schedule for the specified team.
+
+**{prefix}roster** [team]: Gives basic information about a team.

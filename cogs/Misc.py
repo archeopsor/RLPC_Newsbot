@@ -8,14 +8,21 @@ import dataframe_image as dfi
 import os
 
 from tools.sheet import Sheet
-from rlpc.players import Identifier
+from tools.mongo import Session
+from rlpc.players import Identifier, Teams
+
 from settings import prefix, divisions, sheet_p4, sheet_indy
+from errors.player_errors import TeamNotFoundError
 
 class Misc(commands.Cog):
 
-    def __init__(self, bot, identifier: Identifier = None, p4sheet: Sheet = None, indysheet: Sheet = None):
+    def __init__(self, bot, session: Session = None, identifier: Identifier = None, p4sheet: Sheet = None, indysheet: Sheet = None, teams: Teams = None):
         self.bot = bot
 
+        if not session:
+            self.session = Session()
+        else:
+            self.session = session
         if not identifier:
             self.identifier = Identifier()
         else:
@@ -28,6 +35,10 @@ class Misc(commands.Cog):
             self.indysheet = Sheet(sheet_indy)
         else:
             self.indysheet = indysheet
+        if not teams:
+            self.teams = Teams(session=self.session, p4sheet=self.p4sheet)
+        else:
+            self.teams = teams
 
     @commands.command()
     async def ping(self, ctx: Context):
@@ -98,3 +109,23 @@ class Misc(commands.Cog):
     async def schedule_error(self, ctx: Context, error):
         if isinstance(error, MissingRequiredArgument):
             return await ctx.send("Please specify a team.")
+
+    @commands.command(aliases=("rosters",))
+    async def roster(self, ctx: Context, *, team: str):
+        try:
+            data = self.teams.get_data(team)
+        except TeamNotFoundError:
+            return await ctx.send("Couldn't find team: "+ team)
+
+        embed = discord.Embed(title=team, color=0x00008b)
+        embed.set_thumbnail(url=self.teams.get_logo_url(data))
+        embed.add_field(name="GM", value=self.teams.get_gm(data), inline=True)
+        embed.add_field(name="AGM", value=self.teams.get_agm(data), inline=True)
+        embed.add_field(name="Captain", value=self.teams.get_captain(data), inline=True)
+        embed.add_field(name="Org", value="\n".join(self.teams.get_org(data)['Teams']))
+        embed.add_field(name="Roster", value = "\n".join(self.teams.get_roster(team)))
+        embed.add_field(name="League", value=self.teams.get_league(data), inline=True)
+        
+        return await ctx.send(embed=embed)
+
+

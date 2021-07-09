@@ -8,7 +8,7 @@ import dataframe_image as dfi
 import os
 import matplotlib.pyplot as plt
 
-from team_stats import PoissonDataHandler
+from tools.team_stats import PoissonDataHandler
 
 from settings import prefix, forecast_sheet, leagues
 

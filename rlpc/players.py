@@ -1,12 +1,14 @@
 import pandas as pd
 import logging
 import time
+import os
 from bson import ObjectId
 
 from tools.mongo import Session, teamIds
 from tools.sheet import Sheet
 
 from settings import sheet_p4
+from errors.player_errors import *
 
 logger = logging.getLogger(__name__)
 
@@ -377,3 +379,76 @@ class Identifier:
             return player.values[0]
         except:
             return None
+
+
+# TODO: Create team enum for this and other uses
+class Teams: 
+    def __init__(self, refresh_cooldown: int = 30, session: Session = None):
+        self.cooldown = refresh_cooldown
+
+        if not session:
+            self.session = Session()
+        else:
+            self.session = session
+        
+        self.sheet = Sheet(sheet_p4, refresh_cooldown=self.cooldown)
+
+    def get_data(self, team: str) -> pd.Series:
+        data = self.sheet.to_df('Teams!A1:AD129') # ALL the team data, not really necessary but good to have
+        data.set_index("Team", inplace=True)
+        team = team.title()
+        try:
+            data = data.loc[team]
+        except KeyError:
+            raise TeamNotFoundError(team)
+
+        return data
+
+    def get_gm(self,data: pd.Series) -> str:
+        return data.loc['GM']
+
+    def get_agm(self, data: pd.Series) -> str:
+        return data.loc['AGM']
+
+    def get_captain(self, data: pd.Series) -> str:
+        captain = data.loc['Captain']
+        if captain == '':
+            return None
+        else:
+            return captain
+
+    def get_league(self, data: pd.Series) -> str:
+        return data.loc['League']
+
+    def get_org(self, data: pd.Series) -> dict:
+        system = data['League System']
+
+        org = {
+            'System': system,
+            'Teams': [
+                data.loc['Major Affiliate'],
+                data.loc['AAA Affiliate'],
+                data.loc['AA Affiliate'],
+                data.loc['A Affiliate']
+            ]
+        }
+        for i, s in enumerate(org['Teams']):
+            if s == '':
+                org['Teams'][i] = data.name
+
+        return org
+
+    def get_logo_url(self, data: pd.Series) -> str:
+        # path = '/'.join(os.getcwd().split('\\')) + f"/Image_templates/RLPC_Logos/{team.title()}.png"
+        # return path
+
+        return data.loc['Logo']
+
+    def get_roster(self, team: str) -> list:
+        players = self.sheet.to_df("Players!A1:AG")
+        players = players[players['Departed'] == "FALSE"]
+        players = players[players['Team'] == team.title()]
+        players.drop_duplicates(subset="Username", inplace=True)
+
+        roster = list(players['Username'].values)
+        return roster

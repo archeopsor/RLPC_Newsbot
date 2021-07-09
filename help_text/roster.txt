@@ -1,0 +1,4 @@
+**Command: {prefix}roster [team]**
+Aliases: teams
+
+Gets basic information about a team.

@@ -18,7 +18,7 @@ from cogs.Misc import Misc
 from fantasy_infrastructure import FantasyHandler
 from rlpc.elo import EloHandler
 from rlpc.stats import StatsHandler
-from rlpc.players import Identifier, Players
+from rlpc.players import Identifier, Players, Teams
 from tools.mongo import Session
 from tools.sheet import Sheet
 
@@ -46,6 +46,7 @@ class Newsbot(commands.Bot):
         self.players = Players(self.session, self.p4sheet)
         self.stats = StatsHandler(
             self.session, self.p4sheet, self.indysheet, self.pr_sheet)
+        self.teams = Teams(session=self.session)
 
         self.token = token
         
@@ -59,7 +60,7 @@ class Newsbot(commands.Bot):
             Reddit(self),
             Stats(self, session=self.session, p4sheet=self.p4sheet, indysheet=self.indysheet,
                   gdsheet=self.gdsheet, identifier=self.identifier, players=self.players, stats=self.stats),
-            Misc(self, identifier=self.identifier, p4sheet=self.p4sheet, indysheet=self.indysheet)
+            Misc(self, session=self.session, identifier=self.identifier, p4sheet=self.p4sheet, indysheet=self.indysheet, teams=self.teams)
         ]
 
         self.load_cogs()
@@ -188,4 +189,5 @@ class Newsbot(commands.Bot):
 
 if __name__ == "__main__":
     bot = Newsbot(BOT_TOKEN)
+    commands = bot.get_cog("Misc").get_commands()
     bot.run()
