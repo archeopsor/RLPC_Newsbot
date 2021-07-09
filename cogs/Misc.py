@@ -112,20 +112,21 @@ class Misc(commands.Cog):
 
     @commands.command(aliases=("rosters",))
     async def roster(self, ctx: Context, *, team: str):
-        try:
-            data = self.teams.get_data(team)
-        except TeamNotFoundError:
-            return await ctx.send("Couldn't find team: "+ team)
+        async with ctx.typing():
+            try:
+                data = self.teams.get_data(team)
+            except TeamNotFoundError:
+                return await ctx.send("Couldn't find team: "+ team)
 
-        embed = discord.Embed(title=team, color=0x00008b)
-        embed.set_thumbnail(url=self.teams.get_logo_url(data))
-        embed.add_field(name="GM", value=self.teams.get_gm(data), inline=True)
-        embed.add_field(name="AGM", value=self.teams.get_agm(data), inline=True)
-        embed.add_field(name="Captain", value=self.teams.get_captain(data), inline=True)
-        embed.add_field(name="Org", value="\n".join(self.teams.get_org(data)['Teams']))
-        embed.add_field(name="Roster", value = "\n".join(self.teams.get_roster(team)))
-        embed.add_field(name="League", value=self.teams.get_league(data), inline=True)
-        
-        return await ctx.send(embed=embed)
+            embed = discord.Embed(title=team, color=0x00008b)
+            embed.set_thumbnail(url=self.teams.get_logo_url(data))
+            embed.add_field(name="GM", value=self.teams.get_gm(data), inline=True)
+            embed.add_field(name="AGM", value=self.teams.get_agm(data), inline=True)
+            embed.add_field(name="Captain", value=self.teams.get_captain(data), inline=True)
+            embed.add_field(name="Org", value="\n".join(self.teams.get_org(data)['Teams']))
+            embed.add_field(name="Roster", value = "\n".join(self.teams.get_roster(team)))
+            embed.add_field(name="League", value=self.teams.get_league(data), inline=True)
+            
+            return await ctx.send(embed=embed)
 
 
