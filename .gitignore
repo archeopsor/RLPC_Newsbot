@@ -139,6 +139,8 @@ dmypy.json
 # Github secrets
 passwords.py
 creds.json
+carball
+carball/
 
 ##########################
 # VSCODE GITIGNORE STUFF #
@@ -533,4 +535,3 @@ FodyWeavers.xsd
 # JetBrains Rider
 .idea/
 *.sln.iml
-carball

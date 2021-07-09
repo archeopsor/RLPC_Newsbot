@@ -80,7 +80,11 @@ class Newsbot(commands.Bot):
         elif isinstance(error, commands.CommandInvokeError):
             await ctx.send('There was an unexpected error using this command.')
             error_channel: discord.TextChannel = self.get_channel(862730357371305995)
-            await error_channel.send(type(error) + " in " + ctx.channel)
+            channel: discord.ChannelType = ctx.channel
+            if isinstance(channel, discord.TextChannel):
+                await error_channel.send("**" + str(type(error.original)) + " in " + channel.name + "**")
+            elif isinstance(channel, discord.DMChannel):
+                await error_channel.send("**" + str(type(error.original)) + " in DM with " + channel.recipient.name + "**")
             await error_channel.send(error)
 
     async def on_ready(self):
