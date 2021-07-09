@@ -1,12 +1,9 @@
-from asyncio import events
-from threading import Event
 from typing_extensions import Literal
 import os
 from random import choice
 
 import discord
 from discord.ext import commands
-from discord.ext.commands import has_permissions
 from discord.ext.commands.context import Context
 
 # Cogs
@@ -87,7 +84,7 @@ class Newsbot(commands.Bot):
             await error_channel.send("**" + str(type(error)) + " in " + channel.name + "**")
         elif isinstance(channel, discord.DMChannel):
             await error_channel.send("**" + str(type(error)) + " in DM with " + channel.recipient.name + "**")
-        await error_channel.send(f"*Command: {command.name} \nParams: {command.params}*")
+        await error_channel.send(f"*Command: {command.name} \nParams: {command.clean_params.values}*")
         await error_channel.send(error)
 
     async def on_ready(self):
