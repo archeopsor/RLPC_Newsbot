@@ -9,19 +9,16 @@ import numpy as np
 import dataframe_image as dfi
 
 from tools.mongo import Session
-
 from rlpc import mmr
 from rlpc.stats import StatsHandler
 from rlpc.players import Players, Identifier
-
 from tools.sheet import Sheet
+from settings import prefix, valid_stats, leagues, sheet_p4, sheet_indy, gdstats_sheet, divisions, leagues
 
-from settings import prefix, valid_stats, leagues, sheet_p4, sheet_indy, gdstats_sheet, divisions
-
-bot: commands.Bot = commands.Bot(command_prefix=prefix)
+from errors.stats_errors import *
 
 
-class Stats(commands.Cog):
+class Stats(commands.Cog):  # pragma: no cover
 
     def __init__(self, bot: commands.Bot, session: Session = None, p4sheet: Sheet = None, indysheet: Sheet = None, gdsheet: Sheet = None, identifier: Identifier = None, players: Players = None, stats: StatsHandler = None):
         self.bot = bot
@@ -51,7 +48,7 @@ class Stats(commands.Cog):
             self.players = Players(session=self.session, p4sheet=self.p4sheet)
         if not stats:
             self.stats = StatsHandler(
-                session=self.session, p4sheet=self.p4sheet, indysheet=self.indysheet)
+                session=self.session, p4sheet=self.p4sheet, indysheet=self.indysheet, gdsheet=self.gdsheet)
         else:
             self.stats = stats
 
@@ -62,19 +59,13 @@ class Stats(commands.Cog):
     @commands.command(aliases=('power', 'powerrankings', 'power_rankings', 'rankings', 'ranking',))
     async def pr(self, ctx: Context, league: str):
         async with ctx.typing():
-            if league.casefold() == "major":
-                league = "Major"
-            elif league.casefold() in ["indy", "independent"]:
-                league = "Independent"
-            elif league.casefold() in ['mav', 'maverick']:
-                league = "Maverick"
-            elif league.casefold() in ['ren', 'renegade']:
-                league = "Renegade"
-            elif league.casefold() in ['pal', 'paladin']:
-                league = "Paladin"
-            else:
-                league = league.upper()
-            rankings = self.stats.power_rankings(league)
+            league = leagues[league.lower()]
+            try:
+                rankings = self.stats.power_rankings(league)
+            except PRSheetError as error:
+                await ctx.send("There was an error getting power rankings data. This has been reported, and will hopefully be fixed soon.")
+                return self.bot.log_error(error, ctx.channel, ctx.command)
+
             embed = discord.Embed(
                 title=f'{league} Power Rankings', description=f"Official human-generated Power Rankings for {league}. For computer rankings, use $rank", color=0x000080)
 
@@ -95,7 +86,7 @@ class Stats(commands.Cog):
         if isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("You haven't chosen a league.")
 
-    @commands.command()  # TODO: fix this
+    @commands.command()  # TODO: fix this, add error handling, etc
     async def mmr(self, ctx: Context, *, player: str):
         async with ctx.typing():
             players = self.p4sheet.to_df('Players!A1:R')
@@ -133,42 +124,38 @@ class Stats(commands.Cog):
 
     @commands.command(aliases=("getstats", "stats", "get_stats",))
     # TODO: Add database stats
-    async def get_player_stats(self, ctx: Context, *, msg: str):
+    async def get_player_stats(self, ctx: Context, player: str, stat: str = "all"):
         async with ctx.typing():
-            if msg.casefold() == "me":
+            if player == "me":
                 waitingMsg: discord.Message = await ctx.send("One second, retreiving discord ID and stats")
-                msg = str(ctx.author.id)
-                ids = self.p4sheet.to_df(
-                    'PlayerIDs!A1:B').set_index('Discord ID')
+                discord_id = str(ctx.author.id)
                 try:
-                    msg = ids.loc[msg, 'Username']
-                except:
+                    player = self.stats.get_me(discord_id)
+                except FindMeError as error:
                     return await ctx.send("You don't appear to have an up-to-date discord id on record. Try using the name that shows up on the RLPC spreadsheet.")
-                await waitingMsg.delete(delay=5)
-            first = " ".join(msg.split()[:-1])
-            last = msg.split()[-1]
-            try:
-                answer = self.stats.get_player_stats(first, last)
-                if answer == 'That stat could not be understood.':
-                    raise Exception
-            except:
-                try:
-                    answer = self.stats.get_player_stats(msg)
-                except:
-                    await ctx.send(f"Cound not find player {msg}")
-                    return
 
             try:
-                embed = discord.Embed(
-                    title=f"{answer.values[0][0]}'s Stats", color=0x3333ff)
-            except:
-                return await ctx.send(f"Could not find {msg}'s stats. Contact arco if you think this is a bug")
+                answer = self.stats.get_player_stats(player, stat)
+            except InvalidStatError:
+                return await ctx.send(f"Couldn't understand stat {stat}. If this is part of a username, surround the username in quotes.")
+            except StatsError:
+                return await ctx.send(f"Couldn't find {player}'s stats. Contact arco if you think this is a bug.")
+
+            embed = discord.Embed(
+                title=f"{answer.values[0][0]}'s Stats", color=0x3333ff)
+
             for i, col in enumerate(answer.columns[1:]):
                 value = answer.values[0][i+1]
                 if not value:
                     value = 0
                 embed.add_field(name=col, value=value)
+
         await ctx.send(embed=embed)
+
+    @get_player_stats.error
+    async def stats_error(self, ctx: Context, error):
+        if isinstance(error, commands.TooManyArguments):
+            return await ctx.send("Too many arguments, there should only be two. Put names or stats in quotes (\"test name\") if it contains a space.")
 
     @commands.command(aliases=("topstats", "statslb", "stats_lb",))
     async def top(self, ctx: Context, *, msg):
@@ -212,8 +199,14 @@ class Stats(commands.Cog):
             if stat in statsmap.keys():
                 stat = statsmap[stat]
 
-            lb = self.stats.statlb(
-                useSheet=useSheet, league=league, stat=stat, limit=limit, pergame=pergame)
+            try:
+                lb = self.stats.statlb(
+                    useSheet=useSheet, league=league, stat=stat, limit=limit, pergame=pergame)
+            except InvalidStatError as error:
+                return await ctx.send(f'Could not understand stat {error.stat.title()}. Try using "$help stats" for a list of available stats, or include "db" in your command to use advanced stats rather than sheet stats.')
+            except (FindPlayersError, StatSheetError) as error:
+                await ctx.send(f"There was an error getting player data. This has been reported, and will hopefully be fixed soon.")
+                return self.bot.log_error(error, ctx.channel, ctx.command)
 
             embed = discord.Embed(title=f'{stat} {"Per Game " if pergame else ""}Leaderboard',
                                   description=f"League: {league}, Source: {'Sheet' if useSheet else 'Fantasy Database'}")
@@ -227,7 +220,7 @@ class Stats(commands.Cog):
     async def gdstats(self, ctx: Context, *, msg):
         async with ctx.typing():
             player = "me"
-            day = '1'
+            day = 1
             stat = None
             pergame = False
 
@@ -235,21 +228,21 @@ class Stats(commands.Cog):
             used_args = []
 
             for i, arg in enumerate(msg):
-                try:
-                    day = str(int(arg))  # Ensure that it's an integer
+                if arg in '123456789101112131415161718':
+                    day = int(arg)
                     used_args.append(arg)
                     continue
-                except:
-                    pass
                 if arg == 'me':
+                    waitingMsg = await ctx.send("One second, retreiving discord ID and stats")
+                    playerid = str(ctx.author.id)
+                    try:
+                        player = self.stats.get_me(playerid)
+                    except FindMeError:
+                        return await ctx.send("You don't appear to have an up-to-date discord id on record. Try using the name that shows up on the RLPC spreadsheet.")
+                    await waitingMsg.delete(delay=3)
                     used_args.append(arg)
                 elif 'gd' in arg:
-                    try:
-                        # Ensure that it's an integer
-                        day = str(int(arg.split('gd')[-1]))
-                        used_args.append(arg)
-                    except:
-                        pass
+                    used_args.append(arg)
                 elif arg == 'pg':
                     pergame = True
                     used_args.append(arg)
@@ -273,80 +266,37 @@ class Stats(commands.Cog):
                     msg.remove(i)
                 player = ' '.join(msg)
 
-            dates = {'1': '3/16/21 Data', '2': '3/18/21 Data', '3': '3/23/21 Data', '4': '3/25/21 Data', '5': '3/30/21 Data', '6': '4/1/21 Data', '7': '4/6/21 Data', '8': '4/8/21 Data', '9': '4/13/21 Data',
-                     '10': '4/15/21 Data', '11': '4/20/21 Data', '12': '4/22/21 Data', '13': '4/27/21 Data', '14': '4/29/21 Data', '15': '5/4/21 Data', '16': '5/6/21 Data', '17': '5/11/21 Data', '18': '5/13/21 Data'}
             try:
-                if 'gd' in day:
-                    day = day.split('gd')[-1]
-                datarange = dates[day]
-            except:
+                data = self.stats.gdstats(player, day, stat=stat, pergame=pergame)
+            except InvalidDayError:
                 return await ctx.send(f'{day} is not a valid gameday. Please enter a number between 1 and 18.')
-
-            try:
-                data = self.gdsheet.to_df(datarange).set_index("Username")
-            except:
-                return await ctx.send(f'There was an error retrieving data from gameday {day}.')
-
-            if player.lower() == "me":
-                waitingMsg = await ctx.send("One second, retreiving discord ID and stats")
-                playerid = str(ctx.author.id)
-                ids = self.p4sheet.to_df(
-                    'PlayerIDs!A1:B').set_index('Discord ID')
-                try:
-                    player = ids.loc[playerid, 'Username']
-                except:
-                    return await ctx.send("You don't appear to have an up-to-date discord id on record. Try using the name that shows up on the RLPC spreadsheet.")
-                await waitingMsg.delete(delay=3)
-
-            lower_players = data.index.str.lower()
-            if player.lower() in lower_players.values:
-                print("test")
-                pindex = np.where(lower_players.to_numpy() == player.lower())
-                player = data.index[pindex].values[0]
-                print(player)
-            else:
+            except GDStatsSheetError:
+                return await ctx.send(f"It doesn't look like there are any stats available for gameday {day}")
+            except PlayerNotFoundError:
                 return await ctx.send(f"Could not find stats for {player} on gameday {day}.")
-
-            try:
-                statsSeries = data.loc[player]
-            except:
-                return await ctx.send(f"Could not find stats for {player} on gameday {day}.")
-
-            if pergame:
-                statsSeries[3:-1] = statsSeries[3:-
-                                                1].apply(lambda x: float(x)) / int(statsSeries['Games Played'])
-                statsSeries[3:-1] = statsSeries[3:-
-                                                1].apply(lambda x: round(x, 2))
 
             if stat == None:
                 embed = discord.Embed(
                     title=f"{player}'s Stats on Gameday {day}", color=0x3333ff)
                 embed.add_field(name='Games Played',
-                                value=f'{statsSeries.loc["Games Played"]}')
+                                value=f'{data.loc["Games Played"]}')
                 embed.add_field(
-                    name="Goals", value=f"{statsSeries.loc['Goals']}")
+                    name="Goals", value=f"{data.loc['Goals']}")
                 embed.add_field(
-                    name="Assists", value=f"{statsSeries.loc['Assists']}")
+                    name="Assists", value=f"{data.loc['Assists']}")
                 embed.add_field(
-                    name="Saves", value=f"{statsSeries.loc['Saves']}")
+                    name="Saves", value=f"{data.loc['Saves']}")
                 embed.add_field(
-                    name="Shots", value=f"{statsSeries.loc['Shots']}")
+                    name="Shots", value=f"{data.loc['Shots']}")
                 embed.add_field(name="Fantasy Points",
-                                value=f"{statsSeries.loc['Fantasy Points']}")
+                                value=f"{data.loc['Fantasy Points']}")
 
                 return await ctx.send(embed=embed)
 
             else:
-                try:
-                    return await ctx.send(statsSeries.loc[stat.title()])
-                except:
-                    return await ctx.send(f'Could not understand stat "{stat}".')
-
-    @gdstats.error
-    async def gdstats_error(self, ctx: Context, error):
-        if isinstance(error, commands.MissingRequiredArgument):
-            return await ctx.send(error)
+                return await ctx.send(data.loc[stat.title()])
 
 
-def setup(bot: commands.Bot):
-    bot.add_cog(Stats(bot))
+    # @gdstats.error
+    # async def gdstats_error(self, ctx: Context, error):
+    #     pass

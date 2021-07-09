@@ -2,10 +2,10 @@ import numpy as np
 import pandas as pd
 
 from rlpc.players import Identifier
-
 from tools.mongo import Session, teamIds
-
 from settings import k, leagues
+
+from errors.elo_errors import *
 
 
 class EloHandler:

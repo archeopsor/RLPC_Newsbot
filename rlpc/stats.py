@@ -1,12 +1,17 @@
+import numpy as np
 import pandas as pd
 
 from tools.sheet import Sheet
 from tools.mongo import Session, findCategory, teamIds, statsCategories
 
-from settings import valid_stats, leagues, sheet_p4, sheet_indy, power_rankings_sheet
+from settings import valid_stats, leagues, sheet_p4, sheet_indy, power_rankings_sheet, gdstats_sheet
+
+from errors.stats_errors import *
+from errors.sheets_errors import GetSheetError, SheetToDfError
+
 
 class StatsHandler:
-    def __init__(self, session: Session = None, p4sheet: Sheet = None, indysheet: Sheet = None, powerrankings: Sheet = None):
+    def __init__(self, session: Session = None, p4sheet: Sheet = None, indysheet: Sheet = None, powerrankings: Sheet = None, gdsheet: Sheet = None):
         if not session:
             self.session = Session()
         else:
@@ -23,7 +28,11 @@ class StatsHandler:
             self.powerrankings = Sheet(power_rankings_sheet)
         else:
             self.powerrankings = powerrankings
-    
+        if not gdsheet:
+            self.gdsheet = Sheet(gdstats_sheet)
+        else:
+            self.gdsheet = gdsheet
+
     def get_player_stats(self, player: str, stat: str = "all") -> pd.DataFrame:
         """
         Gets the stats from the RLPC Spreadsheet for a given player
@@ -41,38 +50,42 @@ class StatsHandler:
             Series containing player's stats
         """
         # Make sure the program understands the specified stat if it's mis-capitalized or whatever
-        if stat.lower() in ["sp","series","series_played","series-played","splayed","seris","sieries","seiries"]:
+        if stat.lower() in ["sp", "series", "series_played", "series-played", "splayed", "seris", "sieries", "seiries"]:
             stat = "Series Played"
-        elif stat.lower() in ["gp","games","games_played","games-played","gplayed"]:
+        elif stat.lower() in ["gp", "games", "games_played", "games-played", "gplayed"]:
             stat = "Games Played"
-        elif stat.lower() in ["goals","goal","scores"]:
+        elif stat.lower() in ["goals", "goal", "scores"]:
             stat = "Goals"
-        elif stat.lower() in ['assists','assist','passes']:
+        elif stat.lower() in ['assists', 'assist', 'passes']:
             stat = "Assists"
-        elif stat.lower() in ['saves','save']:
+        elif stat.lower() in ['saves', 'save']:
             stat = "Saves"
-        elif stat.lower() in ['shots','shot']:
+        elif stat.lower() in ['shots', 'shot']:
             stat = "Shots"
-        elif stat.lower() in ['points','point','goals+assists','goals + assists','goals and assists']:
+        elif stat.lower() in ['points', 'point', 'goals+assists', 'goals + assists', 'goals and assists']:
             stat = "Points (Goals+Assists)"
-        elif stat.lower() in ['gpg','goals per game','goals pg','goals per']:
+        elif stat.lower() in ['gpg', 'goals per game', 'goals pg', 'goals per']:
             stat = "Goals per game"
-        elif stat.lower() in ['apg','assists per game','assists pg','assists per']:
+        elif stat.lower() in ['apg', 'assists per game', 'assists pg', 'assists per']:
             stat = "Assists per game"
-        elif stat.lower() in ['spg','sapg','saves per game','saves pg','saves per']:
+        elif stat.lower() in ['spg', 'sapg', 'saves per game', 'saves pg', 'saves per']:
             stat = "Saves per game"
-        elif stat.lower() in ['shot rate','shooting percent','shooting percentage','shot accuracy','shooting accuracy','shooting %','shot %']:
+        elif stat.lower() in ['shot rate', 'shooting percent', 'shooting percentage', 'shot accuracy', 'shooting accuracy', 'shooting %', 'shot %']:
             stat = "Shooting %"
-        elif stat.lower() in ['win rate','winning rate','winning percent','winning percentage']:
+        elif stat.lower() in ['win rate', 'winning rate', 'winning percent', 'winning percentage']:
             stat = "Winning %"
-        elif stat.lower() in ['wins','win']:
+        elif stat.lower() in ['wins', 'win']:
             stat = "Wins"
-        elif stat.lower() in ['ppg','points per game','points pg','points per']:
+        elif stat.lower() in ['ppg', 'points per game', 'points pg', 'points per']:
             stat = "Points per Game"
-        elif stat.lower() in ['shpg','shots per game',' shots pg', 'shots per']:
+        elif stat.lower() in ['shpg', 'shots per game', ' shots pg', 'shots per']:
             stat = "Shots Per Game"
 
-        players = self.p4sheet.to_df('Players!A1:I')
+        try:
+            players = self.p4sheet.to_df('Players!A1:I')
+        except SheetToDfError:
+            raise StatSheetError("Players!A1:I")
+
         lower_players = players['Username'].str.lower()
         if player.lower() in lower_players.values:
             pindex = lower_players[lower_players == player.lower()].index[0]
@@ -81,13 +94,23 @@ class StatsHandler:
         league = players.loc[player, "League"]
         if type(league) == pd.Series:
             league = league[0]
-        stats = self.p4sheet.to_df(f"{league} League Stat Database!C3:R")
+
+        try:
+            stats = self.p4sheet.to_df(f"{league} League Stat Database!C3:R")
+        except:
+            raise StatSheetError(f"{league} League Stat Database!C3:R")
+
         if stat not in list(stats) and stat.lower() != "all":
-            return("That stat could not be understood.")
-        stats = stats.loc[stats['Player']==player]
+            raise InvalidStatError(stat)
+
+        stats = stats.loc[stats['Player'] == player]
+
+        if stats.empty:
+            raise StatsError(player, stat)
+
         if stat != "all":
-            stats = stats[['Player',stat]]
-        return stats  
+            stats = stats[['Player', stat]]
+        return stats
 
     def power_rankings(self, league: str) -> pd.DataFrame:
         """
@@ -108,10 +131,15 @@ class StatsHandler:
             league = leagues[league.lower()]
         except:
             return "Could not understand league"
-        
-        start_rows = {'Major': 2, 'AAA': 21, 'AA': 40, 'A': 59, 'Independent': 78, 'Maverick': 97, 'Renegade': 116, 'Paladin': 135}
+
+        start_rows = {'Major': 2, 'AAA': 21, 'AA': 40, 'A': 59,
+                      'Independent': 78, 'Maverick': 97, 'Renegade': 116, 'Paladin': 135}
         data_range = f'Rankings History!A{start_rows[league]}:M{start_rows[league]+16}'
-        data = self.powerrankings.to_df(data_range).set_index('')
+        try:
+            data = self.powerrankings.to_df(data_range).set_index('')
+        except GetSheetError or SheetToDfError:
+            raise PRSheetError(league)
+
         column = 1
         for i in range(12):
             if data.iloc[:, i].values[0] == '':
@@ -146,39 +174,39 @@ class StatsHandler:
                 league = leagues[league.lower()]
             except:
                 return f"Could not understand league {league}."
-    
+
         # Make sure the program understands the specified stat if it's mis-capitalized or whatever
         # SHEETS-UNDERSTANDABLE STATS
         if useSheet == True:
-            if stat.lower() in ["sp","series","series_played","series-played","splayed","seris","sieries","seiries"]:
+            if stat.lower() in ["sp", "series", "series_played", "series-played", "splayed", "seris", "sieries", "seiries"]:
                 stat = "Series Played"
-            elif stat.lower() in ["gp","games","games_played","games-played","gplayed"]:
+            elif stat.lower() in ["gp", "games", "games_played", "games-played", "gplayed"]:
                 stat = "Games Played"
-            elif stat.lower() in ["goals","goal","scores"]:
+            elif stat.lower() in ["goals", "goal", "scores"]:
                 stat = "Goals"
-            elif stat.lower() in ['assists','assist','passes']:
+            elif stat.lower() in ['assists', 'assist', 'passes']:
                 stat = "Assists"
-            elif stat.lower() in ['saves','save']:
+            elif stat.lower() in ['saves', 'save']:
                 stat = "Saves"
-            elif stat.lower() in ['shots','shot']:
+            elif stat.lower() in ['shots', 'shot']:
                 stat = "Shots"
-            elif stat.lower() in ['points','point','goals+assists','goals + assists','goals and assists']:
+            elif stat.lower() in ['points', 'point', 'goals+assists', 'goals + assists', 'goals and assists']:
                 stat = "Points (Goals+Assists)"
-            elif stat.lower() in ['gpg','goals per game','goals pg','goals per']:
+            elif stat.lower() in ['gpg', 'goals per game', 'goals pg', 'goals per']:
                 stat = "Goals per game"
-            elif stat.lower() in ['apg','assists per game','assists pg','assists per']:
+            elif stat.lower() in ['apg', 'assists per game', 'assists pg', 'assists per']:
                 stat = "Assists per game"
-            elif stat.lower() in ['spg','sapg','saves per game','saves pg','saves per']:
+            elif stat.lower() in ['spg', 'sapg', 'saves per game', 'saves pg', 'saves per']:
                 stat = "Saves per game"
-            elif stat.lower() in ['shot rate','shooting percent','shooting percentage','shot accuracy','shooting accuracy','shooting %','shot %']:
+            elif stat.lower() in ['shot rate', 'shooting percent', 'shooting percentage', 'shot accuracy', 'shooting accuracy', 'shooting %', 'shot %']:
                 stat = "Shooting %"
-            elif stat.lower() in ['win rate','winning rate','winning percent','winning percentage']:
+            elif stat.lower() in ['win rate', 'winning rate', 'winning percent', 'winning percentage']:
                 stat = "Winning %"
-            elif stat.lower() in ['wins','win']:
+            elif stat.lower() in ['wins', 'win']:
                 stat = "Wins"
-            elif stat.lower() in ['ppg','points per game','points pg','points per']:
+            elif stat.lower() in ['ppg', 'points per game', 'points pg', 'points per']:
                 stat = "Points per Game"
-            elif stat.lower() in ['shpg','shots per game',' shots pg', 'shots per']:
+            elif stat.lower() in ['shpg', 'shots per game', ' shots pg', 'shots per']:
                 stat = "Shots Per Game"
             else:
                 return f'Could not understand stat {stat.title()}. Try using "$help stats" for a list of available stats, or include "db" in your command to use advanced stats rather than sheet stats.'
@@ -186,39 +214,52 @@ class StatsHandler:
         # I got lazy and people will have to type these in accurately for it to work
         else:
             if stat.title() not in valid_stats:
-                return f'Could not understand stat {stat.title()}. Try using "$help stats" for a list of available stats, or include "db" in your command to use advanced stats rather than sheet stats.'
+                return
             else:
                 stat = stat.title()
-        
+
         if not useSheet:
             players = self.session.players
             category = findCategory(stat)
             if not category:
-                return f"Couldn't find {stat}. Contact arco if this is an error."
+                raise InvalidStatError(stat)
+
             data = pd.DataFrame(columns=['Username', 'Games Played', stat])
 
-            if league != "all":
-                cursor = players.find({"info.league": league})
-            else:
-                cursor = players.find({"$exists": f"stats.{category}.{stat}"})
+            try:
+                if league != "all":
+                    cursor = players.find({"info.league": league})
+                else:
+                    cursor = players.find(
+                        {"$exists": f"stats.{category}.{stat}"})
+            except:
+                raise FindPlayersError(league, stat)
 
             # Iterate through cursor and get all player's stats
             cursor.sort(f"stats.{category}.{stat}", -1)
             for i in range(limit):
                 info = cursor.next()
-                data.append({'Username': info["username"], "Games Played": info["stats"]["general"]["Games Played"], stat: info['stats'][category][stat]}, ignore_index=True)
+                data.append({'Username': info["username"], "Games Played": info["stats"]["general"]
+                            ["Games Played"], stat: info['stats'][category][stat]}, ignore_index=True)
 
             data.set_index("Username", inplace=True)
 
-        else: 
-            # This is redundant for now but sheet ids can be different just in case something changes in the future
-            if league.lower() in ['major', 'aaa', 'aa', 'a']: 
-                data = self.p4sheet.to_df('{league} League Stat Database!C3:R')
-            elif league.lower() in ['independent', 'maverick', 'renegade', 'paladin']:
-                data = self.indysheet.to_df('{league} League Stat Database!C3:R')
+        else:
+            # This (below) is redundant for now but sheet ids can be different just in case something changes in the future
+            try:
+                if league.lower() in ['major', 'aaa', 'aa', 'a']:
+                    data = self.p4sheet.to_df(
+                        '{league} League Stat Database!C3:R')
+                elif league.lower() in ['independent', 'maverick', 'renegade', 'paladin']:
+                    data = self.indysheet.to_df(
+                        '{league} League Stat Database!C3:R')
+            except SheetToDfError:
+                raise StatSheetError('{league} League Stat Database!C3:R')
+
             data.set_index("Player", inplace=True)
-            data.replace(to_replace='', value='0', inplace=True)        
+            data.replace(to_replace='', value='0', inplace=True)
             # Turn number strings into ints and floats
+            # TODO: get rid of try/excepts
             for col in data.columns:
                 try:
                     data[col] = data[col].astype(int)
@@ -227,17 +268,53 @@ class StatsHandler:
                         data[col] = data[col].astype(float)
                     except:
                         data[col] = data[col].str.rstrip('%').astype(float)
-        
+
         lb = data[stat.title()]
+        lb: pd.Series = lb[lb > 0]
         games_played = data['Games Played']
-        
+
         if pergame:
             if stat in ['Goals Per Game', 'Assists per game', 'Saves per game', 'Points per Game', 'Shots per Game', 'Winning %', 'Shooting %']:
-                pass # These stats are already per game
+                pass  # These stats are already per game
             else:
                 lb = round(lb/games_played, 2)
-                
-        
+
         return lb.sort_values(ascending=False).head(limit)
 
-    
+    def get_me(self, discord_id: str) -> str:
+        ids = self.p4sheet.to_df(
+            'PlayerIDs!A1:B').set_index('Discord ID')
+        try:
+            msg = ids.loc[discord_id, 'Username']
+        except:
+            raise FindMeError(discord_id)
+
+    def gdstats(self, player: str, day: int, stat: str = None, pergame: bool = False) -> pd.DataFrame:
+        dates = {1: '3/16/21 Data', 2: '3/18/21 Data', 3: '3/23/21 Data', 4: '3/25/21 Data', 5: '3/30/21 Data', 6: '4/1/21 Data', 7: '4/6/21 Data', 8: '4/8/21 Data', 9: '4/13/21 Data',
+                 10: '4/15/21 Data', 11: '4/20/21 Data', 12: '4/22/21 Data', 13: '4/27/21 Data', 14: '4/29/21 Data', 15: '5/4/21 Data', 16: '5/6/21 Data', 17: '5/11/21 Data', 18: '5/13/21 Data'}
+        try:
+            datarange = dates[day]
+        except KeyError:
+            raise InvalidDayError(day)
+
+        try:
+            data = self.gdsheet.to_df(datarange).set_index("Username")
+        except SheetToDfError:
+            raise GDStatsSheetError(day)
+
+        lower_players: pd.Index = data.index.str.lower()
+        if player.lower() in lower_players.values:
+            pindex = np.where(lower_players.to_numpy() == player.lower())
+            player = data.index[pindex].values[0]
+        else:
+            raise PlayerNotFoundError(player, day)
+
+        stats_series = data.loc[player]
+
+        if pergame:
+            stats_series[3:-1] = stats_series[3:-
+                                              1].apply(lambda x: float(x)) / int(stats_series['Games Played'])
+            stats_series[3:-1] = stats_series[3:-
+                                              1].apply(lambda x: round(x, 2))
+
+        return stats_series

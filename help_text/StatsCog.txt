@@ -11,6 +11,7 @@
 
 **{prefix}stats [player] *[stat]***: Shows the stats of a given player, taken from the RLPC Spreadsheet. Can specify a valid stat, or leave empty to see basic stats.
     *Note: Put "me" as the player to get your own stats*
+    *Additionally, if a player's name or stat name contains a space, wrap it in "quotes" so the bot knows they are grouped together.*
 
 **{prefix}gdstats [player] [gameday #] *[pg]***: Shows the stats of a player from a given gameday, numbered 1-18. Can specify a valid stat (from the advanced list), and can add 'pg' to the end to divide by the number of games played.
     *Note: Put "me" as the player to get your own stats*

@@ -21,7 +21,7 @@ from tools.mongo import Session
 bot = commands.Bot(command_prefix=prefix)
 
 
-class ELO(commands.Cog):
+class ELO(commands.Cog): # pragma: no cover
 
     def __init__(self, bot: commands.Bot, session: Session = None, identifier: Identifier = None, fc_sheet: Sheet = None, elo: EloHandler = None):
         self.bot = bot
