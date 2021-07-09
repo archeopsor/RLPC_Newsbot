@@ -425,16 +425,9 @@ class Teams:
 
         org = {
             'System': system,
-            'Teams': [
-                data.loc['Major Affiliate'],
-                data.loc['AAA Affiliate'],
-                data.loc['AA Affiliate'],
-                data.loc['A Affiliate']
-            ]
+            'Teams': []
         }
-        for i, s in enumerate(org['Teams']):
-            if s == '':
-                org['Teams'][i] = data.name
+        org['Teams'] = data.loc['Organization Name'].split('/')
 
         return org
 
@@ -447,6 +440,7 @@ class Teams:
     def get_roster(self, team: str) -> list:
         players = self.sheet.to_df("Players!A1:AG")
         players = players[players['Departed'] == "FALSE"]
+        players = players[players['Not Playing'] == "FALSE"]
         players = players[players['Team'] == team.title()]
         players.drop_duplicates(subset="Username", inplace=True)
 
