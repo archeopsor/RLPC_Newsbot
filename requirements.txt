@@ -10,7 +10,7 @@ dnspython==2.1.0
 lxml==4.6.3
 
 # POTENTIAL FUTURE REQUIREMENTS
-selenium==3.141.0
+# selenium==3.141.0
 
 # OLD REQUIREMENTS
 # discord.py==1.3.4

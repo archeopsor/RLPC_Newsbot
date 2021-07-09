@@ -62,7 +62,7 @@ class Newsbot(commands.Bot):
             Reddit(self),
             Stats(self, session=self.session, p4sheet=self.p4sheet, indysheet=self.indysheet,
                   gdsheet=self.gdsheet, identifier=self.identifier, players=self.players, stats=self.stats),
-            Misc(self)
+            Misc(self, identifier=self.identifier, p4sheet=self.p4sheet, indysheet=self.indysheet)
         ]
 
         self.load_cogs()

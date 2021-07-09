@@ -2,14 +2,32 @@ import discord
 from discord.ext import commands
 from discord.ext.commands.context import Context
 from discord.ext.commands import has_permissions
-from discord.ext.commands.errors import CommandRegistrationError
+from discord.ext.commands.errors import CommandRegistrationError, MissingRequiredArgument
+import pandas as pd
+import dataframe_image as dfi
+import os
 
-from settings import prefix
+from tools.sheet import Sheet
+from rlpc.players import Identifier
+from settings import prefix, divisions, sheet_p4, sheet_indy
 
 class Misc(commands.Cog):
 
-    def __init__(self, bot):
+    def __init__(self, bot, identifier: Identifier = None, p4sheet: Sheet = None, indysheet: Sheet = None):
         self.bot = bot
+
+        if not identifier:
+            self.identifier = Identifier()
+        else:
+            self.identifier = identifier
+        if not p4sheet:
+            self.p4sheet = Sheet(sheet_p4)
+        else:
+            self.p4sheet = p4sheet
+        if not indysheet:
+            self.indysheet = Sheet(sheet_indy)
+        else:
+            self.indysheet = indysheet
 
     @commands.command()
     async def ping(self, ctx: Context):
@@ -45,3 +63,38 @@ class Misc(commands.Cog):
         if isinstance(error, commands.CheckFailure):
             return await ctx.send("You don't have admin perms for this server.")
 
+    @commands.command(aliases=("schedules", "scheduling",))
+    async def schedule(self, ctx: Context, *, team: str):
+        async with ctx.typing():
+            team: str = team.title()
+            if team not in divisions.keys():
+                return await ctx.send("Couldn't find team" + team)
+
+            league: str = self.identifier.find_league(team)
+            sheet: Sheet = self.p4sheet if league.lower(
+            ) in ['major', 'aaa', 'aa', 'a'] else self.indysheet
+
+            all_games: pd.DataFrame = sheet.to_df(f"{league} Schedule!O4:X")
+            if all_games.empty:
+                return await ctx.send("Schedules couldn't be found, possibly because they aren't on the sheet. Contact arco if you believe this is an error.")
+
+            all_games.columns.values[3] = "Team 1"
+            all_games.columns.values[5] = "Team 2"
+            all_games.columns.values[8] = "Logs"
+            all_games.drop(
+                columns=["Preseason", "Playoff", "Game Logs Processed"], inplace=True)
+
+            schedule: pd.DataFrame = all_games.loc[(
+                all_games['Team 1'] == team) | (all_games["Team 2"] == team)]
+            schedule.set_index("Day", drop=True, inplace=True)
+
+            dfi.export(schedule, "schedule.png", table_conversion='matplotlib')
+            path = os.path.abspath("schedule.png")
+            file = discord.File(path)
+            await ctx.send(file=file)
+            return os.remove(path)
+
+    @schedule.error
+    async def schedule_error(self, ctx: Context, error):
+        if isinstance(error, MissingRequiredArgument):
+            return await ctx.send("Please specify a team.")
