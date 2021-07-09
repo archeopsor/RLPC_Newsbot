@@ -66,6 +66,9 @@ class Stats(commands.Cog):  # pragma: no cover
                 await ctx.send("There was an error getting power rankings data. This has been reported, and will hopefully be fixed soon.")
                 return self.bot.log_error(error, ctx.channel, ctx.command)
 
+            if rankings == None:
+                return await ctx.send(f"It doesn't look like there are any power rankings available.")
+
             embed = discord.Embed(
                 title=f'{league} Power Rankings', description=f"Official human-generated Power Rankings for {league}. For computer rankings, use $rank", color=0x000080)
 

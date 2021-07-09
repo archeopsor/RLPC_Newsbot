@@ -139,6 +139,8 @@ class StatsHandler:
             data = self.powerrankings.to_df(data_range).set_index('')
         except GetSheetError or SheetToDfError:
             raise PRSheetError(league)
+        if data.empty:
+            return None
 
         column = 1
         for i in range(12):
