@@ -265,6 +265,8 @@ class Players:
             if doc['info']['team'] != "Departed":
                 self.session.players.update_one({'username': player}, {'$set': {'info.team': "Departed"}})
 
+        #self.session.players.delete_many({'info.team': {"$in": ['Not Playing', 'Deleted']}, 'stats.general.Games Played': 0})
+
 
 
 

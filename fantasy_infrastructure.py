@@ -227,11 +227,13 @@ class FantasyHandler:
         Returns:
             list: List of dictionaries with player information
         """
-        if team.casefold() in ["all", "none", "no", "idc"]:
+        if team.lower() in ["all", "none", "no", "idc"]:
             team = "all"
+        if team.lower() in ['signed', 'team', 'playing']:
+            team = "signed"
         if league.casefold() in ["all", "none", "no", "idc"]:
             league = "all"
-        if league.casefold() not in ['major', 'aaa', 'aa', 'a', 'independent', 'maverick', 'indy', 'mav', 'all']:
+        if league.lower() not in ['major', 'aaa', 'aa', 'a', 'independent', 'maverick', 'indy', 'mav', 'all']:
             return("League could not be understood")
         elif league.lower() != "all":
             league = leagues[league.lower()]
@@ -239,13 +241,18 @@ class FantasyHandler:
             league = "all"
 
         filter = {
-            "fantasy.fantasy_value": {'$gte': minsalary, '$lte': maxsalary}
+            "fantasy.fantasy_value": {'$gte': minsalary, '$lte': maxsalary},
+            "$nin": {"info.team": ["Not Playing", "Departed"]}
         }
 
         if league != "all":
             filter['info.league'] = league
-        if team != "all":
+        if team != "all" and team != "signed":
             filter['info.team'] = teamIds[team.title()]
+        elif team == "signed":
+            filter['$nin']['info.team'].append("Free Agent")
+            filter['$nin']['info.team'].append("Waitlist") # Shouldn't be in database, but just in case
+            filter['$nin']['info.team'].append("Draftee") # Shouldn't be in database, but just in case
         if name != "none":
             filter['username'] = name
 
