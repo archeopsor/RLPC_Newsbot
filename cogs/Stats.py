@@ -132,6 +132,7 @@ class Stats(commands.Cog):  # pragma: no cover
             if player == "me":
                 waitingMsg: discord.Message = await ctx.send("One second, retreiving discord ID and stats")
                 discord_id = str(ctx.author.id)
+                await waitingMsg.delete(delay=3)
                 try:
                     player = self.stats.get_me(discord_id)
                 except FindMeError as error:

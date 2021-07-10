@@ -78,15 +78,15 @@ class Newsbot(commands.Bot):
         elif isinstance(error, commands.CommandInvokeError):
             await self.log_error(error.original, ctx.channel, ctx.command)
 
-    async def log_error(self, error: Exception, channel: discord.ChannelType, command: commands.Command):
+    async def log_error(self, error: commands.CommandInvokeError, channel: discord.ChannelType, command: commands.Command):
         await channel.send('There was an unexpected error using this command.')
         error_channel: discord.TextChannel = self.get_channel(862730357371305995)
         if isinstance(channel, discord.TextChannel):
             await error_channel.send("**" + str(type(error)) + " in " + channel.name + "**")
         elif isinstance(channel, discord.DMChannel):
             await error_channel.send("**" + str(type(error)) + " in DM with " + channel.recipient.name + "**")
-        await error_channel.send(f"*Command: {command.name} \nParams: {command.clean_params.values}*")
-        await error_channel.send(error)
+        await error_channel.send(f"*Command: {command.name}*")
+        await error_channel.send(error.with_traceback())
 
     async def on_ready(self):
         print('Logged in as')
