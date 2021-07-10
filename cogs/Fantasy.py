@@ -1,3 +1,4 @@
+from errors.stats_errors import FindMeError
 from discord.ext import commands
 import discord
 from discord.ext.commands.context import Context
@@ -142,13 +143,10 @@ class Fantasy(commands.Cog):
                 player = player[:-3]
                 pg = True
             if 'me' in player.lower().split(' '):
-                waitingMsg = await ctx.send("One second, retreiving discord ID and stats")
-                msg = str(ctx.author.id)
-                ids = self.p4_sheet.to_df(
-                    'PlayerIDs!A1:B').set_index('Discord ID')
+                waitingMsg: discord.Message = await ctx.send("One second, retreiving discord ID and stats")
                 try:
-                    player = ids.loc[msg, 'Username']
-                except:
+                    player = self.bot.stats.get_me(str(ctx.author.id))
+                except FindMeError:
                     return await ctx.send("You don't appear to have an up-to-date discord id on record. Try using the name that shows up on the RLPC spreadsheet.")
                 await waitingMsg.delete(delay=3)
 

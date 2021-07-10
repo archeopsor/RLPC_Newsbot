@@ -189,5 +189,4 @@ class Newsbot(commands.Bot):
 
 if __name__ == "__main__":
     bot = Newsbot(BOT_TOKEN)
-    commands = bot.get_cog("Misc").get_commands()
     bot.run()

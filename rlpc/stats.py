@@ -287,9 +287,11 @@ class StatsHandler:
         ids = self.p4sheet.to_df(
             'PlayerIDs!A1:B').set_index('Discord ID')
         try:
-            msg = ids.loc[discord_id, 'Username']
+            player = ids.loc[discord_id, 'Username']
         except:
             raise FindMeError(discord_id)
+        
+        return player
 
     def gdstats(self, player: str, day: int, stat: str = None, pergame: bool = False) -> pd.DataFrame:
         dates = {1: '3/16/21 Data', 2: '3/18/21 Data', 3: '3/23/21 Data', 4: '3/25/21 Data', 5: '3/30/21 Data', 6: '4/1/21 Data', 7: '4/6/21 Data', 8: '4/8/21 Data', 9: '4/13/21 Data',
