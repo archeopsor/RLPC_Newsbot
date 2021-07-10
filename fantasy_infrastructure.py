@@ -242,7 +242,7 @@ class FantasyHandler:
 
         filter = {
             "fantasy.fantasy_value": {'$gte': minsalary, '$lte': maxsalary},
-            "$info.team": {"$nin": ["Not Playing", "Departed"]}
+            "info.team": {"$nin": ["Not Playing", "Departed"]}
         }
 
         if league != "all":
