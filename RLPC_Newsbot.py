@@ -76,10 +76,10 @@ class Newsbot(commands.Bot):
         elif isinstance(error, commands.DisabledCommand):
             await ctx.send('Sorry. This command is disabled and cannot be used.')
         elif isinstance(error, commands.CommandInvokeError):
-            await ctx.send('There was an unexpected error using this command.')
             await self.log_error(error.original, ctx.channel, ctx.command)
 
     async def log_error(self, error: Exception, channel: discord.ChannelType, command: commands.Command):
+        await channel.send('There was an unexpected error using this command.')
         error_channel: discord.TextChannel = self.get_channel(862730357371305995)
         if isinstance(channel, discord.TextChannel):
             await error_channel.send("**" + str(type(error)) + " in " + channel.name + "**")

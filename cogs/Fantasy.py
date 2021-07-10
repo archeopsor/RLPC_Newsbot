@@ -51,6 +51,8 @@ class Fantasy(commands.Cog):
     async def new_fantasy_player_error(self, ctx: Context, error):
         if isinstance(error, commands.MissingRequiredArgument):
             await ctx.send(f'Please include the league you play in. If you are not a player, use "{prefix}new none"')
+        else:
+            self.bot.log_error(error, ctx.channel, ctx.command)
 
     @commands.command(aliases=("pick", "pickplayer", "addplayer", "add_player", "buy"))
     async def pick_player(self, ctx: Context, *, player: str):
@@ -62,6 +64,8 @@ class Fantasy(commands.Cog):
     async def pick_player_error(self, ctx: Context, error):
         if isinstance(error, commands.MissingRequiredArgument):
             await ctx.send('Please include a player')
+        else:
+            self.bot.log_error(error, ctx.channel, ctx.command)
 
     @commands.command(aliases=("drop", "dropplayer", "removeplayer", "remove_player", "sell"))
     async def drop_player(self, ctx: Context, player: str):
@@ -76,6 +80,8 @@ class Fantasy(commands.Cog):
     async def drop_player_error(self, ctx: Context, error):
         if isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("Please include the player you would like dropped")
+        else:
+            self.bot.log_error(error, ctx.channel, ctx.command)
 
     @commands.command(aliases=("leaderboard", "lb", "standings",))
     async def generate_leaderboard(self, ctx: Context):
@@ -145,7 +151,8 @@ class Fantasy(commands.Cog):
             if 'me' in player.lower().split(' '):
                 waitingMsg: discord.Message = await ctx.send("One second, retreiving discord ID and stats")
                 try:
-                    player = self.bot.stats.get_me(str(ctx.author.id))
+                    discord_id = str(ctx.author.id)
+                    player = self.bot.stats.get_me(discord_id)
                 except FindMeError:
                     return await ctx.send("You don't appear to have an up-to-date discord id on record. Try using the name that shows up on the RLPC spreadsheet.")
                 await waitingMsg.delete(delay=3)
@@ -183,6 +190,8 @@ class Fantasy(commands.Cog):
     async def player_info_error(self, ctx: Context, error):
         if isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("Please include a player")
+        else:
+            self.bot.log_error(error, ctx.channel, ctx.command)
 
     @commands.command(aliases=("playerlb", "player_lb", "playerslb",))
     async def players(self, ctx: Context, *, message=None):
