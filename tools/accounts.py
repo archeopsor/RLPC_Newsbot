@@ -27,7 +27,7 @@ def create_account(username: str, discord_id: str, league: str = None, session: 
     if session.fantasy.find_one({'discord_id': discord_id}):
         return "You already have an account!"
     else:
-        doc = session.structures['fantasy']
+        doc = session.structures['fantasy'].copy()
         doc['username'] = username
         doc['discord_id'] = discord_id
         if league:
