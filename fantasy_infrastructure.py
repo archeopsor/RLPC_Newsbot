@@ -47,13 +47,13 @@ class FantasyHandler:
             str: Success or error message to send in discord.
         """
 
-        # Ensure that it's a valid time to make transfers
-        if datetime.now(tz=pytz.timezone("US/Eastern")).weekday() in [1, 3]:
-            if datetime.now(tz=pytz.timezone("US/Eastern")).time().hour > 16:
-                return "You're not allowed to make transfers right now, probably because there are games currently happening or the previous games have not yet been entered into the database. Please contact arco if you think this is an error."
-        elif datetime.now(tz=pytz.timezone("US/Eastern")).weekday() in [2, 4]:
-            if datetime.now(tz=pytz.timezone("US/Eastern")).time().hour < 10:
-                return "You're not allowed to make transfers right now, probably because there are games currently happening or the previous games have not yet been entered into the database. Please contact arco if you think this is an error."
+        # Ensure that it's a valid time to make transfers TODO: ENABLE WHEN SEASON STARTS
+        # if datetime.now(tz=pytz.timezone("US/Eastern")).weekday() in [1, 3]:
+        #     if datetime.now(tz=pytz.timezone("US/Eastern")).time().hour > 16:
+        #         return "You're not allowed to make transfers right now, probably because there are games currently happening or the previous games have not yet been entered into the database. Please contact arco if you think this is an error."
+        # elif datetime.now(tz=pytz.timezone("US/Eastern")).weekday() in [2, 4]:
+        #     if datetime.now(tz=pytz.timezone("US/Eastern")).time().hour < 10:
+        #         return "You're not allowed to make transfers right now, probably because there are games currently happening or the previous games have not yet been entered into the database. Please contact arco if you think this is an error."
 
         fantasy = self.session.fantasy
         account: dict = fantasy.find_one({"discord_id": discord_id})
@@ -126,6 +126,11 @@ class FantasyHandler:
         if not account:
             return f"You don't currently have an account! Use {prefix}new to make an account"
 
+        # Make sure there's at least one transaction left
+        transfers_left = account['transfers_left']
+        if transfers_left < 1:
+            return f"You don't have any transfers left for this week! They will reset after Thursday's games are processed on Friday morning."
+
         # Make sure player is actually on the team
         player_info = self.session.players.find_one(
             {'$text': {'$search': player}})
@@ -162,15 +167,15 @@ class FantasyHandler:
             {'_id': account['_id'], 'player_history.Player': player_info['_id']}, updates)
 
         # Change salary
-        new_salary = self.SALARY_CAP - player_info['fantasy']['fantasy_value']
+        new_salary = account['salary'] - player_info['fantasy']['fantasy_value']
         self.session.fantasy.find_one_and_update(
             {'_id': account['_id']}, {'$set': {'salary': new_salary}})
-        
-        # Remove one transaction
-        self.session.fantasy.find_one_and_update(
-            {'_id': account['_id']}, {'$inc': {'transactions_left': -1}})
 
-        return f'Success! {player} has been dropped from your team. You have {new_salary} left before you reach the salary cap.'
+        # Remove one transaction TODO: ENABLE WHEN SEASON STARTS
+        # self.session.fantasy.find_one_and_update(
+        #     {'_id': account['_id']}, {'$set': {'transfers_left': transfers_left - 1}})
+
+        return f'Success! {player} has been dropped from your team. You have {self.SALARY_CAP - new_salary} left before you reach the salary cap.'
 
     def show_team(self, discord_id: str) -> dict:
         """Gets a person's fantasy account for use by the discord bot. This is a useless function.
@@ -194,16 +199,17 @@ class FantasyHandler:
         Returns:
             dict: player info
         """
-        doc = self.session.players.find_one({'$text': {'$search': f"\"{player}\""}})
+        doc = self.session.players.find_one(
+            {'$text': {'$search': f"\"{player}\""}})
         if not doc:
-            raise Exception #TODO: make custom error class for this
+            raise Exception  # TODO: make custom error class for this
 
         if pg:
             try:
                 doc['fantasy']['fantasy_points'] = round(
                     doc['fantasy']['fantasy_points'] / doc['stats']['general']['Series Played'], 1)
             except:
-                pass # Avoid dividing by zero
+                pass  # Avoid dividing by zero
 
         return doc
 
@@ -252,7 +258,8 @@ class FantasyHandler:
                 players.append(cursor.next())
         else:
             for i in range(5):
-                players.append(cursor.skip(round(random.random()*count)).next())
+                players.append(cursor.skip(
+                    round(random.random()*count)).next())
                 cursor.rewind()
 
         return players
@@ -286,9 +293,10 @@ class FantasyHandler:
 
             if pergame:
                 try:
-                    stat = round(doc[sortby] / player['stats']['Games Played'], 1)
+                    stat = round(doc[sortby] / player['stats']
+                                 ['Games Played'], 1)
                 except:
-                    stat = doc[sortby] # Avoid dividing by 0
+                    stat = doc[sortby]  # Avoid dividing by 0
             else:
                 stat = doc[sortby]
 
