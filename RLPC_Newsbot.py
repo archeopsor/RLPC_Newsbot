@@ -87,7 +87,6 @@ class Newsbot(commands.Bot):
             await error_channel.send("**" + str(type(error)) + " in DM with " + channel.recipient.name + "**")
         await error_channel.send(f"*Command: {command.name}*")
         await error_channel.send(error)
-        await error_channel.send(error.args)
 
     async def on_ready(self):
         print('Logged in as')

@@ -242,7 +242,7 @@ class FantasyHandler:
 
         filter = {
             "fantasy.fantasy_value": {'$gte': minsalary, '$lte': maxsalary},
-            "$nin": {"info.team": ["Not Playing", "Departed"]}
+            "$info.team": {"$nin": ["Not Playing", "Departed"]}
         }
 
         if league != "all":
@@ -250,9 +250,9 @@ class FantasyHandler:
         if team != "all" and team != "signed":
             filter['info.team'] = teamIds[team.title()]
         elif team == "signed":
-            filter['$nin']['info.team'].append("Free Agent")
-            filter['$nin']['info.team'].append("Waitlist") # Shouldn't be in database, but just in case
-            filter['$nin']['info.team'].append("Draftee") # Shouldn't be in database, but just in case
+            filter['info.team']['$nin'].append("Free Agent")
+            filter['info.team']['$nin'].append("Waitlist") # Shouldn't be in database, but just in case
+            filter['info.team']['$nin'].append("Draftee") # Shouldn't be in database, but just in case
         if name != "none":
             filter['username'] = name
 
