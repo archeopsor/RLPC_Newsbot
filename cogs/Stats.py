@@ -64,7 +64,7 @@ class Stats(commands.Cog):  # pragma: no cover
                 rankings = self.stats.power_rankings(league)
             except PRSheetError as error:
                 await ctx.send("There was an error getting power rankings data. This has been reported, and will hopefully be fixed soon.")
-                return await self.bot.log_error(error, ctx.channel, ctx.command)
+                return await self.bot.log_error(error, ctx.channel, ctx.command, ctx.kwargs)
 
             if rankings == None:
                 return await ctx.send(f"It doesn't look like there are any power rankings available.")
@@ -210,7 +210,7 @@ class Stats(commands.Cog):  # pragma: no cover
                 return await ctx.send(f'Could not understand stat {error.stat.title()}. Try using "$help stats" for a list of available stats, or include "db" in your command to use advanced stats rather than sheet stats.')
             except (FindPlayersError, StatSheetError) as error:
                 await ctx.send(f"There was an error getting player data. This has been reported, and will hopefully be fixed soon.")
-                return await self.bot.log_error(error, ctx.channel, ctx.command)
+                return await self.bot.log_error(error, ctx.channel, ctx.command, ctx.kwargs)
 
             embed = discord.Embed(title=f'{stat} {"Per Game " if pergame else ""}Leaderboard',
                                   description=f"League: {league}, Source: {'Sheet' if useSheet else 'Fantasy Database'}")
