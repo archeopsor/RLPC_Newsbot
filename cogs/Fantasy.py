@@ -122,9 +122,11 @@ class Fantasy(commands.Cog):
                 author = ctx.author.name
 
             author_id = self.session.fantasy.find_one(
-                {'username': author})['discord_id']
+                {'username': author})
             if author_id == None:
                 return await ctx.send(f"Couldn't find a fantasy account for {author}")
+            else:
+                author_id = author_id['discord_id']
 
             try:
                 answer = self.fantasy.show_team(author_id)
@@ -196,6 +198,10 @@ class Fantasy(commands.Cog):
                 name="MMR", value=answer['info']['mmr'], inline=True)
             if answer['info']['team'] == None:
                 player_card.add_field(name="Team", value="None")
+            elif answer['info']['team'] == "Not Playing":
+                player_card.add_field(name="Team", value="Not Playing")
+            elif answer['info']['team'] == "Departed":
+                player_card.add_field(name="Team", value="Departed")
             else:
                 team = self.session.teams.find_one(
                     {'_id': answer['info']['team']})['team']

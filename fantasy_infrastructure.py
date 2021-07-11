@@ -50,7 +50,7 @@ class FantasyHandler:
 
         # Ensure that it's a valid time to make transfers TODO: ENABLE WHEN SEASON STARTS
         # if datetime.now(tz=pytz.timezone("US/Eastern")).weekday() in [1, 3]:
-        #     if datetime.now(tz=pytz.timezone("US/Eastern")).time().hour > 16:
+        #     if datetime.now(tz=pytz.timezone("US/Eastern")).time().hour > 18:
         #         raise TimeError()
         # elif datetime.now(tz=pytz.timezone("US/Eastern")).weekday() in [2, 4]:
         #     if datetime.now(tz=pytz.timezone("US/Eastern")).time().hour < 10:
