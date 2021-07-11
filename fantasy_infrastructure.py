@@ -211,7 +211,7 @@ class FantasyHandler:
         doc = self.session.players.find_one(
             {'$text': {'$search': f"\"{player}\""}})
         if not doc:
-            raise Exception  # TODO: make custom error class for this
+            raise PlayerNotFoundError(player)
 
         if pg:
             try:

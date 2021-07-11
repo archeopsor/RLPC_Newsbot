@@ -183,7 +183,7 @@ class Fantasy(commands.Cog):
 
             try:
                 answer = self.fantasy.info(player, pg=pg)
-            except Exception: # TODO: replace with custom error
+            except PlayerNotFoundError: 
                 return await ctx.send(f"Couldn't find a player named {player}.")
 
             player_card = discord.Embed(
