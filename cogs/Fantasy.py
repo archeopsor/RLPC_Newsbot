@@ -1,4 +1,3 @@
-from errors.stats_errors import FindMeError
 from discord.ext import commands
 import discord
 from discord.ext.commands.context import Context
@@ -11,9 +10,8 @@ from tools.sheet import Sheet
 from tools.mongo import Session
 
 from settings import prefix, sheet_p4
-
-bot = commands.Bot(command_prefix=prefix)
-
+from errors.fantasy_errors import *
+from errors.stats_errors import FindMeError
 
 class Fantasy(commands.Cog):
 
@@ -57,7 +55,23 @@ class Fantasy(commands.Cog):
     @commands.command(aliases=("pick", "pickplayer", "addplayer", "add_player", "buy"))
     async def pick_player(self, ctx: Context, *, player: str):
         async with ctx.typing():
-            answer = self.fantasy.pick_player(ctx.author.id, player)
+            try:
+                answer = self.fantasy.pick_player(ctx.author.id, player)
+            except TimeError:
+                return await ctx.send("You're not allowed to make transfers right now, probably because there are games currently happening or the previous games have not yet been entered into the database. Please contact arco if you think this is an error.")
+            except AccountNotFoundError:
+                return await ctx.send("You don't currently have an account! Use {prefix}new to make an account")
+            except PlayerNotFoundError:
+                return await ctx.send("That player couldn't be found in the database. Make sure you spelled their name correctly")
+            except TeamFullError:
+                return await ctx.send("You already have 5 players on your team. Please drop someone before picking your next player")
+            except IllegalPlayerError:
+                return await ctx.send("This player is not available to be picked.")
+            except SalaryError as error:
+                return await ctx.send(f"This player would cause you to exceed the salary cap of {error.salary_cap} by {error.excess}. Please choose a different player, or drop someone on your team.")
+            except AlreadyPickedError:
+                return await ctx.send("You already have this player on your team!")
+            
         await ctx.send(answer)
 
     @pick_player.error
@@ -72,8 +86,15 @@ class Fantasy(commands.Cog):
         async with ctx.typing():
             try:
                 answer = self.fantasy.drop_player(ctx.author.id, player)
-            except:
-                return "There was an error dropping " + player + ". Contact arco if you think this is a bug."
+            except AccountNotFoundError:
+                return await ctx.send("You don't currently have an account! Use {prefix}new to make an account")
+            except NoTransactionError:
+                return await ctx.send("You don't have any transfers left for this week! They will reset after Thursday's games are processed on Friday morning.")
+            except PlayerNotFoundError:
+                return await ctx.send("That player couldn't be found in the database. Make sure you spelled their name correctly")
+            except IllegalPlayerError:
+                return await ctx.send(f"{player} isn't on your team!")
+
         await ctx.send(answer)
 
     @drop_player.error
@@ -97,16 +118,19 @@ class Fantasy(commands.Cog):
     @commands.command(aliases=("show", "team", "showteam",))
     async def show_team(self, ctx: Context, *, author: str = "none"):
         async with ctx.typing():
-            if author == "none":
+            if author == "none" or author == "me":
                 author = ctx.author.name
 
-            try:
-                author_id = self.session.fantasy.find_one(
-                    {'username': author})['discord_id']
-            except:
+            author_id = self.session.fantasy.find_one(
+                {'username': author})['discord_id']
+            if author_id == None:
                 return await ctx.send(f"Couldn't find a fantasy account for {author}")
 
-            answer = self.fantasy.show_team(author_id)
+            try:
+                answer = self.fantasy.show_team(author_id)
+            except AccountNotFoundError:
+                return await ctx.send(f"Couldn't find a fantasy account for {author}")
+
             team = discord.Embed(title=f"{author}'s team", color=0x008080)
 
             if answer['account_league'] != '':
@@ -200,7 +224,6 @@ class Fantasy(commands.Cog):
             num = 10
             pergame = False
             if message != None:
-
                 for i in ['Major', 'AAA', 'AA', 'A', 'Indy', 'Independent', 'Mav', 'Maverick', 'Ren', 'Renegade', 'Pal', 'Paladin']:
                     if i.casefold() in message.casefold().split():
                         league = i
@@ -216,11 +239,8 @@ class Fantasy(commands.Cog):
                     league = "Paladin"
 
                 for word in message.split():
-                    try:
-                        int(word)
+                    if word.isdigit():
                         num = int(word)
-                    except:
-                        pass
 
                 if "pergame" in message or "pg" in message:
                     pergame = True
@@ -338,6 +358,3 @@ Welcome to RLPC Fantasy! This is a just-for-fun fantasy league in which people c
 
         return
 
-
-def setup(bot):
-    bot.add_cog(Fantasy(bot))

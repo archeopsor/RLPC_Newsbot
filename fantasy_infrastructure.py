@@ -8,6 +8,7 @@ import random
 from tools.mongo import Session, teamIds
 
 from settings import prefix, leagues
+from errors.fantasy_errors import *
 
 
 class FantasyHandler:
@@ -50,40 +51,40 @@ class FantasyHandler:
         # Ensure that it's a valid time to make transfers TODO: ENABLE WHEN SEASON STARTS
         # if datetime.now(tz=pytz.timezone("US/Eastern")).weekday() in [1, 3]:
         #     if datetime.now(tz=pytz.timezone("US/Eastern")).time().hour > 16:
-        #         return "You're not allowed to make transfers right now, probably because there are games currently happening or the previous games have not yet been entered into the database. Please contact arco if you think this is an error."
+        #         raise TimeError()
         # elif datetime.now(tz=pytz.timezone("US/Eastern")).weekday() in [2, 4]:
         #     if datetime.now(tz=pytz.timezone("US/Eastern")).time().hour < 10:
-        #         return "You're not allowed to make transfers right now, probably because there are games currently happening or the previous games have not yet been entered into the database. Please contact arco if you think this is an error."
+        #         raise TimeError()
 
         fantasy = self.session.fantasy
         account: dict = fantasy.find_one({"discord_id": discord_id})
         if not account:
-            return f"You don't currently have an account! Use {prefix}new to make an account"
+            raise AccountNotFoundError(discord_id)
 
         # Try to get player (case insensitive), and return if player doesn't exist
         player_info = self.session.players.find_one(
             {'$text': {'$search': f"\"{player}\""}})
         if not player_info:
-            return "That player couldn't be found in the database. Make sure you spelled their name correctly"
+            raise PlayerNotFoundError(player)
 
         # Make sure there are less than 5 players
         if len(account['players']) >= 5:
-            return "You already have 5 players on your team. Please drop someone before picking your next player"
+            raise TeamFullError()
 
         # Make sure the player is allowed to be picked
         if not player_info['fantasy']['allowed']:
-            return "This player is not available to be picked."
+            raise IllegalPlayerError(player)
 
         # Make sure this doesn't exceed salary cap
         new_salary = account['salary'] + \
             player_info['fantasy']['fantasy_value']
         if new_salary > self.SALARY_CAP:
-            return f"This player would cause you to exceed the salary cap of {self.SALARY_CAP}. Please choose a different player, or drop someone on your team."
+            raise SalaryError(new_salary - self.SALARY_CAP, self.SALARY_CAP, player)
 
         # Make sure this player isn't already on the fantasy team
         _id = player_info["_id"]
         if _id in account["players"]:
-            return "You already have this player on your team!"
+            raise AlreadyPickedError(player)
 
         # Add player to list
         self.session.fantasy.update_one({'_id': account['_id']}, {
@@ -99,21 +100,22 @@ class FantasyHandler:
         self.session.fantasy.update_one({"_id": account['_id']}, {
                                         '$push': {'player_history': history}})
 
+        # Change salary
+        self.session.fantasy.update_one({'_id': account['_id']}, {
+                                        '$set': {"salary": new_salary}})
+
         # Add transaction to transaction_log
         transaction = {
             "Timestamp": datetime.now(tz=pytz.timezone("US/Eastern")),
             "Type": "in",
             "Player": {
                 "id": player_info['_id'],
+                "username": player_info['username'],
                 "salary": player_info['fantasy']['fantasy_value'],
             },
         }
         self.session.fantasy.update_one({"_id": account['_id']}, {
                                         '$push': {'transfer_log': transaction}})
-
-        # Change salary
-        self.session.fantasy.update_one({'_id': account['_id']}, {
-                                        '$set': {"salary": new_salary}})
 
         return f'Success! {player} has been added to your team. You have {self.SALARY_CAP - new_salary} left before you reach the salary cap.'
 
@@ -124,18 +126,21 @@ class FantasyHandler:
         # Make sure account exists
         account: dict = fantasy.find_one({"discord_id": discord_id})
         if not account:
-            return f"You don't currently have an account! Use {prefix}new to make an account"
+            raise AccountNotFoundError(discord_id)
 
         # Make sure there's at least one transaction left
         transfers_left = account['transfers_left']
         if transfers_left < 1:
-            return f"You don't have any transfers left for this week! They will reset after Thursday's games are processed on Friday morning."
+            raise NoTransactionError()
 
         # Make sure player is actually on the team
         player_info = self.session.players.find_one(
             {'$text': {'$search': player}})
-        if player_info['_id'] not in account['players']:
-            return f"{player} isn't on your team!"
+
+        if player_info == None:
+            raise PlayerNotFoundError(player)
+        elif player_info['_id'] not in account['players']:
+            raise IllegalPlayerError(player)
         else:
             points = [x for x in account['player_history']
                       if x['Player'] == player_info['_id']][-1]['Points']
@@ -150,6 +155,7 @@ class FantasyHandler:
             "Type": "out",
             "Player": {
                 "id": player_info['_id'],
+                "username": player_info['username'],
                 "salary": player_info['fantasy']['fantasy_value'],
                 "points": points
             },
@@ -187,7 +193,10 @@ class FantasyHandler:
             dict: document containing info for player's fantasy account
         """
         doc = self.session.fantasy.find_one({'discord_id': discord_id})
-        return doc
+        if doc == None:
+            raise AccountNotFoundError(discord_id)
+        else:
+            return doc
 
     def info(self, player: str, pg: bool = False) -> dict:
         """Gets info about an RLPC player. This is also a useless function except for pg.
