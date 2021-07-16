@@ -65,6 +65,8 @@ class Stats(commands.Cog):  # pragma: no cover
             except PRSheetError as error:
                 await ctx.send("There was an error getting power rankings data. This has been reported, and will hopefully be fixed soon.")
                 return await self.bot.log_error(error, ctx.channel, ctx.command, ctx.kwargs)
+            except NoPRError:
+                return await ctx.send("There are no power rankings available.")
 
             if rankings == None:
                 return await ctx.send(f"It doesn't look like there are any power rankings available.")

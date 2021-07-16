@@ -3,6 +3,11 @@ class PRSheetError(Exception):
         self.league = league
         super().__init__(*args)
 
+class NoPRError(Exception):
+    def __init__(self, league: str, *args: object) -> None:
+        self.league = league
+        super().__init__(*args)
+
 class FindMeError(Exception):
     def __init__(self, discord_id: str, *args: object) -> None:
         self.discord_id = discord_id

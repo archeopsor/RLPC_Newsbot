@@ -149,7 +149,10 @@ class StatsHandler:
                 break
             else:
                 continue
-        data.iloc[:, column] = data.iloc[:, column].apply(lambda x: int(x))
+        try:
+            data.iloc[:, column] = data.iloc[:, column].apply(lambda x: int(x))
+        except ValueError:
+            raise NoPRError(league)
         rankings = data.iloc[:, column]
         rankings = rankings.sort_values(ascending=False)
         return rankings
@@ -322,3 +325,7 @@ class StatsHandler:
                                               1].apply(lambda x: round(x, 2))
 
         return stats_series
+
+
+if __name__ == "__main__":
+    StatsHandler().power_rankings("major")
