@@ -5,15 +5,17 @@ import pandas as pd
 import logging
 
 from zipfile import ZipFile
-import carball
 
-import sys
-sys.path.insert(1, 'C:\\Users\\Simi\\Desktop\\Python Projects\\RLPC_Newsbot')
-
-from tools.database import engine, select
+from tools.mongo import Session
 from tools.sheet import df_to_sheet
-
 from rlpc.players import download_ids, identify, find_team, find_league, check_players, tracker_identify
+from replays import Replay, Retreiver
+
+
+class Replay_Analyzer:
+    def __init__(self) -> None:
+        pass
+
 
 global failed
 failed = []

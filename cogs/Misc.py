@@ -73,6 +73,8 @@ class Misc(commands.Cog):
     async def upset_alerts_error(self, ctx: Context, error: commands.CommandError):
         if isinstance(error, commands.CheckFailure):
             return await ctx.send("You don't have admin perms for this server.")
+        else:
+            await self.bot.log_error(error.original, ctx.channel, ctx.command, ctx.kwargs)
 
     @commands.command(aliases=("schedules", "scheduling",))
     async def schedule(self, ctx: Context, *, team: str):
@@ -109,6 +111,8 @@ class Misc(commands.Cog):
     async def schedule_error(self, ctx: Context, error):
         if isinstance(error, MissingRequiredArgument):
             return await ctx.send("Please specify a team.")
+        else:
+            await self.bot.log_error(error.original, ctx.channel, ctx.command, ctx.kwargs)
 
     @commands.command(aliases=("rosters",))
     async def roster(self, ctx: Context, *, team: str):

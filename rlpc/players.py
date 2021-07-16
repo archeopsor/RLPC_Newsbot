@@ -77,8 +77,14 @@ class Players:
         doc['info']['discord_id'] = discord_id
         doc['fantasy']['fantasy_value'] = fantasy_value
 
-        self.session.refresh()
-        return self.session.client['rlpc-news'].players.insert_one(doc)
+        # Add player to players collection
+        self.session.players.insert_one(doc)
+
+        # Add player to team in teams collection
+        self.session.teams.find_one_and_update(
+            {"_id": teamIds[team.title()]},
+            {"$push": {"players": doc['_id']}}            
+        )
 
     def download_ids(self):
         """
@@ -222,6 +228,11 @@ class Players:
             if info['team'] != teamIds[sheetdata.loc[player, 'Team']]:
                 players.update_one({'username': player}, {
                                    "$set": {'info.team': teamIds[sheetdata.loc[player, 'Team']]}})
+                # Add player to team in teams collection
+                self.session.teams.find_one_and_update(
+                    {"_id": teamIds[sheetdata.loc[player, 'Team']]},
+                    {"$push": {"players": info['_id']}}
+                )
                 logger.info(f"{player} updated")
             if info['league'] != sheetdata.loc[player, 'League']:
                 players.update_one({'username': player}, {
@@ -232,7 +243,7 @@ class Players:
                                    "$set": {'info.discord_id': sheetdata.loc[player, 'Discord ID']}})
                 logger.info(f"{player} updated")
 
-        self.remove_not_playing()
+        #self.remove_not_playing()
         logger.info("Done checking players.")
 
     def remove_not_playing(self):
@@ -267,6 +278,11 @@ class Players:
 
         #self.session.players.delete_many({'info.team': {"$in": ['Not Playing', 'Deleted']}, 'stats.general.Games Played': 0})
 
+    def check_teams(self): # TODO: Finish this and handle removing players from teams
+        players = self.session.players.find()
+        for player in players:
+            if player['info']['team'] == "Not Playing":
+                pass
 
 
 

@@ -88,6 +88,8 @@ class Stats(commands.Cog):  # pragma: no cover
     async def prerror(self, ctx: Context, error):
         if isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("You haven't chosen a league.")
+        else:
+            await self.bot.log_error(error.original, ctx.channel, ctx.command, ctx.kwargs)
 
     @commands.command()  # TODO: fix this, add error handling, etc
     async def mmr(self, ctx: Context, *, player: str):
@@ -160,6 +162,8 @@ class Stats(commands.Cog):  # pragma: no cover
     async def stats_error(self, ctx: Context, error):
         if isinstance(error, commands.TooManyArguments):
             return await ctx.send("Too many arguments, there should only be two. Put names or stats in quotes (\"test name\") if it contains a space.")
+        else:
+            await self.bot.log_error(error.original, ctx.channel, ctx.command, ctx.kwargs)
 
     @commands.command(aliases=("topstats", "statslb", "stats_lb",))
     async def top(self, ctx: Context, *, msg):

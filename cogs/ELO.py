@@ -57,6 +57,8 @@ class ELO(commands.Cog): # pragma: no cover
             if error.param.name in ['team1', 'team2']:
                 await ctx.send('Please include two teams')
             await ctx.send(f'The format for this command is {prefix}predict [team 1] [team 2] [# of games *(optional)*]')
+        else:
+            await self.bot.log_error(error.original, ctx.channel, ctx.command, ctx.kwargs)
 
     @commands.command(aliases=("rank",))
     async def rankteams(self, ctx: Context, league):
@@ -75,6 +77,8 @@ class ELO(commands.Cog): # pragma: no cover
     async def rankteams_error(self, ctx: Context, error):
         if isinstance(error, commands.MissingRequiredArgument):
             await ctx.send('Please choose a league')
+        else:
+            await self.bot.log_error(error.original, ctx.channel, ctx.command, ctx.kwargs)
 
     @commands.command(aliases=("fc", "forecasts", "probs", "prob", "probability", "probabilities",))
     async def forecast(self, ctx: Context, *, msg):
@@ -227,6 +231,8 @@ class ELO(commands.Cog): # pragma: no cover
     async def forecast_error(self, ctx, error):
         if isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("You haven't chosen a league. You can also see all of the data here: https://docs.google.com/spreadsheets/d/1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ/edit?usp=sharing")
+        else:
+            await self.bot.log_error(error.original, ctx.channel, ctx.command, ctx.kwargs)
 
     @commands.command(aliases=())
     async def poisson(self, ctx: Context, team1: str, team2: str, numGames: int = 5, img: bool = False):
@@ -283,7 +289,8 @@ class ELO(commands.Cog): # pragma: no cover
     async def poisson_error(self, ctx: Context, error):
         if isinstance(error, commands.BadArgument):
             await ctx.send(f"An error occurred. You may have provided an invalid number of games, or an extra argument other than true or false at the end.")
-
+        else:
+            await self.bot.log_error(error.original, ctx.channel, ctx.command, ctx.kwargs)
 
 def setup(bot):
     bot.add_cog(ELO(bot))
