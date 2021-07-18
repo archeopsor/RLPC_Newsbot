@@ -49,8 +49,8 @@ class Fantasy(commands.Cog):
     async def new_fantasy_player_error(self, ctx: Context, error):
         if isinstance(error, commands.MissingRequiredArgument):
             await ctx.send(f'Please include the league you play in. If you are not a player, use "{prefix}new none"')
-        else:
-            await self.bot.log_error(error, ctx.channel, ctx.command, ctx.kwargs)
+        # else:
+        #     await self.bot.log_error(error, ctx.channel, ctx.command, ctx.kwargs)
 
     @commands.command(aliases=("pick", "pickplayer", "addplayer", "add_player", "buy"))
     async def pick_player(self, ctx: Context, *, player: str):
@@ -78,8 +78,8 @@ class Fantasy(commands.Cog):
     async def pick_player_error(self, ctx: Context, error):
         if isinstance(error, commands.MissingRequiredArgument):
             await ctx.send('Please include a player')
-        else:
-            await self.bot.log_error(error, ctx.channel, ctx.command, ctx.kwargs)
+        # else:
+        #     await self.bot.log_error(error, ctx.channel, ctx.command, ctx.kwargs)
 
     @commands.command(aliases=("drop", "dropplayer", "removeplayer", "remove_player", "sell"))
     async def drop_player(self, ctx: Context, player: str):
@@ -101,8 +101,8 @@ class Fantasy(commands.Cog):
     async def drop_player_error(self, ctx: Context, error):
         if isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("Please include the player you would like dropped")
-        else:
-            await self.bot.log_error(error, ctx.channel, ctx.command, ctx.kwargs)
+        # else:
+        #     await self.bot.log_error(error, ctx.channel, ctx.command, ctx.kwargs)
 
     @commands.command(aliases=("leaderboard", "lb", "standings",))
     async def generate_leaderboard(self, ctx: Context):
@@ -220,8 +220,8 @@ class Fantasy(commands.Cog):
     async def player_info_error(self, ctx: Context, error):
         if isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("Please include a player")
-        else:
-            await self.bot.log_error(error, ctx.channel, ctx.command, ctx.kwargs)
+        # else:
+        #     await self.bot.log_error(error, ctx.channel, ctx.command, ctx.kwargs)
 
     @commands.command(aliases=("playerlb", "player_lb", "playerslb",))
     async def players(self, ctx: Context, *, message=None):

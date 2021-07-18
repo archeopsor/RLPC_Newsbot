@@ -57,14 +57,17 @@ class ELO(commands.Cog): # pragma: no cover
             if error.param.name in ['team1', 'team2']:
                 await ctx.send('Please include two teams')
             await ctx.send(f'The format for this command is {prefix}predict [team 1] [team 2] [# of games *(optional)*]')
-        else:
-            await self.bot.log_error(error.original, ctx.channel, ctx.command, ctx.kwargs)
+        # else:
+        #     await self.bot.log_error(error.original, ctx.channel, ctx.command, ctx.kwargs)
 
     @commands.command(aliases=("rank",))
     async def rankteams(self, ctx: Context, league):
         async with ctx.typing():
+            try:
+                league = leagues[league]
+            except KeyError:
+                return await ctx.send("Couldn't understand league: "+league)
             answer = self.elo.rank_teams(league)
-            league = leagues[league]
             standings = discord.Embed(title=f"{league} Rankings", color=0x000080,
                                       description=f"Computer-generated rankings for the {league} league, based on an internal Elo system. For the official, human-made rankings, use $pr")
             value_response = ""
@@ -77,8 +80,6 @@ class ELO(commands.Cog): # pragma: no cover
     async def rankteams_error(self, ctx: Context, error):
         if isinstance(error, commands.MissingRequiredArgument):
             await ctx.send('Please choose a league')
-        else:
-            return await self.bot.log_error(error.original, ctx.channel, ctx.command, ctx.kwargs)
 
     @commands.command(aliases=("fc", "forecasts", "probs", "prob", "probability", "probabilities",))
     async def forecast(self, ctx: Context, *, msg):
@@ -90,15 +91,7 @@ class ELO(commands.Cog): # pragma: no cover
 
             for word in msg:
                 if word.casefold() in ["major", "aaa", "aa", "a", "independent", "indy", "mav", 'maverick', 'renegade', 'ren', 'paladin', 'pal']:
-                    league = word.casefold()
-                    if league == "indy":
-                        league = "independent"
-                    elif league == 'mav':
-                        league = 'maverick'
-                    elif league == 'ren':
-                        league = 'renegade'
-                    elif league == 'pal':
-                        league = 'paladin'
+                    league = leagues[word.lower()].lower()
                 elif word.casefold() in ['bulls', 'lions', 'panthers', 'sharks', 'cobras', 'ducks', 'eagles', 'hawks', 'ascension', 'flames', 'storm', 'whitecaps', 'kings', 'lumberjacks', 'pirates', 'spartans', 'bulldogs', 'tigers', 'bobcats', 'dolphins', 'vipers', 'geese', 'osprey', 'owls', 'entropy', 'heat', 'thunder', 'tundra', 'knights', 'pioneers', 'raiders', 'trojans', 'mustangs', 'lynx', 'jaguars', 'barracuda', 'pythons', 'herons', 'falcons', 'vultures', 'pulsars', 'inferno', 'lightning', 'avalanche', 'dukes', 'voyagers', 'bandits', 'warriors', 'stallions', 'cougars', 'leopards', 'gulls', 'rattlers', 'pelicans', 'ravens', 'cardinals', 'genesis', 'embers', 'tempest', 'eskimos', 'jesters', 'miners', 'wranglers', 'titans', 'admirals', 'dragons', 'beavers', 'cyclones', 'grizzlies', 'centurions', 'yellow jackets', 'galaxy', 'sockeyes', 'wolves', 'wildcats', 'rhinos', 'scorpions', 'thrashers', 'toucans', 'wizards', 'captains', 'yetis', 'otters', 'tides', 'pandas', 'samurai', 'hornets', 'solar', 'piranhas', 'terriers', 'jackrabbits', 'zebras', 'camels', 'raptors', 'macaws', 'mages', 'pilots', 'werewolves', 'wolverines', 'hurricanes', 'koalas', 'vikings', 'fireflies', 'comets', 'stingrays', 'hounds', 'warthogs', 'gorillas', 'coyotes', 'harriers', 'puffins', 'witches', 'sailors', 'griffins', 'badgers', 'quakes', 'cubs', 'ninjas', 'dragonflies', 'cosmos', 'hammerheads', 'foxes', 'jackals', 'wildebeests', 'roadrunners', 'buzzards', 'penguins', 'sorcerers']:
                     team = word
                 elif word.casefold() in ["wins", "expected wins", "record", "playoffs", "playoff", "semifinals", "semifinal", "finals", "final", "finalist", "champions", "champion", "winners", "winner"]:
@@ -112,11 +105,12 @@ class ELO(commands.Cog): # pragma: no cover
                     elif part in ['winners', 'winner']:
                         part = 'champions'
 
+            datarange: str
+
             if league == "none" and team == "none":
-                await ctx.send("You haven't chosen a league. You can also see all of the data here: <https://docs.google.com/spreadsheets/d/1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ/edit?usp=sharing>")
-                return
+                return await ctx.send("You haven't chosen a league. You can also see all of the data here: <https://docs.google.com/spreadsheets/d/1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ/edit?usp=sharing>")
             elif league == "none" and team != "none":
-                waitingMsg = await ctx.send(f'Finding league for team "{team}"...', )
+                waitingMsg: discord.Message = await ctx.send(f'Finding league for team "{team}"...', )
                 league = self.identifier.find_league(team.title()).lower()
                 waitingMsg.delete(delay=3)
             elif league == "major":
@@ -231,8 +225,8 @@ class ELO(commands.Cog): # pragma: no cover
     async def forecast_error(self, ctx, error):
         if isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("You haven't chosen a league. You can also see all of the data here: https://docs.google.com/spreadsheets/d/1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ/edit?usp=sharing")
-        else:
-            await self.bot.log_error(error.original, ctx.channel, ctx.command, ctx.kwargs)
+        # else:
+        #     await self.bot.log_error(error.original, ctx.channel, ctx.command, ctx.kwargs)
 
     @commands.command(aliases=())
     async def poisson(self, ctx: Context, team1: str, team2: str, numGames: int = 5, img: bool = False):
@@ -289,8 +283,8 @@ class ELO(commands.Cog): # pragma: no cover
     async def poisson_error(self, ctx: Context, error):
         if isinstance(error, commands.BadArgument):
             await ctx.send(f"An error occurred. You may have provided an invalid number of games, or an extra argument other than true or false at the end.")
-        else:
-            await self.bot.log_error(error.original, ctx.channel, ctx.command, ctx.kwargs)
+        # else:
+        #     await self.bot.log_error(error.original, ctx.channel, ctx.command, ctx.kwargs)
 
 def setup(bot):
     bot.add_cog(ELO(bot))
