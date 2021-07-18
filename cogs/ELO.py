@@ -68,8 +68,8 @@ class ELO(commands.Cog): # pragma: no cover
             standings = discord.Embed(title=f"{league} Rankings", color=0x000080,
                                       description=f"Computer-generated rankings for the {league} league, based on an internal Elo system. For the official, human-made rankings, use $pr")
             value_response = ""
-            for row in answer.index:
-                value_response += f"{row+1}: {answer.loc[row, 'Team']} ({answer.loc[row, 'Elo']}) [{answer.loc[row, 'Elo'] - answer.loc[row, 'Previous']}]\n"
+            for i, team in enumerate(answer.index):
+                value_response += f"{i+1}: {team} ({answer.loc[team, 'Elo']}) [{answer.loc[team, 'Elo'] - answer.loc[team, 'Previous']}]\n"
             standings.add_field(name="Rankings", value=value_response)
         await ctx.send(embed=standings)
 
@@ -78,7 +78,7 @@ class ELO(commands.Cog): # pragma: no cover
         if isinstance(error, commands.MissingRequiredArgument):
             await ctx.send('Please choose a league')
         else:
-            await self.bot.log_error(error.original, ctx.channel, ctx.command, ctx.kwargs)
+            return await self.bot.log_error(error.original, ctx.channel, ctx.command, ctx.kwargs)
 
     @commands.command(aliases=("fc", "forecasts", "probs", "prob", "probability", "probabilities",))
     async def forecast(self, ctx: Context, *, msg):

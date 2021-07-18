@@ -25,7 +25,7 @@ class EloHandler:
 
     def set_elo(self, team: str, elo: int) -> None:
         doc = self.session.teams.find_one({'team': team.title()})
-        self.session.teams.find_one_and_update({"_id": doc['_id']}, {'elo.elo': elo, 'elo.previous': doc['elo']['elo']})
+        self.session.teams.find_one_and_update({"_id": doc['_id']}, {'$set': {'elo.elo': elo, 'elo.previous': doc['elo']['elo']}})
 
     def add_game_manual(self, league: str, team1: str, team2: str, winner: str, score: str) -> None:
         if 'ff' in score:
@@ -74,8 +74,8 @@ class EloHandler:
             Sa = Ea
             Sb = Eb
 
-        team1_rating = Ra + k*(Sa-Ea)
-        team2_rating = Rb + k*(Sb-Eb)
+        team1_rating = round(Ra + k*(Sa-Ea))
+        team2_rating = round(Rb + k*(Sb-Eb))
 
         self.set_elo(team1, team1_rating)
         self.set_elo(team2, team2_rating)

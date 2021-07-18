@@ -68,9 +68,6 @@ class Stats(commands.Cog):  # pragma: no cover
             except NoPRError:
                 return await ctx.send("There are no power rankings available.")
 
-            if rankings == None:
-                return await ctx.send(f"It doesn't look like there are any power rankings available.")
-
             embed = discord.Embed(
                 title=f'{league} Power Rankings', description=f"Official human-generated Power Rankings for {league}. For computer rankings, use $rank", color=0x000080)
 
@@ -84,14 +81,14 @@ class Stats(commands.Cog):  # pragma: no cover
 
             embed.add_field(name="Rankings", value=value_response)
 
-            await ctx.send(embed=embed)
+        await ctx.send(embed=embed)
 
     @pr.error
     async def prerror(self, ctx: Context, error):
         if isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("You haven't chosen a league.")
         else:
-            await self.bot.log_error(error.original, ctx.channel, ctx.command, ctx.kwargs)
+            return await self.bot.log_error(error.original, ctx.channel, ctx.command, ctx.kwargs)
 
     @commands.command()  # TODO: fix this, add error handling, etc
     async def mmr(self, ctx: Context, *, player: str):

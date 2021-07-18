@@ -147,6 +147,10 @@ class Sheet:
             for col_id, col_name in enumerate(header):
                 column_data = []
                 for row in values:
+                    if col_id >= len(row):
+                        datapoint = ""
+                        column_data.append(datapoint)
+                        continue
                     try:
                         datapoint = row[col_id]
                     except:

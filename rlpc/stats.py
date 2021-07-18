@@ -140,7 +140,7 @@ class StatsHandler:
         except GetSheetError or SheetToDfError:
             raise PRSheetError(league)
         if data.empty:
-            return None
+            raise NoPRError(league)
 
         column = 1
         for i in range(12):
