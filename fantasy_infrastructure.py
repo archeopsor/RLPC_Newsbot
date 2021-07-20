@@ -48,13 +48,13 @@ class FantasyHandler:
             str: Success or error message to send in discord.
         """
 
-        # Ensure that it's a valid time to make transfers TODO: ENABLE WHEN SEASON STARTS
-        # if datetime.now(tz=pytz.timezone("US/Eastern")).weekday() in [1, 3]:
-        #     if datetime.now(tz=pytz.timezone("US/Eastern")).time().hour > 18:
-        #         raise TimeError()
-        # elif datetime.now(tz=pytz.timezone("US/Eastern")).weekday() in [2, 4]:
-        #     if datetime.now(tz=pytz.timezone("US/Eastern")).time().hour < 10:
-        #         raise TimeError()
+        # Ensure that it's a valid time to make transfers
+        if datetime.now(tz=pytz.timezone("US/Eastern")).weekday() in [1, 3]:
+            if datetime.now(tz=pytz.timezone("US/Eastern")).time().hour > 18:
+                raise TimeError()
+        elif datetime.now(tz=pytz.timezone("US/Eastern")).weekday() in [2, 4]:
+            if datetime.now(tz=pytz.timezone("US/Eastern")).time().hour < 10:
+                raise TimeError()
 
         fantasy = self.session.fantasy
         account: dict = fantasy.find_one({"discord_id": discord_id})
@@ -177,9 +177,9 @@ class FantasyHandler:
         self.session.fantasy.find_one_and_update(
             {'_id': account['_id']}, {'$set': {'salary': new_salary}})
 
-        # Remove one transaction TODO: ENABLE WHEN SEASON STARTS
-        # self.session.fantasy.find_one_and_update(
-        #     {'_id': account['_id']}, {'$set': {'transfers_left': transfers_left - 1}})
+        # Remove one transaction
+        self.session.fantasy.find_one_and_update(
+            {'_id': account['_id']}, {'$set': {'transfers_left': transfers_left - 1}})
 
         return f'Success! {player} has been dropped from your team. You have {self.SALARY_CAP - new_salary} left before you reach the salary cap.'
 
