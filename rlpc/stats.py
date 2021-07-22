@@ -3,6 +3,7 @@ import pandas as pd
 
 from tools.sheet import Sheet
 from tools.mongo import Session, findCategory, teamIds, statsCategories
+from rlpc.players import Teams
 
 from settings import valid_stats, leagues, sheet_p4, sheet_indy, power_rankings_sheet, gdstats_sheet
 
@@ -11,7 +12,7 @@ from errors.sheets_errors import GetSheetError, SheetToDfError
 
 
 class StatsHandler:
-    def __init__(self, session: Session = None, p4sheet: Sheet = None, indysheet: Sheet = None, powerrankings: Sheet = None, gdsheet: Sheet = None):
+    def __init__(self, session: Session = None, p4sheet: Sheet = None, indysheet: Sheet = None, powerrankings: Sheet = None, gdsheet: Sheet = None, teams: Teams = None):
         if not session:
             self.session = Session()
         else:
@@ -32,6 +33,10 @@ class StatsHandler:
             self.gdsheet = Sheet(gdstats_sheet)
         else:
             self.gdsheet = gdsheet
+        if not teams:
+            self.teams = Teams(session=self.session)
+        else:
+            self.teams = teams
 
     def get_player_stats(self, player: str, stat: str = "all") -> pd.DataFrame:
         """
@@ -157,9 +162,8 @@ class StatsHandler:
         rankings = rankings.sort_values(ascending=False)
         return rankings
 
-    # TODO: Add option to reverse lb order for statlb
     # TODO: Add boost ratio, shot %, win %, etc as stats
-    def statlb(self, useSheet: bool = False, league: str = "all", stat: str = "Goals", limit: int = 10, pergame: bool = False) -> pd.Series:
+    def statlb(self, useSheet: bool = False, league: str = "all", stat: str = "Goals", limit: int = 10, pergame: bool = False, asc: bool = False) -> pd.Series:
         """Gets a series containing a leaderboard for a given stat
 
         Args:
@@ -246,8 +250,8 @@ class StatsHandler:
                     data[info['username']] = round((info['stats'][category][stat] / info["stats"]["general"]["Games Played"]), 2)
                 else:
                     data[info['username']] = round(info['stats'][category][stat], 2)
-
-            return data.sort_values(ascending=False).head(limit)
+            
+            return data.sort_values(ascending=asc).head(limit)
 
         else:
             # This (below) is redundant for now but sheet ids can be different just in case something changes in the future
@@ -284,7 +288,7 @@ class StatsHandler:
             else:
                 lb = round(lb/games_played, 2)
 
-        return lb.sort_values(ascending=False).head(limit)
+        return lb.sort_values(ascending=asc).head(limit)
 
     def get_me(self, discord_id: str) -> str:
         ids = self.p4sheet.to_df(
@@ -325,6 +329,10 @@ class StatsHandler:
                                               1].apply(lambda x: round(x, 2))
 
         return stats_series
+
+    def teamstats(self, team: str):
+        team = team.title()
+        roster = self.teams.get_roster(team)
 
 
 if __name__ == "__main__":

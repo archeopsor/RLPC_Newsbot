@@ -752,7 +752,7 @@ class RLPCAnalysis:
         for player in stats.index:
             self.session.players.update_one(
                 {'username': player},
-                {'$inc': {'fantasy.fantasy_points': int(stats.loc[player, 'Fantasy Points']}}
+                {'$inc': {'fantasy.fantasy_points': int(stats.loc[player, 'Fantasy Points'])}}
             )
 
     def create_post(self, stats: pd.DataFrame):

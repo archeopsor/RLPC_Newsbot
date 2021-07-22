@@ -26,7 +26,6 @@ from settings import prefix, power_rankings_sheet, sheet_p4, sheet_indy, forecas
 
 try:
     from passwords import BOT_TOKEN
-    #from passwords import TEST_BOT_TOKEN as BOT_TOKEN
 except:
     BOT_TOKEN = os.environ.get('BOT_TOKEN')
 
@@ -60,7 +59,7 @@ class Newsbot(commands.Bot):
             Links(self),
             Reddit(self),
             Stats(self, session=self.session, p4sheet=self.p4sheet, indysheet=self.indysheet,
-                  gdsheet=self.gdsheet, identifier=self.identifier, players=self.players, stats=self.stats),
+                  gdsheet=self.gdsheet, identifier=self.identifier, players=self.players, stats=self.stats, teams=self.teams),
             Misc(self, session=self.session, identifier=self.identifier, p4sheet=self.p4sheet, indysheet=self.indysheet, teams=self.teams)
         ]
 
@@ -83,7 +82,7 @@ class Newsbot(commands.Bot):
         await channel.send('There was an unexpected error using this command.')
         error_channel: discord.TextChannel = self.get_channel(862730357371305995)
         if isinstance(channel, discord.TextChannel):
-            await error_channel.send("**" + str(type(error)) + " in " + channel.name + "**")
+            await error_channel.send("**" + str(type(error)) + " in " + f"<#{channel.id}>" + "**")
         elif isinstance(channel, discord.DMChannel):
             await error_channel.send("**" + str(type(error)) + " in DM with " + channel.recipient.name + "**")
         await error_channel.send(f"*Command: {command.name}*")
@@ -190,5 +189,6 @@ class Newsbot(commands.Bot):
 
 
 if __name__ == "__main__":
+    from passwords import TEST_BOT_TOKEN as BOT_TOKEN
     bot = Newsbot(BOT_TOKEN)
     bot.run()

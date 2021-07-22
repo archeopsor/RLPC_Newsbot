@@ -11,7 +11,7 @@ import dataframe_image as dfi
 from tools.mongo import Session
 from rlpc import mmr
 from rlpc.stats import StatsHandler
-from rlpc.players import Players, Identifier
+from rlpc.players import Players, Identifier, Teams
 from tools.sheet import Sheet
 from settings import prefix, valid_stats, leagues, sheet_p4, sheet_indy, gdstats_sheet, divisions, leagues
 
@@ -20,7 +20,7 @@ from errors.stats_errors import *
 
 class Stats(commands.Cog):  # pragma: no cover
 
-    def __init__(self, bot: commands.Bot, session: Session = None, p4sheet: Sheet = None, indysheet: Sheet = None, gdsheet: Sheet = None, identifier: Identifier = None, players: Players = None, stats: StatsHandler = None):
+    def __init__(self, bot: commands.Bot, session: Session = None, p4sheet: Sheet = None, indysheet: Sheet = None, gdsheet: Sheet = None, identifier: Identifier = None, players: Players = None, stats: StatsHandler = None, teams: Teams = None):
         self.bot = bot
 
         if not session:
@@ -46,9 +46,13 @@ class Stats(commands.Cog):  # pragma: no cover
             self.identifier = identifier
         if not players:
             self.players = Players(session=self.session, p4sheet=self.p4sheet)
+        if not teams:
+            self.teams = Teams(session=self.session)
+        else:
+            self.teams = teams
         if not stats:
             self.stats = StatsHandler(
-                session=self.session, p4sheet=self.p4sheet, indysheet=self.indysheet, gdsheet=self.gdsheet)
+                session=self.session, p4sheet=self.p4sheet, indysheet=self.indysheet, gdsheet=self.gdsheet, teams=self.teams)
         else:
             self.stats = stats
 
@@ -143,7 +147,7 @@ class Stats(commands.Cog):  # pragma: no cover
                 answer = self.stats.get_player_stats(player, stat)
             except InvalidStatError:
                 return await ctx.send(f"Couldn't understand stat {stat}. If this is part of a username, surround the username in quotes.")
-            except StatsError:
+            except (StatsError, KeyError):
                 return await ctx.send(f"Couldn't find {player}'s stats. Contact arco if you think this is a bug.")
 
             embed = discord.Embed(
@@ -173,6 +177,7 @@ class Stats(commands.Cog):  # pragma: no cover
             stat = "Points Per Game"
             limit = 10
             pergame = False
+            asc = False
 
             msg = msg.split()
 
@@ -185,6 +190,8 @@ class Stats(commands.Cog):  # pragma: no cover
                     league = leagues[word.lower()]
                 elif word.lower() in ['pg', 'pergame']:
                     pergame = True
+                elif word.lower() in ['asc', 'ascending', 'reverse', 'least', 'bottom', 'bot']:
+                    asc = True
                 elif word.lower() in ['sheet', 'usesheet']:
                     useSheet = True
                 elif word.lower() in ['db', 'database', 'fantasy', 'fantasydb']:
@@ -208,7 +215,7 @@ class Stats(commands.Cog):  # pragma: no cover
 
             try:
                 lb = self.stats.statlb(
-                    useSheet=useSheet, league=league, stat=stat, limit=limit, pergame=pergame)
+                    useSheet=useSheet, league=league, stat=stat, limit=limit, pergame=pergame, asc=asc)
             except InvalidStatError as error:
                 return await ctx.send(f'Could not understand stat {error.stat.title()}. Try using "$help stats" for a list of available stats, or include "db" in your command to use advanced stats rather than sheet stats.')
             except (FindPlayersError, StatSheetError) as error:
@@ -307,3 +314,9 @@ class Stats(commands.Cog):  # pragma: no cover
     # @gdstats.error
     # async def gdstats_error(self, ctx: Context, error):
     #     pass
+
+
+    @commands.command(aliases=("ts", "statsteam", "teamstat",))
+    async def teamstats(self, ctx: Context, *, team):
+        async with ctx.typing():
+            pass

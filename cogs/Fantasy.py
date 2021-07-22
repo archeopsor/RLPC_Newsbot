@@ -105,9 +105,9 @@ class Fantasy(commands.Cog):
         #     await self.bot.log_error(error, ctx.channel, ctx.command, ctx.kwargs)
 
     @commands.command(aliases=("leaderboard", "lb", "standings",))
-    async def generate_leaderboard(self, ctx: Context):
+    async def generate_leaderboard(self, ctx: Context, limit: int = 15):
         async with ctx.typing():
-            answer = self.fantasy.fantasy_lb()
+            answer = self.fantasy.fantasy_lb().head(limit)
             leaderboard = discord.Embed(
                 title="Fantasy Leaderboard", color=0xffff00)
             for i, player in enumerate(answer.index):
