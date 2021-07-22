@@ -202,6 +202,8 @@ class Fantasy(commands.Cog):
                 player_card.add_field(name="Team", value="Not Playing")
             elif answer['info']['team'] == "Departed":
                 player_card.add_field(name="Team", value="Departed")
+            elif answer['info']['team'] == 'Free Agent':
+                player_card.add_field(name="Team", value="Free Agent")
             else:
                 team = self.session.teams.find_one(
                     {'_id': answer['info']['team']})['team']
