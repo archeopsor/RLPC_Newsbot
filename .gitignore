@@ -140,6 +140,7 @@ dmypy.json
 passwords.py
 creds.json
 replay_processing/Replay_Files/
+post.txt
 
 ##########################
 # VSCODE GITIGNORE STUFF #

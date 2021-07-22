@@ -712,7 +712,11 @@ class RLPCAnalysis:
 
             for col in stats.columns:
                 category = findCategory(col)
-                update['$inc'][f'stats.{category}.{col}'] = stats.loc[player, col]
+                if type(stats.loc[player, col]) == np.int64:
+                    datapoint = int(stats.loc[player, col])
+                else:
+                    datapoint = float(stats.loc[player, col])
+                update['$inc'][f'stats.{category}.{col}'] = datapoint
 
             try:
                 self.session.players.update_one(
@@ -731,14 +735,18 @@ class RLPCAnalysis:
         while fantasy.alive:
             account = fantasy.next()
             for player in account['players']:
-                username = self.session.players.find({'_id': player})['username']
+                username = self.session.players.find_one({'_id': player})['username']
+
+                if username not in stats.index: # They didn't have stats for this gameday
+                    continue
+
                 points = stats.loc[username, 'Fantasy Points']
                 # index = next((i for (i, d) in enumerate(account['player_history']) if d["Player"] == player), None)
                 # if index == None:
                 #     continue
                 self.session.fantasy.update_one(
                     {'_id': account['_id'], 'player_history.Player': player},
-                    {'$inc': {'player_history.Points': points, 'points': points}}
+                    {'$inc': {'player_history.$.Points': points, 'points': points}}
                     )
         
         for player in stats.index:
@@ -750,12 +758,12 @@ class RLPCAnalysis:
     def create_post(self, stats: pd.DataFrame):
         if 'League' not in stats.columns:
             stats['Fantasy Points'] = stats.apply(lambda row: fantasy_formula(row), axis=1)
-            stats['League'] = stats.apply(lambda row: self.identifier.find_league(self.identifier.find_team(row)), axis=0)
+            stats['League'] = stats.apply(lambda row: self.identifier.find_league(self.identifier.find_team(row.name)), axis=0)
 
         stats.sort_values(by="Fantasy Points", ascending=False, inplace=True)
 
         with open("post.txt", 'a') as file:
-            file.write("Fantasy Leaders:\n")
+            file.write("Player Leaders:\n")
             leaders = stats.head(3).index
             file.write(f"1. {leaders[0]} - {stats.loc[leaders[0], 'Fantasy Points']}\n")
             file.write(f"2. {leaders[1]} - {stats.loc[leaders[1], 'Fantasy Points']}\n")
@@ -826,11 +834,10 @@ class RLPCAnalysis:
         Sheet(gdstats_sheet).push_df('7/20/21 Data!A2:Z', stats.reset_index().fillna(value=0))
 
         print("Uploading Stats")
-        #self.upload_stats(stats)
+        self.upload_stats(stats)
 
         print("Updating fantasy points")
         self.update_fantasy(stats)
-
 
         print("Creating post file")
         self.create_post(stats)
@@ -840,4 +847,15 @@ class RLPCAnalysis:
 
 
 if __name__ == "__main__":
-    RLPCAnalysis().main()
+    #RLPCAnalysis().main()
+
+    stats = Sheet(gdstats_sheet).to_df('7/20/21 Data!A1:AL268').set_index('Username')
+    for col in stats.columns[:-2]:
+        try:
+            stats[col] = stats[col].apply(lambda x: int(x))
+        except:
+            stats[col] = stats[col].apply(lambda x: float(x))
+
+    rlpc = RLPCAnalysis()
+
+    rlpc.create_post(stats)

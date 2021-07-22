@@ -112,7 +112,7 @@ class Fantasy(commands.Cog):
                 title="Fantasy Leaderboard", color=0xffff00)
             for i, player in enumerate(answer.index):
                 leaderboard.add_field(
-                    name=f'{i+1}: {player}', value=answer.loc[player], inline=False)
+                    name=f'{i+1}: {player}', value=round(answer.loc[player]), inline=False)
         await ctx.send(embed=leaderboard)
 
     @commands.command(aliases=("show", "team", "showteam",))
@@ -150,7 +150,7 @@ class Fantasy(commands.Cog):
                     player_history: list = [
                         x for x in answer['player_history'] if x['Player'] == player_id]
                     # Gets points of most recent entry of player
-                    points: int = player_history[-1]['Points']
+                    points: int = round(player_history[-1]['Points'])
 
                     team.add_field(
                         name=f"Player {i+1}", value=f"{player['username']} ({points})", inline=True)
