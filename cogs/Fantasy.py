@@ -171,7 +171,7 @@ class Fantasy(commands.Cog):
     async def player_info(self, ctx: Context, *, player):
         async with ctx.typing():
             pg = False
-            if 'pg' in player:
+            if 'pg' in player.split():
                 player = player[:-3]
                 pg = True
             if 'me' in player.lower().split(' '):

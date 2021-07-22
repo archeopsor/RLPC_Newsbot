@@ -135,7 +135,7 @@ class FantasyHandler:
 
         # Make sure player is actually on the team
         player_info = self.session.players.find_one(
-            {'$text': {'$search': f'\"player\"'}})
+            {'$text': {'$search': f'\"{player}\"'}})
 
         if player_info == None:
             raise PlayerNotFoundError(player)
