@@ -35,7 +35,7 @@ class FantasyHandler:
             info = cursor.next()
             lb[info['username']] = info['points']
 
-        return lb
+        return lb.astype(int)
 
     def pick_player(self, discord_id: int, player: str) -> str:
         """Adds an RLPC player to a fantasy account

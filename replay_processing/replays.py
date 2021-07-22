@@ -752,7 +752,7 @@ class RLPCAnalysis:
         for player in stats.index:
             self.session.players.update_one(
                 {'username': player},
-                {'$inc': {'fantasy.fantasy_points': points}}
+                {'$inc': {'fantasy.fantasy_points': int(stats.loc[player, 'Fantasy Points']}}
             )
 
     def create_post(self, stats: pd.DataFrame):
@@ -850,7 +850,7 @@ if __name__ == "__main__":
     #RLPCAnalysis().main()
 
     stats = Sheet(gdstats_sheet).to_df('7/20/21 Data!A1:AL268').set_index('Username')
-    for col in stats.columns[:-2]:
+    for col in stats.columns[:-1]:
         try:
             stats[col] = stats[col].apply(lambda x: int(x))
         except:

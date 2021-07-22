@@ -52,7 +52,7 @@ class Fantasy(commands.Cog):
         # else:
         #     await self.bot.log_error(error, ctx.channel, ctx.command, ctx.kwargs)
 
-    @commands.command(aliases=("pick", "pickplayer", "addplayer", "add_player", "buy"))
+    @commands.command(aliases=("pick", "pickplayer", "addplayer", "add_player", "buy", "sign",))
     async def pick_player(self, ctx: Context, *, player: str):
         async with ctx.typing():
             try:

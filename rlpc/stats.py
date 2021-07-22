@@ -229,25 +229,25 @@ class StatsHandler:
             if not category:
                 raise InvalidStatError(stat)
 
-            data = pd.DataFrame(columns=['Username', 'Games Played', stat])
+            data = pd.Series(name=stat, dtype=float)
 
             try:
                 if league != "all":
-                    cursor = players.find({"info.league": league})
+                    cursor = players.find({"info.league": league, f"stats.{category}.{stat}": {'$gt': 0}, "stats.general.Games Played": {'$gt': 0}})
                 else:
-                    cursor = players.find(
-                        {"$exists": f"stats.{category}.{stat}"})
+                    cursor = players.find({f"stats.{category}.{stat}": {'$gt': 0}, "stats.general.Games Played": {'$gt': 0}})
             except:
                 raise FindPlayersError(league, stat)
 
             # Iterate through cursor and get all player's stats
-            cursor.sort(f"stats.{category}.{stat}", -1)
-            for i in range(limit):
+            while cursor.alive:
                 info = cursor.next()
-                data.append({'Username': info["username"], "Games Played": info["stats"]["general"]
-                            ["Games Played"], stat: info['stats'][category][stat]}, ignore_index=True)
+                if pergame:
+                    data[info['username']] = round((info['stats'][category][stat] / info["stats"]["general"]["Games Played"]), 2)
+                else:
+                    data[info['username']] = round(info['stats'][category][stat], 2)
 
-            data.set_index("Username", inplace=True)
+            return data.sort_values(ascending=False).head(limit)
 
         else:
             # This (below) is redundant for now but sheet ids can be different just in case something changes in the future

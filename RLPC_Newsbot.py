@@ -26,6 +26,7 @@ from settings import prefix, power_rankings_sheet, sheet_p4, sheet_indy, forecas
 
 try:
     from passwords import BOT_TOKEN
+    #from passwords import TEST_BOT_TOKEN as BOT_TOKEN
 except:
     BOT_TOKEN = os.environ.get('BOT_TOKEN')
 
