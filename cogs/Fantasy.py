@@ -82,7 +82,7 @@ class Fantasy(commands.Cog):
         #     await self.bot.log_error(error, ctx.channel, ctx.command, ctx.kwargs)
 
     @commands.command(aliases=("drop", "dropplayer", "removeplayer", "remove_player", "sell"))
-    async def drop_player(self, ctx: Context, player: str):
+    async def drop_player(self, ctx: Context, *, player: str):
         async with ctx.typing():
             try:
                 answer = self.fantasy.drop_player(ctx.author.id, player)

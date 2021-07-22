@@ -96,6 +96,7 @@ class Players:
 
         """
         logger.info("Downloading IDs...")
+        print("IDS")
         sheetdata = self.p4sheet.to_df('Players!A1:AG')
         sheetdata['Unique IDs'] = sheetdata['Unique IDs'].map(
             lambda x: x.split(","))
@@ -115,7 +116,7 @@ class Players:
 
                 # Look through ids on the sheet, see if it maches any in the database
                 # Any matches indicate a name change
-                for playerid in sheetdata.loc[player, 'Unique IDs']:
+                for playerid in sheetdata.loc[sheetdata['Username']==player, 'Unique IDs']:
                     if playerid == '':
                         continue  # No ids are available, so just ignore
                     else:
@@ -138,7 +139,10 @@ class Players:
 
             else:  # Player's username is found in db
                 doc = self.session.players.find_one({'username': player})
-                db_ids = set(doc['info']['id'])
+                try:
+                    db_ids = set(doc['info']['id'])
+                except TypeError:
+                    db_ids = set(doc['info']['id'][0]) # Some players have weird id structures for some reason TODO: Look into this.
                 sheet_ids = set(
                     sheetdata.loc[sheetdata['Username'] == player, 'Unique IDs'].values[0])
 
@@ -149,7 +153,7 @@ class Players:
                     ids = sheet_ids.union(db_ids)
                     doc['info']['ids'] = ids
                     self.session.players.update_one(
-                        {"username": player}, {"$set": {"info.id": ids}})
+                        {"username": player}, {"$set": {"info.id": list(ids)}})
                     logger.info(f"{player} ids updated")
 
         logger.info("Done downloading ids.")
@@ -178,7 +182,6 @@ class Players:
         players = self.session.players
 
         for player in sheetdata.index:
-            print(player)
             if sheetdata.loc[player, 'Team'] in ['Not Playing', 'Ineligible', 'Future Star', 'Departed', 'Banned', 'Waitlist', 'Below MMR']:
                 # See if player's document exists and/or needs to be updated
                 players.find_one_and_update(
@@ -212,7 +215,8 @@ class Players:
                                     playerinfo['Team'], playerinfo['League'], playerinfo['Discord ID'], ids=playerinfo['Unique IDs'])
                     logger.info(f'{player} added')
 
-            info = players.find_one({'username': player})['info']
+            playerdata = players.find_one({'username': player})
+            info = playerdata['info']
             if info['region'] != sheetdata.loc[player, 'Region']:
                 players.update_one({'username': player}, {
                                    "$set": {'info.region': sheetdata.loc[player, 'Region']}})
@@ -231,7 +235,7 @@ class Players:
                 # Add player to team in teams collection
                 self.session.teams.find_one_and_update(
                     {"_id": teamIds[sheetdata.loc[player, 'Team']]},
-                    {"$push": {"players": info['_id']}}
+                    {"$push": {"players": playerdata['_id']}}
                 )
                 logger.info(f"{player} updated")
             if info['league'] != sheetdata.loc[player, 'League']:
@@ -243,11 +247,11 @@ class Players:
                                    "$set": {'info.discord_id': sheetdata.loc[player, 'Discord ID']}})
                 logger.info(f"{player} updated")
 
-        #self.remove_not_playing()
+        self.remove_not_playing()
         logger.info("Done checking players.")
 
     def remove_not_playing(self):
-        """Changes team of anyone listed on the sheet as "Not Playing"
+        """Changes team of anyone listed on the sheet as "Not Playing" or "Departed"
 
         Returns:
             None
@@ -260,16 +264,16 @@ class Players:
         not_playing = sheetdata.loc[sheetdata['Not Playing'] == "TRUE"]
         departed = sheetdata.loc[sheetdata['Departed'] == "TRUE"]
 
+        print("NOT PLAYING")
         for player in not_playing.index:
-            print("NOT PLAYING: " + player)
             doc = self.session.players.find_one({'username': player})
             if doc == None:
                 continue
             if doc['info']['team'] != "Not Playing":
                 self.session.players.update_one({'username': player}, {'$set': {'info.team': "Not Playing"}})
         
+        print("DEPARTED")
         for player in departed.index:
-            print("DEPARTED: " + player)
             doc = self.session.players.find_one({'username': player})
             if doc == None:
                 continue
@@ -360,7 +364,12 @@ class Identifier:
         for player in names:
             doc = self.session.players.find_one({'username': player})
             teamId: ObjectId = doc['info']['team']
-            team = self.session.teams.find_one({'_id': teamId})['team']
+            if teamId in ['Free Agent', 'Not Playing', 'Departed', 'Waitlist']:
+                continue
+            try:
+                team = self.session.teams.find_one({'_id': teamId})['team']
+            except TypeError:
+                continue
 
             if choices:
                 choice_league = self.find_league(choices[0])
@@ -375,14 +384,14 @@ class Identifier:
                     'Renegade': 'AA Affiliate',
                     'Paladin': 'A Affiliate'
                 }
-                team = teams.loc[teams['Team'] == team_league,
-                                 affiliate_columns[choice_league]]
+                if teams.loc[teams['Team'] == team, affiliate_columns[choice_league]].values[0] != '': # This player is from a different league, so is likely a sub
+                    team = teams.loc[teams['Team'] == team, affiliate_columns[choice_league]].values[0]
 
             found_teams.append(team)
 
         for team in found_teams:
-            if found_teams.count(team) > 1:
-                return team  # This will return if any two players are on the same team
+            if found_teams.count(team) > (len(found_teams)/2):
+                return team  # This will return if more than half of the players are on the same team
 
         return "Undetermined"  # If every player belongs to a different team
 
@@ -503,4 +512,4 @@ class Teams:
 
 if __name__ == "__main__":
     players = Players()
-    players.remove_not_playing()
+    players.check_players()

@@ -155,7 +155,7 @@ playersStructure = {
             "Aerials": 0,
             "Turnovers Lost": 0,
             "Defensive Turnovers Lost": 0,
-            "Offensive Turnovers Lost": 0,
+            "Offensive Turnovers lost": 0,
             "Turnovers Won": 0,
             "Hits": 0,
             "Flicks": 0,
@@ -313,66 +313,7 @@ gamesStructure = {
     "gameday": "",
     "league": "",
     "playoff": False,
-    "teams": [
-        {
-            "team": None, # Team ObjectId
-            "players": [
-                {
-                    "username": "",
-                    "id": None, # Player ObjectId
-                    "stats": {
-                        "general": {
-                            "Series Played": 0,
-                            "Series Won": 0,
-                            "Games Played": 0,
-                            "Games Won": 0,
-                            "Goals": 0,
-                            "Assists": 0,
-                            "Saves": 0,
-                            "Shots": 0,
-                            "Demos Inflicted": 0,
-                            "Demos Taken": 0,
-                        },
-                        "boost": {
-                            "Boost Used": 0,
-                            "Wasted Collection": 0,
-                            "Wasted Usage": 0,
-                            "# Small Boosts": 0,
-                            "# Large Boosts": 0,
-                            "# Boost Steals": 0,
-                            "Wasted Big": 0,
-                            "Wasted Small": 0,
-                        },
-                        "movement": {
-                            "Time Slow": 0,
-                            "Time Boost": 0,
-                            "Time Supersonic": 0,
-                        },
-                        "possession": {
-                            "Dribbles": 0,
-                            "Passes": 0,
-                            "Aerials": 0,
-                            "Turnovers Lost": 0,
-                            "Defensive Turnovers Lost": 0,
-                            "Offensive Turnovers Lost": 0,
-                            "Turnovers Won": 0,
-                            "Hits": 0,
-                            "Flicks": 0,
-                            "Clears": 0,
-                        },
-                        "kickoffs": {
-                            "Kickoffs": 0,
-                            "First Touches": 0,
-                            "Kickoff Cheats": 0,
-                            "Kickoff Boosts": 0,
-                        },
-                    }
-                }
-            ],
-            "score": 0,
-            "won": False,
-        }
-    ],
+    "teams": [],
     "games": 0,
 }
 

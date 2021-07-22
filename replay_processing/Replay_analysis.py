@@ -20,41 +20,6 @@ class Replay_Analyzer:
 global failed
 failed = []
 
-def fantasy_formula(row: pd.Series) -> int:
-    """
-    Determines fantasy points earned by a player given their stats
-
-    Parameters
-    ----------
-    row : pd.Series
-        Row of Dataframe with all the player's stats.
-
-    Returns
-    -------
-    int
-        Number of fantasy points earned.
-
-    """
-    points = 0
-    gp = row['Games Played']
-    
-    if gp == 0:
-        return 0
-    
-    points += (row['Goals']/gp)*21
-    points += (row['Assists']/gp)*15
-    points += (row['Shots']/gp)*3
-    points += (row['Saves']/gp)*13
-    points += (row['Demos Inflicted']/gp)*6
-    points += (row['Clears']/gp)*4
-    points += (row['Passes']/gp)*2
-    points += (row['Turnovers Won']/gp)*0.6
-    points += (row['Turnovers Lost']/gp)*(-0.3)
-    points += (row['Series Won'])*5
-    points += (row['Games Won'])*1
-    
-    return round(points)
-
 def get_replay_stats(replay: str) -> dict:
     """
 

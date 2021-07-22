@@ -37,7 +37,7 @@ class FantasyHandler:
 
         return lb
 
-    def pick_player(self, discord_id: str, player: str) -> str:
+    def pick_player(self, discord_id: int, player: str) -> str:
         """Adds an RLPC player to a fantasy account
 
         Args:
@@ -135,7 +135,7 @@ class FantasyHandler:
 
         # Make sure player is actually on the team
         player_info = self.session.players.find_one(
-            {'$text': {'$search': player}})
+            {'$text': {'$search': f'\"player\"''}})
 
         if player_info == None:
             raise PlayerNotFoundError(player)

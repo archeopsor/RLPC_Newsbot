@@ -11,12 +11,48 @@ import pytz
 
 import carball
 
-from tools.mongo import Session
+from tools.mongo import Session, teamIds, findCategory
 from tools.sheet import Sheet
 
 from rlpc.players import Players, Identifier
+from rlpc.elo import EloHandler
 
-from settings import sheet_p4, valid_stats
+from settings import sheet_p4, valid_stats, gdstats_sheet
+
+def fantasy_formula(row: pd.Series) -> int:
+    """
+    Determines fantasy points earned by a player given their stats
+
+    Parameters
+    ----------
+    row : pd.Series
+        Row of Dataframe with all the player's stats.
+
+    Returns
+    -------
+    int
+        Number of fantasy points earned.
+
+    """
+    points = 0
+    gp = row['Games Played']
+    
+    if gp == 0:
+        return 0
+    
+    points += (row['Goals']/gp)*21
+    points += (row['Assists']/gp)*15
+    points += (row['Shots']/gp)*3
+    points += (row['Saves']/gp)*13
+    points += (row['Demos Inflicted']/gp)*6
+    points += (row['Clears']/gp)*4
+    points += (row['Passes']/gp)*2
+    points += (row['Turnovers Won']/gp)*0.6
+    points += (row['Turnovers Lost']/gp)*(-0.3)
+    points += (row['Series Won'])*5
+    points += (row['Games Won'])*1
+    
+    return round(points)
 
 
 class Retreiver:
@@ -24,7 +60,7 @@ class Retreiver:
         pass
 
     @staticmethod
-    def download(elo=True):
+    def download(update_elo=True):
         """
         Downloads yesterday's replays from the rlpcgamelogs website
 
@@ -128,8 +164,8 @@ class Retreiver:
 
             time.sleep(13)
 
-        if elo:
-            elo.autoparse(scores)
+        if update_elo:
+            EloHandler().autoparse(scores)
 
         return browser.quit()
 
@@ -155,7 +191,7 @@ class Retreiver:
         return replays
 
     @staticmethod
-    def get_downloaded_replays(path: str = 'C:/Users/Simi/Downloads', target: str = "./Replay_Files", max_age: int = 1) -> list:
+    def get_downloaded_replays(path: str = 'C:/Users/Simi/Downloads', target: str = "./replay_processing/Replay_Files", max_age: int = 1) -> list:
         """
         Moves replay zip files downloaded from rlpcgamelogs.com to the target folder, and unfolds them in the process. Returns a list of retreived replays.
 
@@ -189,16 +225,21 @@ class Retreiver:
                     filename = os.listdir(f"{target}/{name}/{folder}")[0]
                     replays.append(f"{target}/{name}/{folder}/{filename}")
                 files[name] = replays
-
-                shutil.rmtree(f"{path}/{download}")
+                
+                filepath = os.path.join(path, download).replace('/', '\\')
+                #os.remove(filepath)
+                # shutil.rmtree(filepath)
 
         return files
 
     @staticmethod
-    def clean_folder(path: str = './Replay_Files'):
+    def clean_folder(path: str = './replay_processing/Replay_Files'):
         for file in os.listdir(path):
             filepath = os.path.join(path, file)
-            shutil.rmtree(filepath)
+            try:
+                shutil.rmtree(filepath)
+            except:
+                os.remove(filepath)
 
 
 class Replay:
@@ -223,7 +264,10 @@ class Replay:
             self.identifier = identifier
 
         self.failed = False
-        self._stats, self._frames = self.process(isPerGoal)
+        try:
+            self._stats, self._frames = self.process(isPerGoal)
+        except:
+            self.failed = True
 
     def process(self, isPerGoal: bool = False) -> Union[dict, pd.DataFrame]:
         """
@@ -240,14 +284,17 @@ class Replay:
         try:
             analysis_manager = carball.analyze_replay_file(
                 self.path, logging_level=logging.CRITICAL)
+
+            frames = analysis_manager.get_data_frame().fillna(value=0)
+            stats = dict(analysis_manager.get_json_data())
+
+            return stats, frames
+
         except:
             print("REPLAY FAILED: " + self.path)
             self.failed = True
-
-        frames = analysis_manager.get_data_frame().fillna(value=0)
-        stats = dict(analysis_manager.get_json_data())
-
-        return stats, frames
+            return None
+        
 
     def get_teams(self) -> Union[str, str]:
         """
@@ -260,7 +307,7 @@ class Replay:
 
         """
         stats = self._stats
-        choices = self.path.split('/')[-1].split(' - ')
+        choices = self.path.split('/')[-3].split(' - ')
 
         teams = []
         teams.append([x['id'] for x in stats['teams'][0]['playerIds']])
@@ -282,7 +329,11 @@ class Replay:
             List of all valid players in the replay.
 
         """
-        teams = self._teams
+        try:
+            teams = self._teams
+        except AttributeError:
+            self._teams = self.get_teams()
+            teams = self._teams
         stats = self._stats
         players: list = []
 
@@ -298,9 +349,11 @@ class Replay:
             # Handle subs
             try:
                 doc = self.session.players.find_one({'username': name})
-                if name not in self.session.teams.find_one({"_id": doc['info']['team']})['players']:
-                    # This should only be true if the player is not actually on the team, ie a sub or call down
+                if doc['info']['team'] != teamIds[teams[0]] and doc['info']['team'] != teamIds[teams[1]]:
                     continue
+                # if name not in self.session.teams.find_one({"_id": doc['info']['team']})['players']: TODO: Fix this by adding players to teams in mongo
+                #     # This should only be true if the player is not actually on the team, ie a sub or call down
+                #     continue
             except:
                 print("PLAYER FAILED: " + name)
                 continue
@@ -377,6 +430,7 @@ class Series:
         self.identifier = identifier
         self.length = 5
         self.replays = replays
+        self.players = []
         try:
             self.teams = self.replays[1].teams
         except:
@@ -413,176 +467,176 @@ class Series:
                         if name == None:
                             name = player['name']
 
-            # Don't include subs
-            if name not in replay.players:
-                continue
+                # Don't include subs
+                if name not in replay.players:
+                    continue
 
-            if name not in player_stats.index.values:
-                # Create an empty row for the player's stats if it isn't already there
-                player_stats = player_stats.append(
-                    pd.Series(name=name, dtype=object)).fillna(0)
+                if name not in player_stats.index.values:
+                    # Create an empty row for the player's stats if it isn't already there
+                    player_stats = player_stats.append(
+                        pd.Series(name=name, dtype=object)).fillna(0)
 
-            # Add stats to player_stats
-            player_stats.loc[name, 'Goals'] += player['goals']
-            if str(player['id']['id']) in [x['id'] for x in stats['teams'][winner]['playerIds']]:
-                # Add 1 game won only if they won
-                player_stats.loc[name, 'Games Won'] += 1
-            try:
-                player_stats.loc[name, 'Goals'] += player['goals']
-            except:
-                pass
-            try:
-                player_stats.loc[name, 'Assists'] += player['assists']
-            except:
-                pass
-            try:
-                player_stats.loc[name, 'Saves'] += player['saves']
-            except:
-                pass
-            try:
-                player_stats.loc[name, 'Shots'] += player['shots']
-            except:
-                pass
-            try:
-                player_stats.loc[name,
-                                 'Dribbles'] += player['stats']['hitCounts']['totalDribbles']
-            except:
-                pass
-            try:
-                player_stats.loc[name,
-                                 'Passes'] += player['stats']['hitCounts']['totalPasses']
-            except:
-                pass
-            try:
-                player_stats.loc[name,
-                                 'Aerials'] += player['stats']['hitCounts']['totalAerials']
-            except:
-                pass
-            try:
-                player_stats.loc[name,
-                                 'Hits'] += player['stats']['hitCounts']['totalHits']
-            except:
-                pass
-            try:
-                player_stats.loc[name,
-                                 'Boost Used'] += player['stats']['boost']['boostUsage']
-            except:
-                pass
-            try:
-                player_stats.loc[name,
-                                 'Wasted Collection'] += player['stats']['boost']['wastedCollection']
-            except:
-                pass
-            try:
-                player_stats.loc[name,
-                                 'Wasted Usage'] += player['stats']['boost']['wastedUsage']
-            except:
-                pass
-            try:
-                player_stats.loc[name,
-                                 '# Small Boosts'] += player['stats']['boost']['numSmallBoosts']
-            except:
-                pass
-            try:
-                player_stats.loc[name,
-                                 '# Large Boosts'] += player['stats']['boost']['numLargeBoosts']
-            except:
-                pass
-            try:
-                player_stats.loc[name,
-                                 '# Boost Steals'] += player['stats']['boost']['numStolenBoosts']
-            except:
-                pass
-            try:
-                player_stats.loc[name,
-                                 'Wasted Big'] += player['stats']['boost']['wastedBig']
-            except:
-                pass
-            try:
-                player_stats.loc[name,
-                                 'Wasted Small'] += player['stats']['boost']['wastedSmall']
-            except:
-                pass
-            try:
-                player_stats.loc[name,
-                                 'Time Slow'] += player['stats']['speed']['timeAtSlowSpeed']
-            except:
-                pass
-            try:
-                player_stats.loc[name,
-                                 'Time Boost'] += player['stats']['speed']['timeAtBoostSpeed']
-            except:
-                pass
-            try:
-                player_stats.loc[name,
-                                 'Time Supersonic'] += player['stats']['speed']['timeAtSuperSonic']
-            except:
-                pass
-            try:
-                player_stats.loc[name,
-                                 'Turnovers Lost'] += player['stats']['possession']['turnovers']
-            except:
-                pass
-            try:
-                player_stats.loc[name, 'Defensive Turnovers Lost'] += (
-                    player['stats']['possession']['turnovers'] - player['stats']['possession']['turnoversOnTheirHalf'])
-            except:
-                pass
-            try:
-                player_stats.loc[name,
-                                 'Offensive Turnovers Lost'] += player['stats']['possession']['turnoversOnTheirHalf']
-            except:
-                pass
-            try:
-                player_stats.loc[name,
-                                 'Turnovers Won'] += player['stats']['possession']['wonTurnovers']
-            except:
-                pass
-            try:
-                player_stats.loc[name,
-                                 'Kickoffs'] += player['stats']['kickoffStats']['totalKickoffs']
-            except:
-                pass
-            try:
-                player_stats.loc[name,
-                                 'First Touches'] += player['stats']['kickoffStats']['numTimeFirstTouch']
-            except:
-                pass
-            try:
-                player_stats.loc[name,
-                                 'Kickoff Cheats'] += player['stats']['kickoffStats']['numTimeCheat']
-            except:
-                pass
-            try:
-                player_stats.loc[name,
-                                 'Kickoff Boosts'] += player['stats']['kickoffStats']['numTimeBoost']
-            except:
-                pass
-            try:
-                player_stats.loc[name, 'Demos Inflicted'] += [x['attackerId']['id']
-                                                              for x in stats['gameMetadata']['demos']].count(player['id']['id'])
-            except:
-                pass
-            try:
-                player_stats.loc[name, 'Demos Taken'] += [x['victimId']['id']
-                                                          for x in stats['gameMetadata']['demos']].count(player['id']['id'])
-            except:
-                pass
-            try:
-                player_stats.loc[name,
-                                 'Clears'] += player['stats']['hitCounts']['totalClears']
-            except:
-                pass
-            try:
-                player_stats.loc[name,
-                                 'Flicks'] += player['stats']['ballCarries']['totalFlicks']
-            except:
-                pass
+                # Add stats to player_stats
+                player_stats.loc[name, 'Games Played'] += 1
+                if str(player['id']['id']) in [x['id'] for x in stats['teams'][winner]['playerIds']]:
+                    # Add 1 game won only if they won
+                    player_stats.loc[name, 'Games Won'] += 1
+                try:
+                    player_stats.loc[name, 'Goals'] += player['goals']
+                except:
+                    pass
+                try:
+                    player_stats.loc[name, 'Assists'] += player['assists']
+                except:
+                    pass
+                try:
+                    player_stats.loc[name, 'Saves'] += player['saves']
+                except:
+                    pass
+                try:
+                    player_stats.loc[name, 'Shots'] += player['shots']
+                except:
+                    pass
+                try:
+                    player_stats.loc[name,
+                                    'Dribbles'] += player['stats']['hitCounts']['totalDribbles']
+                except:
+                    pass
+                try:
+                    player_stats.loc[name,
+                                    'Passes'] += player['stats']['hitCounts']['totalPasses']
+                except:
+                    pass
+                try:
+                    player_stats.loc[name,
+                                    'Aerials'] += player['stats']['hitCounts']['totalAerials']
+                except:
+                    pass
+                try:
+                    player_stats.loc[name,
+                                    'Hits'] += player['stats']['hitCounts']['totalHits']
+                except:
+                    pass
+                try:
+                    player_stats.loc[name,
+                                    'Boost Used'] += player['stats']['boost']['boostUsage']
+                except:
+                    pass
+                try:
+                    player_stats.loc[name,
+                                    'Wasted Collection'] += player['stats']['boost']['wastedCollection']
+                except:
+                    pass
+                try:
+                    player_stats.loc[name,
+                                    'Wasted Usage'] += player['stats']['boost']['wastedUsage']
+                except:
+                    pass
+                try:
+                    player_stats.loc[name,
+                                    '# Small Boosts'] += player['stats']['boost']['numSmallBoosts']
+                except:
+                    pass
+                try:
+                    player_stats.loc[name,
+                                    '# Large Boosts'] += player['stats']['boost']['numLargeBoosts']
+                except:
+                    pass
+                try:
+                    player_stats.loc[name,
+                                    '# Boost Steals'] += player['stats']['boost']['numStolenBoosts']
+                except:
+                    pass
+                try:
+                    player_stats.loc[name,
+                                    'Wasted Big'] += player['stats']['boost']['wastedBig']
+                except:
+                    pass
+                try:
+                    player_stats.loc[name,
+                                    'Wasted Small'] += player['stats']['boost']['wastedSmall']
+                except:
+                    pass
+                try:
+                    player_stats.loc[name,
+                                    'Time Slow'] += player['stats']['speed']['timeAtSlowSpeed']
+                except:
+                    pass
+                try:
+                    player_stats.loc[name,
+                                    'Time Boost'] += player['stats']['speed']['timeAtBoostSpeed']
+                except:
+                    pass
+                try:
+                    player_stats.loc[name,
+                                    'Time Supersonic'] += player['stats']['speed']['timeAtSuperSonic']
+                except:
+                    pass
+                try:
+                    player_stats.loc[name,
+                                    'Turnovers Lost'] += player['stats']['possession']['turnovers']
+                except:
+                    pass
+                try:
+                    player_stats.loc[name, 'Defensive Turnovers Lost'] += (
+                        player['stats']['possession']['turnovers'] - player['stats']['possession']['turnoversOnTheirHalf'])
+                except:
+                    pass
+                try:
+                    player_stats.loc[name,
+                                    'Offensive Turnovers Lost'] += player['stats']['possession']['turnoversOnTheirHalf']
+                except:
+                    pass
+                try:
+                    player_stats.loc[name,
+                                    'Turnovers Won'] += player['stats']['possession']['wonTurnovers']
+                except:
+                    pass
+                try:
+                    player_stats.loc[name,
+                                    'Kickoffs'] += player['stats']['kickoffStats']['totalKickoffs']
+                except:
+                    pass
+                try:
+                    player_stats.loc[name,
+                                    'First Touches'] += player['stats']['kickoffStats']['numTimeFirstTouch']
+                except:
+                    pass
+                try:
+                    player_stats.loc[name,
+                                    'Kickoff Cheats'] += player['stats']['kickoffStats']['numTimeCheat']
+                except:
+                    pass
+                try:
+                    player_stats.loc[name,
+                                    'Kickoff Boosts'] += player['stats']['kickoffStats']['numTimeBoost']
+                except:
+                    pass
+                try:
+                    player_stats.loc[name, 'Demos Inflicted'] += [x['attackerId']['id']
+                                                                for x in stats['gameMetadata']['demos']].count(player['id']['id'])
+                except:
+                    pass
+                try:
+                    player_stats.loc[name, 'Demos Taken'] += [x['victimId']['id']
+                                                            for x in stats['gameMetadata']['demos']].count(player['id']['id'])
+                except:
+                    pass
+                try:
+                    player_stats.loc[name,
+                                    'Clears'] += player['stats']['hitCounts']['totalClears']
+                except:
+                    pass
+                try:
+                    player_stats.loc[name,
+                                    'Flicks'] += player['stats']['ballCarries']['totalFlicks']
+                except:
+                    pass
 
         # Add Series Played and Series Won stats
         for player in player_stats.index:
             player_stats.loc[player, 'Series Played'] = 1
-            if (player_stats.loc[player, 'Games Won']/player_stats.loc[player, 'Games Played']):
+            if (player_stats.loc[player, 'Games Won']/player_stats.loc[player, 'Games Played']) > 0.5:
                 player_stats.loc[player, 'Series Won'] = 1
 
         return player_stats
@@ -607,16 +661,183 @@ class RLPCAnalysis:
         else:
             self.identifier = identifier
 
+        self.failed = []
+
     def checks(self):
         self.playersHandler.check_players()
         self.playersHandler.download_ids()
 
     def get_replays(self):
-        replays = Retreiver.get_downloaded_replays()
+        replays = Retreiver.get_downloaded_replays(max_age=2)
+        self.replays = replays
+        return replays
+
+    def analyze_replays(self):
+        stats = pd.DataFrame(columns=valid_stats)
+        counter = 1
+        replays = self.get_replays()
+
+        for series in list(replays):
+            print(f'Analyzing series {counter} of {len(list(replays))} ({round(((counter-1)/len(list(replays)))*100)}%)')
+
+            games = []
+            for replay in replays[series]:
+                games.append(Replay(replay, session=self.session, p4sheet=self.p4sheet, playersHandler=self.playersHandler, identifier=self.identifier))
+            series_obj = Series(self.session, self.identifier, len(games), games)
+
+            series_stats = series_obj.get_stats()
+            failed = series_obj.failed
+
+            stats = stats.append(series_stats)
+            self.failed.append(failed)        
+
+            # self.upload_game(series_obj)      
+            counter += 1         
+
+        self.stats = stats
+        return stats
+
+    def upload_game(self, series: Series):
+        # game_doc = self.session.structures['games'].copy()
+        # game_doc['gameday'] = str(datetime.now(tz=pytz.timezone("US/Eastern")).date())
+        # game_doc['league'] = self.identifier.find_league(series.teams[0])
+        # game_doc['teams'].append({
+        #     'name': series.teams[0]
+        # })
+        pass
+
+    def upload_stats(self, stats: pd.DataFrame):
+        for player in stats.index:
+            update = {'$inc': {}}
+
+            for col in stats.columns:
+                category = findCategory(col)
+                update['$inc'][f'stats.{category}.{col}'] = stats.loc[player, col]
+
+            try:
+                self.session.players.update_one(
+                    {'username': player},
+                    update
+                )
+            except:
+                print("PLAYER STATS FAILED: "+player)
+                continue
+
+    def update_fantasy(self, stats: pd.DataFrame):
+        stats = stats.groupby(stats.index).sum()
+        stats['Fantasy Points'] = stats.apply(lambda row: fantasy_formula(row), axis=1)
+        stats['League'] = stats.apply(lambda row: self.identifier.find_league(self.identifier.find_team([row.name])), axis=1)
+        fantasy = self.session.fantasy.find()
+        while fantasy.alive:
+            account = fantasy.next()
+            for player in account['players']:
+                username = self.session.players.find({'_id': player})['username']
+                points = stats.loc[username, 'Fantasy Points']
+                # index = next((i for (i, d) in enumerate(account['player_history']) if d["Player"] == player), None)
+                # if index == None:
+                #     continue
+                self.session.fantasy.update_one(
+                    {'_id': account['_id'], 'player_history.Player': player},
+                    {'$inc': {'player_history.Points': points, 'points': points}}
+                    )
+        
+        for player in stats.index:
+            self.session.players.update_one(
+                {'username': player},
+                {'$inc': {'fantasy.fantasy_points': points}}
+            )
+
+    def create_post(self, stats: pd.DataFrame):
+        if 'League' not in stats.columns:
+            stats['Fantasy Points'] = stats.apply(lambda row: fantasy_formula(row), axis=1)
+            stats['League'] = stats.apply(lambda row: self.identifier.find_league(self.identifier.find_team(row)), axis=0)
+
+        stats.sort_values(by="Fantasy Points", ascending=False, inplace=True)
+
+        with open("post.txt", 'a') as file:
+            file.write("Fantasy Leaders:\n")
+            leaders = stats.head(3).index
+            file.write(f"1. {leaders[0]} - {stats.loc[leaders[0], 'Fantasy Points']}\n")
+            file.write(f"2. {leaders[1]} - {stats.loc[leaders[1], 'Fantasy Points']}\n")
+            file.write(f"3. {leaders[2]} - {stats.loc[leaders[2], 'Fantasy Points']}\n\n")
+
+            try:
+                leaders = stats[stats['League']=='Major'].head(3).index
+                file.write("Major MVPs:\n")
+                file.write(f"1. {leaders[0]} - {stats.loc[leaders[0], 'Fantasy Points']}\n")
+                file.write(f"2. {leaders[1]} - {stats.loc[leaders[1], 'Fantasy Points']}\n")
+                file.write(f"3. {leaders[2]} - {stats.loc[leaders[2], 'Fantasy Points']}\n\n")
+            except IndexError:
+                pass
+
+            try:
+                leaders = stats[stats['League']=='AAA'].head(3).index
+                file.write("AAA MVPs:\n")
+                file.write(f"1. {leaders[0]} - {stats.loc[leaders[0], 'Fantasy Points']}\n")
+                file.write(f"2. {leaders[1]} - {stats.loc[leaders[1], 'Fantasy Points']}\n")
+                file.write(f"3. {leaders[2]} - {stats.loc[leaders[2], 'Fantasy Points']}\n\n")
+            except IndexError:
+                pass
+
+            try:
+                leaders = stats[stats['League']=='AA'].head(3).index
+                file.write("AA MVPs:\n")
+                file.write(f"1. {leaders[0]} - {stats.loc[leaders[0], 'Fantasy Points']}\n")
+                file.write(f"2. {leaders[1]} - {stats.loc[leaders[1], 'Fantasy Points']}\n")
+                file.write(f"3. {leaders[2]} - {stats.loc[leaders[2], 'Fantasy Points']}\n\n")
+            except IndexError:
+                pass
+
+            try:
+                leaders = stats[stats['League']=='A'].head(3).index
+                file.write("A MVPs:\n")
+                file.write(f"1. {leaders[0]} - {stats.loc[leaders[0], 'Fantasy Points']}\n")
+                file.write(f"2. {leaders[1]} - {stats.loc[leaders[1], 'Fantasy Points']}\n")
+                file.write(f"3. {leaders[2]} - {stats.loc[leaders[2], 'Fantasy Points']}\n\n")
+            except IndexError:
+                pass
+
+            try:
+                leaders = stats[stats['League']=='Independent'].head(3).index
+                file.write("Indy MVPs:\n")
+                file.write(f"1. {leaders[0]} - {stats.loc[leaders[0], 'Fantasy Points']}\n")
+                file.write(f"2. {leaders[1]} - {stats.loc[leaders[1], 'Fantasy Points']}\n")
+                file.write(f"3. {leaders[2]} - {stats.loc[leaders[2], 'Fantasy Points']}\n\n")
+            except IndexError:
+                pass
+
+            try:
+                leaders = stats[stats['League']=='Maverick'].head(3).index
+                file.write("Mav MVPs:\n")
+                file.write(f"1. {leaders[0]} - {stats.loc[leaders[0], 'Fantasy Points']}\n")
+                file.write(f"2. {leaders[1]} - {stats.loc[leaders[1], 'Fantasy Points']}\n")
+                file.write(f"3. {leaders[2]} - {stats.loc[leaders[2], 'Fantasy Points']}")
+            except IndexError:
+                pass
+
+    def main(self):
+        print("Checks")
+        self.checks()
+
+        print("Getting replays")
+        stats = self.analyze_replays()
+
+        print("Logging data")
+        Sheet(gdstats_sheet).push_df('7/20/21 Data!A2:Z', stats.reset_index().fillna(value=0))
+
+        print("Uploading Stats")
+        #self.upload_stats(stats)
+
+        print("Updating fantasy points")
+        self.update_fantasy(stats)
+
+
+        print("Creating post file")
+        self.create_post(stats)
+
+        print("FAILED: "+self.failed)
+
 
 
 if __name__ == "__main__":
-    t1 = time.time()
-    replay = Replay(path='C:\\Users\\Simi\\Documents\\My Games\\Rocket League\\TAGame\\Demos\\CA6509C8416BF65001C3A99F3501B356.replay')
-    t2 = time.time()
-    print(t2 - t1)
+    RLPCAnalysis().main()
