@@ -16,6 +16,6 @@
 **{prefix}gdstats [player] [gameday #] *[pg]***: Shows the stats of a player from a given gameday, numbered 1-18. Can specify a valid stat (from the advanced list), and can add 'pg' to the end to divide by the number of games played.
     *Note: Put "me" as the player to get your own stats*
     
-**{prefix}top [stat] *[league]* *[source]* *[limit]* *[pg]* *[reverse]***: Shows a leaderboard for the given stat, which can either be from the spreadsheet or from the fantasy database (default is the fantasy database). Can add 'pg' to divide by the number of games played.
+**{prefix}top [stat] *[league]* *[source]* *[limit]* *[pg]* *[reverse]***: Shows a leaderboard for the given stat, which can either be from the spreadsheet or from the fantasy database (default is the fantasy database). Can add 'pg' to divide by the number of games played or 'asc' to show the lowest end.
     *Note: Parameters do not need to be in order.*
     *Additionally, to use the sheet as the source, there must be a league specified.*

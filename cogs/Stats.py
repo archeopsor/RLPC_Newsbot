@@ -179,7 +179,7 @@ class Stats(commands.Cog):  # pragma: no cover
             pergame = False
             asc = False
 
-            msg = msg.split()
+            msg: list[str] = msg.split()
 
             for i, word in enumerate(msg):
                 try:
@@ -204,9 +204,12 @@ class Stats(commands.Cog):  # pragma: no cover
                     if msg[i+1].lower() in [x.split()[1].lower() if len(x.split()) > 1 else None for x in valid_stats]:  # Second word
                         stat = stat + ' ' + msg[i+1].title()
                         if len(msg) == i+2:  # If the next arg is the last arg in the msg
+                            msg.remove(msg[i+1]) # Get rid of second word in stat
                             break
                         if msg[i+2].lower() in [x.split()[2].lower() if len(x.split()) > 2 else None for x in valid_stats]:  # Third word
                             stat = stat + ' ' + msg[i+2].title()
+                            msg.remove(msg[i+1]) # Get rid of second word in stat
+                            msg.remove(msg[i+1]) # Get rid of third word in stat
 
             # For common misused stat names
             statsmap = {'Demos': 'Demos Inflicted'}
