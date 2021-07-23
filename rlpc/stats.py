@@ -184,9 +184,17 @@ class StatsHandler:
             except:
                 return f"Could not understand league {league}."
 
+        extended_stats = {
+            'Winning %': ['Games Won', 'Games Played'],
+            'Shooting %': ['Shots', 'Games Played'],
+            'Points': ['Goals', 'Assists']
+        }
+
+        stat = stat.title()
+
         # Make sure the program understands the specified stat if it's mis-capitalized or whatever
-        # SHEETS-UNDERSTANDABLE STATS
-        if useSheet == True:
+        # SHEETS STATS
+        if useSheet:
             if stat.lower() in ["sp", "series", "series_played", "series-played", "splayed", "seris", "sieries", "seiries"]:
                 stat = "Series Played"
             elif stat.lower() in ["gp", "games", "games_played", "games-played", "gplayed"]:
@@ -218,57 +226,21 @@ class StatsHandler:
             elif stat.lower() in ['shpg', 'shots per game', ' shots pg', 'shots per']:
                 stat = "Shots Per Game"
             else:
-                return f'Could not understand stat {stat.title()}. Try using "$help stats" for a list of available stats, or include "db" in your command to use advanced stats rather than sheet stats.'
-        # DATABASE STATS
-        # I got lazy and people will have to type these in accurately for it to work
-        else:
-            if stat.title() not in valid_stats:
-                return
-            else:
-                stat = stat.title()
-
-        if not useSheet:
-            players = self.session.players
-            category = findCategory(stat)
-            if not category:
                 raise InvalidStatError(stat)
-
-            data = pd.Series(name=stat, dtype=float)
-
-            try:
-                if league != "all":
-                    cursor = players.find({"info.league": league, f"stats.{category}.{stat}": {'$gt': 0}, "stats.general.Games Played": {'$gt': 0}})
-                else:
-                    cursor = players.find({f"stats.{category}.{stat}": {'$gt': 0}, "stats.general.Games Played": {'$gt': 0}})
-            except:
-                raise FindPlayersError(league, stat)
-
-            # Iterate through cursor and get all player's stats
-            while cursor.alive:
-                info = cursor.next()
-                if pergame:
-                    data[info['username']] = round((info['stats'][category][stat] / info["stats"]["general"]["Games Played"]), 2)
-                else:
-                    data[info['username']] = round(info['stats'][category][stat], 2)
-            
-            return data.sort_values(ascending=asc).head(limit)
-
-        else:
-            # This (below) is redundant for now but sheet ids can be different just in case something changes in the future
+        
             try:
                 if league.lower() in ['major', 'aaa', 'aa', 'a']:
                     data = self.p4sheet.to_df(
-                        '{league} League Stat Database!C3:R')
+                        f'{league} League Stat Database!C3:R')
                 elif league.lower() in ['independent', 'maverick', 'renegade', 'paladin']:
                     data = self.indysheet.to_df(
-                        '{league} League Stat Database!C3:R')
+                        f'{league} Stat Database!C3:R')
             except SheetToDfError:
                 raise StatSheetError('{league} League Stat Database!C3:R')
 
             data.set_index("Player", inplace=True)
             data.replace(to_replace='', value='0', inplace=True)
             # Turn number strings into ints and floats
-            # TODO: get rid of try/excepts
             for col in data.columns:
                 try:
                     data[col] = data[col].astype(int)
@@ -278,15 +250,75 @@ class StatsHandler:
                     except:
                         data[col] = data[col].str.rstrip('%').astype(float)
 
-        lb = data[stat.title()]
-        lb: pd.Series = lb[lb > 0]
-        games_played = data['Games Played']
+            lb = data[stat.title()]
+            lb: pd.Series = lb[lb > 0]
+            games_played = data['Games Played']
 
-        if pergame:
-            if stat in ['Goals Per Game', 'Assists per game', 'Saves per game', 'Points per Game', 'Shots per Game', 'Winning %', 'Shooting %']:
-                pass  # These stats are already per game
+            if pergame:
+                if stat in ['Goals Per Game', 'Assists per game', 'Saves per game', 'Points per Game', 'Shots per Game', 'Winning %', 'Shooting %']:
+                    pass  # These stats are already per game
+                else:
+                    lb = round(lb/games_played, 2)
+        
+        # DATABASE STATS
+        else:
+            if stat not in valid_stats and stat not in extended_stats.keys():
+                raise InvalidStatError(stat)
             else:
-                lb = round(lb/games_played, 2)
+                stat = stat.title()
+
+            players = self.session.players
+            data = pd.Series(name=stat, dtype=float)
+
+            if stat not in extended_stats.keys():
+                category = findCategory(stat)
+                if not category:
+                    raise InvalidStatError(stat)
+
+                try:
+                    if league != "all":
+                        cursor = players.find({"info.league": league, f"stats.{category}.{stat}": {'$gt': 0}, "stats.general.Games Played": {'$gt': 0}})
+                    else:
+                        cursor = players.find({f"stats.{category}.{stat}": {'$gt': 0}, "stats.general.Games Played": {'$gt': 0}})
+                except:
+                    raise FindPlayersError(league, stat)
+
+                # Iterate through cursor and get all players' stats
+                while cursor.alive:
+                    info = cursor.next()
+                    if pergame:
+                        data[info['username']] = round((info['stats'][category][stat] / info["stats"]["general"]["Games Played"]), 2)
+                    else:
+                        data[info['username']] = round(info['stats'][category][stat], 2)
+                
+                return data.sort_values(ascending=asc).head(limit)
+            else:
+                filter = {}
+                if league != "all":
+                    filter['info.league'] = league
+                necessary = extended_stats[stat]
+                for i in necessary:
+                    filter[f'stats.{findCategory(i)}.{i}'] = {'$gt': 0}
+                
+                try:
+                    cursor = players.find(filter)
+                except:
+                    raise FindPlayersError(league, stat)
+
+                # Iterate throuch cursor and get all players' stats
+                while cursor.alive:
+                    info = cursor.next()
+                    if stat == 'Winning %':
+                        datapoint = round((info['stats']['general']['Games Won'] / info['stats']['general']['Games Played']), 2)
+                    elif stat == 'Shooting %':
+                        datapoint = round((info['stats']['general']['Goals'] / info['stats']['general']['Shots']), 2)
+                    elif stat == 'Points':
+                        datapoint = round((info['stats']['general']['Goals'] / info['stats']['general']['Assists']), 2)
+                        if pergame:
+                            datapoint = round((datapoint / info['stats']['general']['Games Played']), 2)
+                    data[info['username']] = datapoint
+                
+                return data.sort_values(ascending=asc).head(limit)
 
         return lb.sort_values(ascending=asc).head(limit)
 
@@ -301,8 +333,8 @@ class StatsHandler:
         return player
 
     def gdstats(self, player: str, day: int, stat: str = None, pergame: bool = False) -> pd.DataFrame:
-        dates = {1: '3/16/21 Data', 2: '3/18/21 Data', 3: '3/23/21 Data', 4: '3/25/21 Data', 5: '3/30/21 Data', 6: '4/1/21 Data', 7: '4/6/21 Data', 8: '4/8/21 Data', 9: '4/13/21 Data',
-                 10: '4/15/21 Data', 11: '4/20/21 Data', 12: '4/22/21 Data', 13: '4/27/21 Data', 14: '4/29/21 Data', 15: '5/4/21 Data', 16: '5/6/21 Data', 17: '5/11/21 Data', 18: '5/13/21 Data'}
+        dates = {1: '7/20/21 Data', 2: '7/22/21 Data', 3: '7/27/21 Data', 4: '7/29//21 Data', 5: '8/3/21 Data', 6: '8/5/21 Data', 7: '8/10/21 Data', 8: '8/12/21 Data', 9: '8/17/21 Data',
+                 10: '8/19/21 Data', 11: '8/24/21 Data', 12: '8/26/21 Data', 13: '8/31/21 Data', 14: '9/2/21 Data', 15: '9/7/21 Data', 16: '9/9/21 Data', 17: '9/14/21 Data', 18: '9/16/21 Data'}
         try:
             datarange = dates[day]
         except KeyError:

@@ -858,5 +858,5 @@ class RLPCAnalysis:
 
 
 if __name__ == "__main__":
-    #Retreiver.download()
+    Retreiver.download()
     RLPCAnalysis().main()

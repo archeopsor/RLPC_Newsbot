@@ -1,3 +1,4 @@
+from errors.sheets_errors import GetSheetError
 from discord.ext.commands.errors import MissingRequiredArgument
 from discord.ext.commands.context import Context
 import discord
@@ -174,54 +175,76 @@ class Stats(commands.Cog):  # pragma: no cover
             # Default arguments
             useSheet = False
             league = "all"
-            stat = "Points Per Game"
+            stat = "Points"
             limit = 10
             pergame = False
             asc = False
 
             msg: list[str] = msg.split()
+            used_args = []
 
             for i, word in enumerate(msg):
-                try:
-                    limit = int(word)
-                except:
-                    pass
+                if word.isdigit():
+                    limit = word
+                    used_args.append(word)
+                    continue
                 if word.lower() in leagues.keys():
                     league = leagues[word.lower()]
+                    used_args.append(word)
+                    continue
                 elif word.lower() in ['pg', 'pergame']:
                     pergame = True
+                    used_args.append(word)
+                    continue
                 elif word.lower() in ['asc', 'ascending', 'reverse', 'least', 'bottom', 'bot']:
                     asc = True
-                elif word.lower() in ['sheet', 'usesheet']:
+                    used_args.append(word)
+                    continue
+                elif word.lower() in ['sheet', 'usesheet']: # TODO: Fix sheet stats
                     useSheet = True
+                    used_args.append(word)
+                    continue
                 elif word.lower() in ['db', 'database', 'fantasy', 'fantasydb']:
                     useSheet = False
-                # First word of a stat
-                elif word.lower() in [x.split()[0].lower() for x in valid_stats]:
-                    stat = word.title()
-                    if len(msg) == i+1:  # If that was the last arg in the msg
-                        break
-                    if msg[i+1].lower() in [x.split()[1].lower() if len(x.split()) > 1 else None for x in valid_stats]:  # Second word
-                        stat = stat + ' ' + msg[i+1].title()
-                        if len(msg) == i+2:  # If the next arg is the last arg in the msg
-                            msg.remove(msg[i+1]) # Get rid of second word in stat
-                            break
-                        if msg[i+2].lower() in [x.split()[2].lower() if len(x.split()) > 2 else None for x in valid_stats]:  # Third word
-                            stat = stat + ' ' + msg[i+2].title()
-                            msg.remove(msg[i+1]) # Get rid of second word in stat
-                            msg.remove(msg[i+1]) # Get rid of third word in stat
+                    used_args.append(word)
+                    continue
+
+            if len(msg) > len(used_args):  # If there are still args left, it must be the stat
+                for i in used_args:
+                    msg.remove(i)
+                stat = ' '.join(msg)
 
             # For common misused stat names
-            statsmap = {'Demos': 'Demos Inflicted'}
-            if stat in statsmap.keys():
-                stat = statsmap[stat]
+            statsmap = {
+                'Demos': 'Demos Inflicted',
+                'Goal': 'Goals',
+                'Assist': 'Assists',
+                'Save': 'Saves',
+                'Shot': 'Shots',
+                'Small Boosts': '# Small Boosts',
+                'Small Boost': '# Small Boosts',
+                '# Small Boost': '# Small Boosts',
+                'Large Boosts': '# Large Boosts',
+                'Large Boost': '# Large Boosts',
+                '# Large Boost': '# Large Boosts',
+                'Boost Steals': '# Boost Steals',
+                'Boost Steal': '# Boost Steals',
+                '# Boost Steal': '# Boost Steals',
+                'Boost': 'Boost Used',
+                'Win %': 'Winning %',
+                'Shot %': 'Shooting %'
+                }
+            if stat.title() in statsmap.keys():
+                stat = statsmap[stat.title()]
+            else:
+                stat = stat.title()
 
             try:
                 lb = self.stats.statlb(
                     useSheet=useSheet, league=league, stat=stat, limit=limit, pergame=pergame, asc=asc)
             except InvalidStatError as error:
                 return await ctx.send(f'Could not understand stat {error.stat.title()}. Try using "$help stats" for a list of available stats, or include "db" in your command to use advanced stats rather than sheet stats.')
-            except (FindPlayersError, StatSheetError) as error:
+            except (FindPlayersError, StatSheetError, GetSheetError) as error:
                 await ctx.send(f"There was an error getting player data. This has been reported, and will hopefully be fixed soon.")
                 return await self.bot.log_error(error, ctx.channel, ctx.command, ctx.kwargs)
 
