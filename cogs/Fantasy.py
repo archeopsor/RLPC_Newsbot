@@ -310,7 +310,7 @@ Welcome to RLPC Fantasy! This is a just-for-fun fantasy league in which people c
             minsalary = 0
             maxsalary = 700
             league = "all"
-            team = "all"
+            team = "signed"
             maxdistance = 5
             argument_labels = [arg1, arg3, arg5, arg7, arg9, arg11]
             arguments = [arg2, arg4, arg6, arg8, arg10, arg12]
