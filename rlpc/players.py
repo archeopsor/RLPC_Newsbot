@@ -436,8 +436,7 @@ class Identifier:
 
         """
         sheetdata = self.p4sheet.to_df('Players!A1:AE')
-        player = sheetdata.loc[sheetdata['Tracker'].str.contains(name.split()[
-                                                                 0]), 'Username']
+        player = sheetdata.loc[sheetdata['Tracker'].str.contains(name.replace(' ', '%20'), case=False), 'Username']
         try:
             return player.values[0]
         except:

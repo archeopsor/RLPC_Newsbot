@@ -240,7 +240,7 @@ class Sheet:
 
     def ensure_recent(self, minutes=10):
         if (time.time() - self.last_refreshed) > (60*minutes):
-            self.refresh
+            self.refresh()
 
     def push_df(self, range: str, df: pd.DataFrame, dimension: str = "COLUMNS") -> dict:
         """

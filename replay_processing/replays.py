@@ -291,10 +291,8 @@ class Replay:
             return stats, frames
 
         except:
-            print("REPLAY FAILED: " + self.path)
             self.failed = True
             return None
-        
 
     def get_teams(self) -> Union[str, str]:
         """
@@ -308,14 +306,13 @@ class Replay:
         """
         stats = self._stats
         choices = self.path.split('/')[-3].split(' - ')
+        return choices # TODO: Fix ids not working properly
 
         teams = []
         teams.append([x['id'] for x in stats['teams'][0]['playerIds']])
         teams.append([x['id'] for x in stats['teams'][1]['playerIds']])
-        team1 = self.identifier.find_team(
-            teams[0], id_players=True, choices=choices)
-        team2 = self.identifier.find_team(
-            teams[1], id_players=True, choices=choices)
+        team1 = self.identifier.find_team(teams[0], id_players=True, choices=choices)
+        team2 = self.identifier.find_team(teams[1], id_players=True, choices=choices)
 
         return [team1, team2]
 
@@ -338,6 +335,9 @@ class Replay:
         players: list = []
 
         for player in stats['players']:
+            if player['timeInGame'] < 150 or player['firstFrameInGame'] > 100: # In case they joined mid-game, these are pretty generous though
+                continue
+
             name = self.identifier.identify(player['id']['id'])
             if name == None:
                 name = self.identifier.identify(player['name'])
@@ -358,7 +358,8 @@ class Replay:
                 print("PLAYER FAILED: " + name)
                 continue
 
-            players.append(name)
+            if name not in players:
+                players.append(name)
 
         return players
 
@@ -447,7 +448,7 @@ class Series:
         for replay in self.replays:
             if replay.failed:
                 print(f"REPLAY FAILED: {replay.path}")
-                self.failed.append(replay)
+                self.failed.append(replay.path)
                 self.length -= 1  # Not sure if I should keep this in
                 continue
             else:
@@ -668,7 +669,7 @@ class RLPCAnalysis:
         self.playersHandler.download_ids()
 
     def get_replays(self):
-        replays = Retreiver.get_downloaded_replays(max_age=2)
+        replays = Retreiver.get_downloaded_replays()
         self.replays = replays
         return replays
 
@@ -691,7 +692,7 @@ class RLPCAnalysis:
             stats = stats.append(series_stats)
             self.failed.append(failed)        
 
-            # self.upload_game(series_obj)      
+            # self.upload_game(series_obj)
             counter += 1         
 
         self.stats = stats
@@ -707,6 +708,9 @@ class RLPCAnalysis:
         pass
 
     def upload_stats(self, stats: pd.DataFrame):
+        if 'League' in stats.columns:
+            stats = stats.drop(columns=['Fantasy Points', 'League'])
+
         for player in stats.index:
             update = {'$inc': {}}
 
@@ -728,9 +732,9 @@ class RLPCAnalysis:
                 continue
 
     def update_fantasy(self, stats: pd.DataFrame):
-        stats = stats.groupby(stats.index).sum()
-        stats['Fantasy Points'] = stats.apply(lambda row: fantasy_formula(row), axis=1)
-        stats['League'] = stats.apply(lambda row: self.identifier.find_league(self.identifier.find_team([row.name])), axis=1)
+        if 'League' not in stats.columns:
+            stats['Fantasy Points'] = stats.apply(lambda row: fantasy_formula(row), axis=1)
+            stats['League'] = stats.apply(lambda row: self.identifier.find_league(self.identifier.find_team([row.name])), axis=1)
         fantasy = self.session.fantasy.find()
         while fantasy.alive:
             account = fantasy.next()
@@ -740,7 +744,7 @@ class RLPCAnalysis:
                 if username not in stats.index: # They didn't have stats for this gameday
                     continue
 
-                points = stats.loc[username, 'Fantasy Points']
+                points = int(stats.loc[username, 'Fantasy Points'])
                 # index = next((i for (i, d) in enumerate(account['player_history']) if d["Player"] == player), None)
                 # if index == None:
                 #     continue
@@ -755,10 +759,17 @@ class RLPCAnalysis:
                 {'$inc': {'fantasy.fantasy_points': int(stats.loc[player, 'Fantasy Points'])}}
             )
 
+    def log_data(self, stats: pd.DataFrame, range: str):
+        if 'League' not in stats.columns:
+            stats['Fantasy Points'] = stats.apply(lambda row: fantasy_formula(row), axis=1)
+            stats['League'] = stats.apply(lambda row: self.identifier.find_league(self.identifier.find_team([row.name])), axis=1)
+
+        Sheet(gdstats_sheet).push_df(range, stats.reset_index().fillna(value=0))
+
     def create_post(self, stats: pd.DataFrame):
         if 'League' not in stats.columns:
             stats['Fantasy Points'] = stats.apply(lambda row: fantasy_formula(row), axis=1)
-            stats['League'] = stats.apply(lambda row: self.identifier.find_league(self.identifier.find_team(row.name)), axis=0)
+            stats['League'] = stats.apply(lambda row: self.identifier.find_league(self.identifier.find_team([row.name])), axis=1)
 
         stats.sort_values(by="Fantasy Points", ascending=False, inplace=True)
 
@@ -824,14 +835,14 @@ class RLPCAnalysis:
                 pass
 
     def main(self):
-        print("Checks")
-        self.checks()
+        # print("Checks")
+        # self.checks()
 
         print("Getting replays")
         stats = self.analyze_replays()
 
         print("Logging data")
-        Sheet(gdstats_sheet).push_df('7/20/21 Data!A2:Z', stats.reset_index().fillna(value=0))
+        self.log_data(stats, '7/22/21 Data!A2:Z')
 
         print("Uploading Stats")
         self.upload_stats(stats)
@@ -847,15 +858,5 @@ class RLPCAnalysis:
 
 
 if __name__ == "__main__":
-    #RLPCAnalysis().main()
-
-    stats = Sheet(gdstats_sheet).to_df('7/20/21 Data!A1:AL268').set_index('Username')
-    for col in stats.columns[:-1]:
-        try:
-            stats[col] = stats[col].apply(lambda x: int(x))
-        except:
-            stats[col] = stats[col].apply(lambda x: float(x))
-
-    rlpc = RLPCAnalysis()
-
-    rlpc.create_post(stats)
+    #Retreiver.download()
+    RLPCAnalysis().main()
