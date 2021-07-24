@@ -19,8 +19,10 @@ class Help(commands.Cog):
         author = ctx.message.author
         specified = specified.lower()
         
-        if specified in ['elo', 'fantasy', 'link', 'reddit', 'statscog', 'other']:
+        if specified in ['elo', 'fantasy', 'link', 'reddit', 'other']:
             specified = specified.title()
+        elif specified == 'statscog':
+            specified = 'StatsCog'
         elif specified not in ['none', 'predict', 'rank', 'forecast', 'new', 'pick', 'drop', 'lb', 'team', 'info', 'players', 'search', 'getreddit', 'get', 'newest', 'valid', 'pr', 'mmr', 'stats', 'gdstats', 'top', 'ping', 'alerts']:
             await ctx.send(f"Couldn't understand {specified.title()}")
             specified = "none"

@@ -162,7 +162,6 @@ class StatsHandler:
         rankings = rankings.sort_values(ascending=False)
         return rankings
 
-    # TODO: Add boost ratio, shot %, win %, etc as stats
     def statlb(self, useSheet: bool = False, league: str = "all", stat: str = "Goals", limit: int = 10, pergame: bool = False, asc: bool = False) -> pd.Series:
         """Gets a series containing a leaderboard for a given stat
 

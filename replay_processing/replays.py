@@ -835,8 +835,8 @@ class RLPCAnalysis:
                 pass
 
     def main(self):
-        # print("Checks")
-        # self.checks()
+        print("Checks")
+        self.checks()
 
         print("Getting replays")
         stats = self.analyze_replays()
@@ -853,7 +853,7 @@ class RLPCAnalysis:
         print("Creating post file")
         self.create_post(stats)
 
-        print("FAILED: "+self.failed)
+        print("FAILED: "+str(self.failed))
 
 
 
