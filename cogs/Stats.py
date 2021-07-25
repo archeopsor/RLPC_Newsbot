@@ -185,7 +185,7 @@ class Stats(commands.Cog):  # pragma: no cover
 
             for i, word in enumerate(msg):
                 if word.isdigit():
-                    limit = word
+                    limit = int(word)
                     used_args.append(word)
                     continue
                 if word.lower() in leagues.keys():

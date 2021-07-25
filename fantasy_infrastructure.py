@@ -292,7 +292,7 @@ class FantasyHandler:
         Returns:
             pd.Series: Sorted series with Username: value pairs.
         """
-        filter = {}
+        filter = {'fantasy.fantasy_points': {'$gt': 0}}
         if league:
             filter['info.league'] = leagues[league.lower()]
 
@@ -309,8 +309,7 @@ class FantasyHandler:
 
             if pergame:
                 try:
-                    stat = round(doc[sortby] / player['stats']
-                                 ['Games Played'], 1)
+                    stat = round(doc[sortby] / player['stats']['general']['Series Played'], 1)
                 except:
                     stat = doc[sortby]  # Avoid dividing by 0
             else:
