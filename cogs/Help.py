@@ -1,4 +1,5 @@
 import discord
+from discord.errors import HTTPException
 from discord.ext import commands
 import os
 
@@ -36,7 +37,10 @@ class Help(commands.Cog):
             text = text.replace('{prefix}', prefix)
         
         if not isinstance(ctx.channel, discord.channel.DMChannel):
-            await author.send(text)
+            try:
+                await author.send(text)
+            except HTTPException:
+                return await ctx.send("There currently isn't a help section written for this command, sorry. It's on the list of things to add.")
             return await ctx.send("A DM has been sent! If you have any further questions, please DM Arco.")
         else:
             return await ctx.send(text)

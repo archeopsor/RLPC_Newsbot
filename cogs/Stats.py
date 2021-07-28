@@ -243,7 +243,7 @@ class Stats(commands.Cog):  # pragma: no cover
                 lb = self.stats.statlb(
                     useSheet=useSheet, league=league, stat=stat, limit=limit, pergame=pergame, asc=asc)
             except InvalidStatError as error:
-                return await ctx.send(f'Could not understand stat {error.stat.title()}. Try using "$help stats" for a list of available stats, or include "db" in your command to use advanced stats rather than sheet stats.')
+                return await ctx.send(f'Could not understand stat {error.stat.title()}. Try using "$valid" for a list of available stats.')
             except (FindPlayersError, StatSheetError, GetSheetError) as error:
                 await ctx.send(f"There was an error getting player data. This has been reported, and will hopefully be fixed soon.")
                 return await self.bot.log_error(error, ctx.channel, ctx.command, ctx.kwargs)
@@ -310,7 +310,7 @@ class Stats(commands.Cog):  # pragma: no cover
                 data = self.stats.gdstats(player, day, stat=stat, pergame=pergame)
             except InvalidDayError:
                 return await ctx.send(f'{day} is not a valid gameday. Please enter a number between 1 and 18.')
-            except GDStatsSheetError:
+            except (GDStatsSheetError, GetSheetError):
                 return await ctx.send(f"It doesn't look like there are any stats available for gameday {day}")
             except PlayerNotFoundError:
                 return await ctx.send(f"Could not find stats for {player} on gameday {day}.")

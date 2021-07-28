@@ -141,6 +141,7 @@ passwords.py
 creds.json
 replay_processing/Replay_Files/
 post.txt
+.prof
 
 ##########################
 # VSCODE GITIGNORE STUFF #

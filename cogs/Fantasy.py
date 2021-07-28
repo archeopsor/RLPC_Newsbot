@@ -256,6 +256,8 @@ class Fantasy(commands.Cog):
             lb = self.fantasy.player_lb(
                 league=league, num=num, pergame=pergame)
 
+            num = min(num, lb.size)
+
             message = f"**1)** {lb.index[0]} ({lb[lb.index[0]]})"
             for i in range(1, num):
                 message = message + \
