@@ -17,6 +17,7 @@ from tools.sheet import Sheet
 from settings import prefix, valid_stats, leagues, sheet_p4, sheet_indy, gdstats_sheet, divisions, leagues
 
 from errors.stats_errors import *
+from errors.general_errors import *
 
 
 class Stats(commands.Cog):  # pragma: no cover
@@ -53,7 +54,7 @@ class Stats(commands.Cog):  # pragma: no cover
             self.teams = teams
         if not stats:
             self.stats = StatsHandler(
-                session=self.session, p4sheet=self.p4sheet, indysheet=self.indysheet, gdsheet=self.gdsheet, teams=self.teams)
+                session=self.session, p4sheet=self.p4sheet, indysheet=self.indysheet, gdsheet=self.gdsheet, teams=self.teams, identifier=self.identifier)
         else:
             self.stats = stats
 
@@ -336,13 +337,37 @@ class Stats(commands.Cog):  # pragma: no cover
             else:
                 return await ctx.send(data.loc[stat.title()])
 
-
-    # @gdstats.error
-    # async def gdstats_error(self, ctx: Context, error):
-    #     pass
-
-
     @commands.command(aliases=("ts", "statsteam", "teamstat",))
-    async def teamstats(self, ctx: Context, *, team):
+    async def teamstats(self, ctx: Context, *, msg):
+        async with ctx.typing():
+            league = None
+            team = None
+
+            waitingMsg: discord.Message = await ctx.send("This may take a second")
+
+            if msg.lower() in leagues.keys():
+                league = leagues[msg.lower()]
+            elif msg.title() in divisions.keys():
+                team = msg.title()
+            else:
+                return await ctx.send(f"Couldn't understand {msg}. Please specify either a league or a team.")
+
+            if league != None:
+                stats = self.stats.teamstats(league = league)
+            else:
+                stats = self.stats.teamstats(team = team)
+
+
+            dfi.export(stats, "stats.png", table_conversion='matplotlib')
+            path = os.path.abspath("stats.png")
+            file = discord.File(path)
+            await ctx.send(file=file)
+            await waitingMsg.delete()
+            
+            return os.remove(path)
+            
+
+    @commands.command(aliases=())
+    async def statsrank(self, ctx: Context, *, msg):
         async with ctx.typing():
             pass

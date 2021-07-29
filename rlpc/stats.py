@@ -3,16 +3,17 @@ import pandas as pd
 
 from tools.sheet import Sheet
 from tools.mongo import Session, findCategory, teamIds, statsCategories
-from rlpc.players import Teams
+from rlpc.players import Teams, Identifier
 
 from settings import valid_stats, leagues, sheet_p4, sheet_indy, power_rankings_sheet, gdstats_sheet
 
 from errors.stats_errors import *
 from errors.sheets_errors import GetSheetError, SheetToDfError
+from errors.general_errors import *
 
 
 class StatsHandler:
-    def __init__(self, session: Session = None, p4sheet: Sheet = None, indysheet: Sheet = None, powerrankings: Sheet = None, gdsheet: Sheet = None, teams: Teams = None):
+    def __init__(self, session: Session = None, p4sheet: Sheet = None, indysheet: Sheet = None, powerrankings: Sheet = None, gdsheet: Sheet = None, teams: Teams = None, identifier: Identifier = None):
         if not session:
             self.session = Session()
         else:
@@ -37,6 +38,10 @@ class StatsHandler:
             self.teams = Teams(session=self.session)
         else:
             self.teams = teams
+        if not identifier:
+            self.identifier = Identifier(self.session, self.p4sheet)
+        else:
+            self.identifier = identifier
 
     def get_player_stats(self, player: str, stat: str = "all") -> pd.DataFrame:
         """
@@ -361,9 +366,63 @@ class StatsHandler:
 
         return stats_series
 
-    def teamstats(self, team: str):
-        team = team.title()
-        roster = self.teams.get_roster(team)
+    def teamstats(self, team: str = None, league: str = None):
+        if team != None:
+            team = team.title()
+            roster = self.teams.get_roster(team)
+            league = self.identifier.find_league(team)
+        elif league != None:
+            league = leagues[league.lower()]
+
+        sheet: Sheet
+        if league in ['Major', 'AAA', 'AA', 'A']:
+            sheet = self.p4sheet
+        elif league in ['Independent', 'Maverick', 'Renegade', 'Paladin']:
+            sheet = self.indysheet
+        else:
+            raise LeagueNotFoundError(team)
+
+        if not team:
+            stats = sheet.to_df(f"{league} Stats!D5:Q9").set_index("")
+            stats = stats.append(sheet.to_df(f"{league} Stats!D12:Q16").set_index(""))
+            stats = stats.append(sheet.to_df(f"{league} Stats!D20:Q24").set_index(""))
+            stats = stats.append(sheet.to_df(f"{league} Stats!D27:Q31").set_index(""))
+            stats.rename(columns={
+                'Record (Div Record)': 'Record',
+                'Forfeits': "FFs", 
+                'W/L Streak': 'Streak',
+                'Winning %': 'Win %',
+                'Goals | PG': 'Goals',
+                'Assists | PG': 'Assists',
+                'Saves | PG': 'Saves',
+                'Shots | PG': 'Shots',
+                r'%Goals Assisted': 'Assist %',
+                'Shooting %': 'Shot %',
+                'GA | PG': 'GA',
+                'Shots Agnst  | PG': 'SA',
+                'Opp Shooting %': 'Opp Shot %'
+                }, inplace=True)
+            return stats
+
+        else:
+            stats = pd.DataFrame()
+            for player in roster:
+                stats = stats.append(self.get_player_stats(player))
+            
+            stats.rename(columns={
+                'Series Played': 'Series',
+                'Games Played': 'Games',
+                'Points (Goals+Assists)': 'Points',
+                'Goals per game': 'GPG',
+                'Assists per game': 'APG',
+                'Saves per game': 'SPG',
+                'Shooting %': 'Shot %',
+                'Winning %': 'Win %',
+                'Points per Game': 'PPG',
+                'Shots Per Game': 'ShPG'
+            }, inplace=True)
+
+            return stats.set_index('Player')
 
 
 if __name__ == "__main__":

@@ -44,9 +44,8 @@ class Newsbot(commands.Bot):
         self.elo = EloHandler(self.session, self.identifier)
         self.fantasy = FantasyHandler(self.session)
         self.players = Players(self.session, self.p4sheet)
-        self.stats = StatsHandler(
-            self.session, self.p4sheet, self.indysheet, self.pr_sheet)
         self.teams = Teams(session=self.session)
+        self.stats = StatsHandler(session=self.session, p4sheet=self.p4sheet, indysheet=self.indysheet, powerrankings=self.pr_sheet, teams=self.teams, identifier=self.identifier)
 
         self.token = token
         
@@ -189,6 +188,6 @@ class Newsbot(commands.Bot):
 
 
 if __name__ == "__main__":
-    #from passwords import TEST_BOT_TOKEN as BOT_TOKEN
+    from passwords import TEST_BOT_TOKEN as BOT_TOKEN
     bot = Newsbot(BOT_TOKEN)
     bot.run()
