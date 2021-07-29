@@ -35,9 +35,9 @@ class Newsbot(commands.Bot):
         super().__init__(command_prefix=prefix, help_command=None)
 
         self.session = Session()
-        self.p4sheet = Sheet(sheet_p4)
+        self.p4sheet = Sheet(sheet_p4, refresh_cooldown=60)
         self.fc_sheet = Sheet(forecast_sheet)
-        self.indysheet = Sheet(sheet_indy)
+        self.indysheet = Sheet(sheet_indy, refresh_cooldown=60)
         self.gdsheet = Sheet(gdstats_sheet)
         self.pr_sheet = Sheet(power_rankings_sheet)
         self.identifier = Identifier(self.session, self.p4sheet)
