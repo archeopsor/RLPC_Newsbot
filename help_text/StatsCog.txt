@@ -19,3 +19,5 @@
 **{prefix}top [stat] *[league]* *[source]* *[limit]* *[pg]* *[reverse]***: Shows a leaderboard for the given stat, which can either be from the spreadsheet or from the fantasy database (default is the fantasy database). Can add 'pg' to divide by the number of games played or 'asc' to show the lowest end.
     *Note: Parameters do not need to be in order.*
     *Additionally, to use the sheet as the source, there must be a league specified.*
+
+**{prefix}teamstats [team/league]**: Either shows team stats for the specified league, or stats for players on the specified team.
