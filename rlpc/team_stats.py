@@ -21,7 +21,7 @@ class SheetsPoisson:
         else:
             self.p4sheet = p4sheet
         if not indysheet:
-            self.indysheet = Sheet(indysheet)
+            self.indysheet = Sheet(sheet_indy)
         else:
             self.indysheet = indysheet
 
