@@ -130,6 +130,10 @@ class Misc(commands.Cog):
             embed.add_field(name="**Org**", value="\n".join(self.teams.get_org(data)['Teams']))
             embed.add_field(name="**Roster**", value = "\n".join(self.teams.get_roster(team)))
             embed.add_field(name="**League**", value=self.teams.get_league(data), inline=True)
+
+        for i, field in enumerate(embed.fields):
+            if field.value == '':
+                embed.set_field_at(i, name = field.name, value = '-')
             
         return await ctx.send(embed=embed)
 

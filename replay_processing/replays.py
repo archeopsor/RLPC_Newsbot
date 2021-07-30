@@ -210,6 +210,8 @@ class Retreiver:
             List of replay file paths unfolded and retreived
 
         """
+        Retreiver.clean_folder()
+        
         files = {}
         for download in os.listdir(path):
             new = os.path.getmtime(
@@ -222,12 +224,16 @@ class Retreiver:
                     # Extract files to new folder
                     zip_ref.extractall(f"{target}/{name}")
                 for folder in os.listdir(f"{target}/{name}"):
-                    filename = os.listdir(f"{target}/{name}/{folder}")[0]
+                    dir = os.listdir(f"{target}/{name}/{folder}")
+                    filename = dir[0]
+                    for key in dir:
+                        if os.path.getctime(f"{target}/{name}/{folder}/{key}") > os.path.getctime(f"{target}/{name}/{folder}/{filename}"):
+                            filename = key
                     replays.append(f"{target}/{name}/{folder}/{filename}")
                 files[name] = replays
                 
                 filepath = os.path.join(path, download).replace('/', '\\')
-                #os.remove(filepath)
+                os.remove(filepath)
                 # shutil.rmtree(filepath)
 
         return files
@@ -856,6 +862,45 @@ class RLPCAnalysis:
         print("FAILED: "+str(self.failed))
 
 
+def temp():
+    sheet = Sheet(gdstats_sheet)
+    old_stats = sheet.to_df("Copy of 7/29/21 Data!A1:AK").set_index("Username")
+    new_stats = sheet.to_df("7/29/21 Data!A1:AK").set_index("Username")
+    update_stats = pd.DataFrame()
+    for player in new_stats.index:
+        try:
+            old = old_stats.loc[player]
+        except:
+            old = None
+
+        new = new_stats.loc[player]
+
+        for col in new_stats.columns:
+            if old is not None:
+                update_stats.loc[player, col] = float(new[col]) - float(old[col])
+            else:
+                update_stats.loc[player, col] = float(new[col])
+    
+    for player in old_stats.index:
+        if player in update_stats.index:
+            continue
+        
+        try:
+            new = new_stats.loc[player]
+        except:
+            new = None
+
+        old = old_stats.loc[player]
+
+        for col in old_stats.columns:
+            if new is not None:
+                update_stats.loc[player, col] = float(new[col]) - float(old[col])
+            else:
+                update_stats.loc[player, col] = 0 - float(old[col])
+
+    return update_stats
+
+    
 
 if __name__ == "__main__":
     Retreiver.download()
