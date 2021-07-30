@@ -337,7 +337,7 @@ class StatsHandler:
         return player
 
     def gdstats(self, player: str, day: int, stat: str = None, pergame: bool = False) -> pd.DataFrame:
-        dates = {1: '7/20/21 Data', 2: '7/22/21 Data', 3: '7/27/21 Data', 4: '7/29//21 Data', 5: '8/3/21 Data', 6: '8/5/21 Data', 7: '8/10/21 Data', 8: '8/12/21 Data', 9: '8/17/21 Data',
+        dates = {1: '7/20/21 Data', 2: '7/22/21 Data', 3: '7/27/21 Data', 4: '7/29/21 Data', 5: '8/3/21 Data', 6: '8/5/21 Data', 7: '8/10/21 Data', 8: '8/12/21 Data', 9: '8/17/21 Data',
                  10: '8/19/21 Data', 11: '8/24/21 Data', 12: '8/26/21 Data', 13: '8/31/21 Data', 14: '9/2/21 Data', 15: '9/7/21 Data', 16: '9/9/21 Data', 17: '9/14/21 Data', 18: '9/16/21 Data'}
         try:
             datarange = dates[day]
