@@ -43,7 +43,7 @@ class StatsHandler:
         else:
             self.identifier = identifier
 
-    def get_player_stats(self, player: str, stat: str = "all") -> pd.DataFrame:
+    def get_player_stats(self, player: str, stat: str = "all", advanced: bool = False) -> pd.DataFrame:
         """
         Gets the stats from the RLPC Spreadsheet for a given player
 

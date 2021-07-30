@@ -134,19 +134,19 @@ class Stats(commands.Cog):  # pragma: no cover
 
     @commands.command(aliases=("getstats", "stats", "get_stats",))
     # TODO: Add database stats
-    async def get_player_stats(self, ctx: Context, player: str, stat: str = "all"):
+    async def get_player_stats(self, ctx: Context, player: str, stat: str = "all", advanced: bool = False):
         async with ctx.typing():
             if player == "me":
                 waitingMsg: discord.Message = await ctx.send("One second, retreiving discord ID and stats")
                 discord_id = str(ctx.author.id)
-                await waitingMsg.delete(delay=3)
+                await waitingMsg.delete()
                 try:
                     player = self.stats.get_me(discord_id)
                 except FindMeError as error:
                     return await ctx.send("You don't appear to have an up-to-date discord id on record. Try using the name that shows up on the RLPC spreadsheet.")
 
             try:
-                answer = self.stats.get_player_stats(player, stat)
+                answer = self.stats.get_player_stats(player, stat, advanced)
             except InvalidStatError:
                 return await ctx.send(f"Couldn't understand stat {stat}. If this is part of a username, surround the username in quotes.")
             except (StatsError, KeyError):
@@ -286,7 +286,7 @@ class Stats(commands.Cog):  # pragma: no cover
                         player = self.stats.get_me(playerid)
                     except FindMeError:
                         return await ctx.send("You don't appear to have an up-to-date discord id on record. Try using the name that shows up on the RLPC spreadsheet.")
-                    await waitingMsg.delete(delay=3)
+                    await waitingMsg.delete()
                     used_args.append(arg)
                 elif 'gd' in arg:
                     used_args.append(arg)

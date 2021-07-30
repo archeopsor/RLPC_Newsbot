@@ -74,7 +74,7 @@ def get_creds():
 
 
 class Sheet:
-    def __init__(self, sheet_id, refresh_cooldown=10):
+    def __init__(self, sheet_id, refresh_cooldown=30):
         self.service = get_creds()
         self.sheet_id = sheet_id
         self.ranges = {}

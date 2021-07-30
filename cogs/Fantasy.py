@@ -181,7 +181,7 @@ class Fantasy(commands.Cog):
                     player = self.bot.stats.get_me(discord_id)
                 except FindMeError:
                     return await ctx.send("You don't appear to have an up-to-date discord id on record. Try using the name that shows up on the RLPC spreadsheet.")
-                await waitingMsg.delete(delay=3)
+                await waitingMsg.delete()
 
             try:
                 answer = self.fantasy.info(player, pg=pg)

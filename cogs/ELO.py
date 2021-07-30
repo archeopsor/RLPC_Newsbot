@@ -7,11 +7,12 @@ import pandas as pd
 import dataframe_image as dfi
 import os
 import matplotlib.pyplot as plt
+from matplotlib.image import AxesImage
 
-from tools.team_stats import PoissonDataHandler
 
 from settings import prefix, forecast_sheet, leagues
 
+from rlpc.team_stats import PoissonDataHandler, SheetsPoisson
 from rlpc.players import Identifier
 from rlpc.elo import EloHandler
 
@@ -21,9 +22,9 @@ from tools.mongo import Session
 bot = commands.Bot(command_prefix=prefix)
 
 
-class ELO(commands.Cog): # pragma: no cover
+class ELO(commands.Cog):
 
-    def __init__(self, bot: commands.Bot, session: Session = None, identifier: Identifier = None, fc_sheet: Sheet = None, elo: EloHandler = None):
+    def __init__(self, bot: commands.Bot, session: Session = None, identifier: Identifier = None, fc_sheet: Sheet = None, elo: EloHandler = None, poissonHandler: SheetsPoisson = None):
         self.bot = bot
 
         if not session:
@@ -43,6 +44,10 @@ class ELO(commands.Cog): # pragma: no cover
                                   identifier=self.identifier)
         else:
             self.elo = elo
+        if not poissonHandler:
+            self.poissonHandler = SheetsPoisson()
+        else:
+            self.poissonHandler = poissonHandler
 
     @commands.command(aliases=("scorepredict", "predictscore", "score_predict", "predict_score",))
     async def predict(self, ctx: Context, team1: str, team2: str, bestof: float = 5.0):
@@ -112,7 +117,7 @@ class ELO(commands.Cog): # pragma: no cover
             elif league == "none" and team != "none":
                 waitingMsg: discord.Message = await ctx.send(f'Finding league for team "{team}"...', )
                 league = self.identifier.find_league(team.title()).lower()
-                waitingMsg.delete(delay=3)
+                waitingMsg.delete()
             elif league == "major":
                 datarange = "Most Recent!A2:F18"
             elif league == "aaa":
@@ -244,15 +249,23 @@ class ELO(commands.Cog): # pragma: no cover
             if numGames > 15:
                 return await ctx.send("To avoid spam and rate limiting, 15 is the maximum number of games supported.")
 
-            handler = PoissonDataHandler(league, team1, team2)
+            handler = self.poissonHandler
+
             if img:
-                img = plt.imshow(handler.generatePoisson())
-                img.figure.savefig('poisson.png')
+                img: AxesImage = plt.imshow(handler.generatePoisson(team1, team2, league)[0])
+                plt.title(f'Poisson Distribution: {team1} vs. {team2}', fontsize=16)
+                cb = plt.colorbar(img, label="Probability of result")
+                plt.xlabel(f"{team1} Goals", fontsize=10)
+                plt.ylabel(f"{team2} Goals", fontsize=10)
+                img.figure.savefig('poisson.png', bbox_inches='tight')
+                cb.remove() # Remove the colorbar so that it doesn't stay for the next function call
+
                 path = os.path.abspath('poisson.png')
                 file = discord.File(path)
                 await ctx.send(file=file)
+                os.remove(path)
 
-            team1Poisson, team2Poisson = handler.getOneWayPoisson()
+            team1Poisson, team2Poisson = handler.getOneWayPoisson(league, team1, team2)
             team1Wins = 0
             team2Wins = 0
             i = 1
@@ -277,7 +290,7 @@ class ELO(commands.Cog): # pragma: no cover
                 elif team2Wins > (numGames / 2):
                     return await ctx.send(f"{team2} has won the series with a score of {team2Wins} - {team1Wins}")
 
-            return await ctx.send(f"The series has ended in a {team1Wins} - {team2Wins} draw. Consider using an odd number of games")
+        return await ctx.send(f"The series has ended in a {team1Wins} - {team2Wins} draw. Consider using an odd number of games")
 
     @poisson.error
     async def poisson_error(self, ctx: Context, error):

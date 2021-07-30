@@ -75,7 +75,10 @@ class Newsbot(commands.Bot):
         elif isinstance(error, commands.DisabledCommand):
             await ctx.send('Sorry. This command is disabled and cannot be used.')
         elif isinstance(error, commands.CommandInvokeError):
-            await self.log_error(error.original, ctx.channel, ctx.command, ctx.kwargs)
+            if isinstance(error.original, discord.errors.Forbidden):
+                return await ctx.send("This bot doesn't have adequate permissions in this channel or server.")
+            else:
+                await self.log_error(error.original, ctx.channel, ctx.command, ctx.kwargs)
 
     async def log_error(self, error: commands.CommandInvokeError, channel: discord.ChannelType, command: commands.Command, args: dict):
         await channel.send('There was an unexpected error using this command.')
@@ -188,6 +191,6 @@ class Newsbot(commands.Bot):
 
 
 if __name__ == "__main__":
-    #from passwords import TEST_BOT_TOKEN as BOT_TOKEN
+    from passwords import TEST_BOT_TOKEN as BOT_TOKEN
     bot = Newsbot(BOT_TOKEN)
     bot.run()
