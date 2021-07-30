@@ -197,6 +197,12 @@ class Stats(commands.Cog):  # pragma: no cover
                     pergame = True
                     used_args.append(word)
                     continue
+                elif word.lower() == 'per' and msg[i+1].lower() == 'game':
+                    pergame = True
+                    used_args.append(word)
+                    used_args.append(msg[i+1])
+                    msg.remove(msg[i+1])
+                    continue
                 elif word.lower() in ['asc', 'ascending', 'reverse', 'least', 'bottom', 'bot']:
                     asc = True
                     used_args.append(word)

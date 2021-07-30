@@ -139,9 +139,12 @@ dmypy.json
 # Github secrets
 passwords.py
 creds.json
+
+# Random stuff
 replay_processing/Replay_Files/
 post.txt
 .prof
+.log
 
 ##########################
 # VSCODE GITIGNORE STUFF #
