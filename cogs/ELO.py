@@ -69,7 +69,7 @@ class ELO(commands.Cog):
     async def rankteams(self, ctx: Context, league):
         async with ctx.typing():
             try:
-                league = leagues[league]
+                league = leagues[league.lower()]
             except KeyError:
                 return await ctx.send("Couldn't understand league: "+league)
             answer = self.elo.rank_teams(league)
