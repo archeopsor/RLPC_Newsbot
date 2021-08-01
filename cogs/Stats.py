@@ -65,7 +65,10 @@ class Stats(commands.Cog):  # pragma: no cover
     @commands.command(aliases=('power', 'powerrankings', 'power_rankings', 'rankings', 'ranking',))
     async def pr(self, ctx: Context, league: str):
         async with ctx.typing():
-            league = leagues[league.lower()]
+            try:
+                league = leagues[league.lower()]
+            except KeyError:
+                return await ctx.send("Couldn't understand league: "+league)
             try:
                 rankings = self.stats.power_rankings(league)
             except PRSheetError as error:
