@@ -17,7 +17,7 @@ class TestSheet(unittest.TestCase):
         self.assertIsNotNone(indy.get("Players!A1:H"))
 
     def test_no_perms(self):
-        self.assertRaises(NoPermissionError, invalid.get, "a1:b")
+        self.assertRaises(GetSheetError, invalid.get, "a1:b")
 
     def test_get_cache(self):
         p4.get("Players!A1:H")
@@ -27,7 +27,7 @@ class TestSheet(unittest.TestCase):
         self.assertEqual(df.columns.to_list(), ['Username', 'Region', 'Platform', 'Sheet MMR', 'Team', 'League', 'Conf', 'Div'])
 
     def test_invalid_perms_append(self):
-        self.assertRaises(NoPermissionError, p4.append, "Major Rosters!A1:B", [['a', 'b']])
+        self.assertRaises(GetSheetError, p4.append, "Major Rosters!A1:B", [['a', 'b']])
 
     def test_0_update(self):
         self.assertEqual(type(test.update_cell('testing!A4', 20)), dict)

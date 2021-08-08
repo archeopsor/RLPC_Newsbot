@@ -25,7 +25,7 @@ class TestPlayers(unittest.TestCase):
         self.assertEqual("bdong", identifier.identify("76561199015415785"))
 
     def test_tracker_identify(self):
-        self.assertEqual("Eniity", identifier.tracker_identify("OhWaitWhy"))
+        self.assertEqual("Lil Uzi Yurt", identifier.tracker_identify("OhWaitWhy"))
         
 if __name__ == '__main__':
     unittest.main()

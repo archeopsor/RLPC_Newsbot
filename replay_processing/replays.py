@@ -191,7 +191,7 @@ class Retreiver:
         return replays
 
     @staticmethod
-    def get_downloaded_replays(path: str = 'C:/Users/Simi/Downloads', target: str = "./replay_processing/Replay_Files", max_age: int = 1) -> list:
+    def get_downloaded_replays(path: str = 'C:/Users/Simi/Downloads', target: str = "./replay_processing/Replay_Files", max_age: float = 0.5) -> list:
         """
         Moves replay zip files downloaded from rlpcgamelogs.com to the target folder, and unfolds them in the process. Returns a list of retreived replays.
 
@@ -201,8 +201,8 @@ class Retreiver:
             Where the downloaded replays are located. The default is 'C:/Users/Simi/Downloads'.
         target : str, optional
             Where to move unfolded replays. The default is "C:/Users/Simi/Desktop/Replay Files/".
-        max_age : int, optional
-            Maximum age, in days, of files to get. The default is 1.
+        max_age : float, optional
+            Maximum age, in days, of files to get. The default is 0.5.
 
         Returns
         -------
@@ -850,7 +850,7 @@ class RLPCAnalysis:
         stats = self.analyze_replays()
 
         print("Logging data")
-        self.log_data(stats, '8/3/21 Data!A2:Z')
+        self.log_data(stats, '8/5/21 Data!A2:Z')
 
         print("Uploading Stats")
         self.upload_stats(stats)
@@ -905,5 +905,5 @@ def temp():
     
 
 if __name__ == "__main__":
-    Retreiver.download()
+    #Retreiver.download()
     RLPCAnalysis().main()

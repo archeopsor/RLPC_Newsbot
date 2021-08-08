@@ -117,8 +117,9 @@ class ELO(commands.Cog):
             elif league == "none" and team != "none":
                 waitingMsg: discord.Message = await ctx.send(f'Finding league for team "{team}"...', )
                 league = self.identifier.find_league(team.title()).lower()
-                waitingMsg.delete()
-            elif league == "major":
+                await waitingMsg.delete()
+
+            if league == "major":
                 datarange = "Most Recent!A2:F18"
             elif league == "aaa":
                 datarange = "Most Recent!A21:F37"
@@ -188,14 +189,14 @@ class ELO(commands.Cog):
 
             elif team != "none" and part == "none":
                 embed = discord.Embed(
-                    title=f'{team.title()} Forecast', description="Average record and probability of making each part of playoffs throughout 100,000 simulations of the league.", color=0x000080)
+                    title=f'{team.title()} Forecast', description="Average record and probability of making each part of playoffs throughout 100,000 simulations of the league.", color=0x000080, url="https://docs.google.com/spreadsheets/d/1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ/edit?usp=sharing")
                 data = data.loc[team.title()]
                 data['Expected Wins'] = f"({round(float(data['Expected Wins']), 1)} - {round(18-float(data['Expected Wins']), 1)})"
                 data.rename({'Expected Wins': 'Record'}, inplace=True)
 
                 for col in data.index:
                     embed.add_field(name=col, value=data[col], inline=False)
-                return await ctx.send("See all of the data here: <https://docs.google.com/spreadsheets/d/1GEFufHK5xt0WqThYC7xaK2gz3cwjinO43KOsb7HogQQ/edit?usp=sharing>", embed=embed)
+                return await ctx.send(embed=embed)
 
             elif team == "none" and part != "none":
                 embed = discord.Embed(
