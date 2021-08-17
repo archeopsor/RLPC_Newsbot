@@ -19,7 +19,7 @@ dates = {1: '7/20/21 Data', 2: '7/22/21 Data', 3: '7/27/21 Data', 4: '7/29/21 Da
         10: '8/19/21 Data', 11: '8/24/21 Data', 12: '8/26/21 Data', 13: '8/31/21 Data', 14: '9/2/21 Data', 15: '9/7/21 Data', 16: '9/9/21 Data', 17: '9/14/21 Data', 18: '9/16/21 Data'}
 
 def get_latest_gameday() -> int:
-    day = datetime.datetime.now(tz=pytz.timezone("US/Eastern")).date()
+    day = datetime.datetime.now(tz=pytz.timezone("US/Eastern"))
     found_day = False
     
     # Go backwards day by day until a valid day is found (starting yesterday)
@@ -28,7 +28,7 @@ def get_latest_gameday() -> int:
         day_string = day.strftime("%#m/%#d/%#y Data")
         if day_string in dates.values():
             return list(dates.keys())[list(dates.values()).index(day_string)]
-        elif datetime.datetime.strptime(list(dates.values())[0], "%m/%d/%y Data") > day: # If the day is earlier than all possible days
+        elif datetime.datetime.strptime(list(dates.values())[0], "%m/%d/%y Data").astimezone(pytz.timezone("US/Eastern")) > day: # If the day is earlier than all possible days
             raise InvalidDayError(day=0)
         
 
