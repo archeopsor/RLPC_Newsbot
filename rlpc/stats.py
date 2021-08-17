@@ -24,10 +24,11 @@ def get_latest_gameday() -> int:
     
     # Go backwards day by day until a valid day is found (starting yesterday)
     while not found_day:
-        print(day)
         day -= datetime.timedelta(days=1)
         day_string = day.strftime("%#m/%#d/%#y Data")
+        print(day_string)
         if day_string in dates.values():
+            found_day = True
             return list(dates.keys())[list(dates.values()).index(day_string)]
         elif datetime.datetime.strptime(list(dates.values())[0], "%m/%d/%y Data").astimezone(pytz.timezone("US/Eastern")) > day: # If the day is earlier than all possible days
             raise InvalidDayError(day=0)
