@@ -21,3 +21,5 @@
     *Additionally, to use the sheet as the source, there must be a league specified.*
 
 **{prefix}teamstats [team/league]**: Either shows team stats for the specified league, or stats for players on the specified team.
+
+**{prefix}diff [player] [stat]**: Shows the difference in any given stat for a player's most recent series compared to their season average.

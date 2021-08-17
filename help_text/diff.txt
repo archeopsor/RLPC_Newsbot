@@ -1,0 +1,5 @@
+**Command: {prefix}difference [player] [stat]**
+Aliases: diff
+
+Shows the difference in any given stat for a player's most recent series compared to their season average.
+May need to surround the player's username or stat name in "" if it contains a space.
