@@ -404,7 +404,7 @@ class Stats(commands.Cog):  # pragma: no cover
                 return await ctx.send("Couldn't understand stat: "+ e.stat + ". You may need to surround it in double quotes (\") to be understood correctly.")
             except PlayerNotFoundError as e:
                 return await ctx.send("Couldn't understand player: " + e.player + ". You may need to surround it in double quotes (\") to be understood correctly.")
-            except ZeroError:
+            except (ZeroError, InvalidDayError):
                 return await ctx.send("There don't appear to be any stats to compare to. Contact arco if you believe this is an error.")
 
             embed = discord.Embed(title=f"{player}: {stat.title()}")
