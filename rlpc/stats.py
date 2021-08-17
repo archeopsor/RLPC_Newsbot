@@ -1,5 +1,7 @@
+from typing import List
 import numpy as np
 import pandas as pd
+import datetime
 
 from tools.sheet import Sheet
 from tools.mongo import Session, findCategory, teamIds, statsCategories
@@ -11,6 +13,23 @@ from errors.stats_errors import *
 from errors.sheets_errors import GetSheetError, SheetToDfError
 from errors.general_errors import *
 
+
+dates = {1: '7/20/21 Data', 2: '7/22/21 Data', 3: '7/27/21 Data', 4: '7/29/21 Data', 5: '8/3/21 Data', 6: '8/5/21 Data', 7: '8/10/21 Data', 8: '8/12/21 Data', 9: '8/17/21 Data',
+        10: '8/19/21 Data', 11: '8/24/21 Data', 12: '8/26/21 Data', 13: '8/31/21 Data', 14: '9/2/21 Data', 15: '9/7/21 Data', 16: '9/9/21 Data', 17: '9/14/21 Data', 18: '9/16/21 Data'}
+
+def get_latest_gameday() -> int:
+    day = datetime.datetime.today()
+    found_day = False
+    
+    # Go backwards day by day until a valid day is found
+    while not found_day:
+        day -= datetime.timedelta(days=1)
+        day_string = day.strftime("%#m/%#d/%#y Data")
+        if day_string in dates.values():
+            return list(dates.keys())[list(dates.values()).index(day_string)]
+        elif datetime.datetime.strptime(list(dates.values())[0], "%m/%d/%y Data") > day: # If the day is earlier than all possible days
+            raise InvalidDayError(day=0)
+        
 
 class StatsHandler:
     def __init__(self, session: Session = None, p4sheet: Sheet = None, indysheet: Sheet = None, powerrankings: Sheet = None, gdsheet: Sheet = None, teams: Teams = None, identifier: Identifier = None):
@@ -336,9 +355,10 @@ class StatsHandler:
         
         return player
 
-    def gdstats(self, player: str, day: int, stat: str = None, pergame: bool = False) -> pd.DataFrame:
-        dates = {1: '7/20/21 Data', 2: '7/22/21 Data', 3: '7/27/21 Data', 4: '7/29/21 Data', 5: '8/3/21 Data', 6: '8/5/21 Data', 7: '8/10/21 Data', 8: '8/12/21 Data', 9: '8/17/21 Data',
-                 10: '8/19/21 Data', 11: '8/24/21 Data', 12: '8/26/21 Data', 13: '8/31/21 Data', 14: '9/2/21 Data', 15: '9/7/21 Data', 16: '9/9/21 Data', 17: '9/14/21 Data', 18: '9/16/21 Data'}
+    def gdstats(self, player: str, day: int = None, stat: str = None, pergame: bool = False) -> pd.DataFrame:
+        if day == None:
+            day = get_latest_gameday()
+            
         try:
             datarange = dates[day]
         except KeyError:
@@ -366,7 +386,7 @@ class StatsHandler:
 
         return stats_series
 
-    def teamstats(self, team: str = None, league: str = None):
+    def teamstats(self, team: str = None, league: str = None) -> pd.DataFrame:
         if team != None:
             team = team.title()
             roster = self.teams.get_roster(team)
@@ -424,6 +444,44 @@ class StatsHandler:
 
             return stats.set_index('Player')
 
+    def difference(self, player: str, stat: str) -> List[float]:
+        stat = stat.title()
+        if stat not in valid_stats:
+            raise InvalidStatError(stat)
+        day = get_latest_gameday()
+
+        player_info = self.session.players.find_one({'$text': {'$search': f"\"{player}\""}})
+        if player_info == None:
+            raise PlayerNotFoundError(player, 0)
+        else:
+            total_stat = player_info['stats'][findCategory(stat)][stat]
+            games_played = player_info['stats']['general']['Games Played']
+            total_stat /= games_played
+
+        while day > 0:
+            try:
+                recent_stat = self.gdstats(player, day, stat, pergame=True).loc[stat.title()]
+                break
+            except PlayerNotFoundError:
+                day -= 1
+                continue
+        
+        if day == 0:
+            # Raise error if player has no stats on gdstats sheet
+            raise PlayerNotFoundError(player, 0)
+
+        if recent_stat == 0:
+            diff = -1
+        elif total_stat == 0:
+            raise ZeroError()
+        else:
+            diff = (recent_stat - total_stat) / total_stat
+
+        return (diff, total_stat, recent_stat)
+
+
+
+
 
 if __name__ == "__main__":
-    StatsHandler().power_rankings("major")
+    StatsHandler().difference("four", "assists")

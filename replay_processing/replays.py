@@ -479,8 +479,8 @@ class RLPCAnalysis:
                 pass
 
     def main(self):
-        # print("Checks")
-        # self.checks()
+        print("Checks")
+        self.checks()
 
         print("Getting replays")
         stats = self.analyze_replays()
@@ -541,5 +541,5 @@ def temp():
     
 
 if __name__ == "__main__":
-    #Retreiver.download()
+    Retreiver.download()
     RLPCAnalysis().main()

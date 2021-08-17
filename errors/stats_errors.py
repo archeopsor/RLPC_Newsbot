@@ -50,3 +50,6 @@ class PlayerNotFoundError(Exception):
         self.player = player
         self.day = day
         super().__init__(*args)
+    
+class ZeroError(Exception):
+    pass

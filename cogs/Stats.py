@@ -11,7 +11,7 @@ import dataframe_image as dfi
 
 from tools.mongo import Session
 from rlpc import mmr
-from rlpc.stats import StatsHandler
+from rlpc.stats import StatsHandler, get_latest_gameday
 from rlpc.players import Players, Identifier, Teams
 from tools.sheet import Sheet
 from settings import prefix, valid_stats, leagues, sheet_p4, sheet_indy, gdstats_sheet, divisions, leagues
@@ -270,7 +270,7 @@ class Stats(commands.Cog):  # pragma: no cover
     async def gdstats(self, ctx: Context, *, msg):
         async with ctx.typing():
             player = "me"
-            day = 1
+            day = None
             stat = None
             pergame = False
 
@@ -288,6 +288,7 @@ class Stats(commands.Cog):  # pragma: no cover
                     try:
                         player = self.stats.get_me(playerid)
                     except FindMeError:
+                        await waitingMsg.delete()
                         return await ctx.send("You don't appear to have an up-to-date discord id on record. Try using the name that shows up on the RLPC spreadsheet.")
                     await waitingMsg.delete()
                     used_args.append(arg)
@@ -315,6 +316,9 @@ class Stats(commands.Cog):  # pragma: no cover
                 for i in used_args:
                     msg.remove(i)
                 player = ' '.join(msg)
+
+            if day == None:
+                day = get_latest_gameday()
 
             try:
                 data = self.stats.gdstats(player, day, stat=stat, pergame=pergame)
@@ -375,8 +379,44 @@ class Stats(commands.Cog):  # pragma: no cover
             
             return os.remove(path)
             
-
-    @commands.command(aliases=())
+    @commands.command(aliases=()) # TODO: Finish this
     async def statsrank(self, ctx: Context, *, msg):
         async with ctx.typing():
             pass
+
+    @commands.command(aliases=("diff",))
+    async def difference(self, ctx: Context, player: str, stat: str):
+        async with ctx.typing():
+            if player.lower() == "me":
+                waitingMsg: discord.Message = await ctx.send("One second, retreiving discord ID and stats")
+                discord_id = str(ctx.author.id)
+                await waitingMsg.delete()
+                try:
+                    player = self.stats.get_me(discord_id)
+                except FindMeError as error:
+                    await waitingMsg.delete()
+                    return await ctx.send("You don't appear to have an up-to-date discord id on record. Try using the name that shows up on the RLPC spreadsheet.")
+            
+            try:
+                diff, total, recent = self.stats.difference(player, stat)
+                diff = round(diff * 100)
+            except InvalidStatError as e:
+                return await ctx.send("Couldn't understand stat: "+ e.stat + ". You may need to surround it in double quotes (\") to be understood correctly.")
+            except PlayerNotFoundError as e:
+                return await ctx.send("Couldn't understand player: " + e.player + ". You may need to surround it in double quotes (\") to be understood correctly.")
+            except ZeroError:
+                return await ctx.send("There don't appear to be any stats to compare to. Contact arco if you believe this is an error.")
+
+            embed = discord.Embed(title=f"{player}: {stat.title()}")
+            embed.add_field(name="Season Average", value=round(total, 2))
+            embed.add_field(name="Last Series", value=round(recent, 2))
+            embed.add_field(name="Difference", value=f"{diff}%")
+
+            if diff > 0:
+                embed.set_footer(text=f"In their last series, {player} got {diff}% more {stat.lower()} than their season average.")
+            elif diff < 0:
+                embed.set_footer(text=f"In their last series, {player} got {abs(diff)}% less {stat.lower()} than their season average.")
+            else:
+                embed.set_footer(text=f"In their last series, {player} matched their season average for {stat.lower()}.")
+
+        return await ctx.send(embed=embed)
