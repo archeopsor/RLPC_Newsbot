@@ -24,6 +24,7 @@ def get_latest_gameday() -> int:
     
     # Go backwards day by day until a valid day is found (starting yesterday)
     while not found_day:
+        print(day)
         day -= datetime.timedelta(days=1)
         day_string = day.strftime("%#m/%#d/%#y Data")
         if day_string in dates.values():
