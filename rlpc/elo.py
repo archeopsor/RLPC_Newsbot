@@ -39,8 +39,8 @@ class EloHandler:
         Rb = self.get_elo(team2) # Team 2 rating
         score = list(score.strip())
         score = f"{score[0]} - {score[-1]}" # Putting it in the right format
-        Qa = 10**(Ra/400)
-        Qb = 10**(Rb/400)
+        Qa = 10**(Ra/200)
+        Qb = 10**(Rb/200)
         Ea = Qa/(Qa+Qb)  # Team 1 expected score (percentage of games)
         Eb = Qb/(Qa+Qb)  # Team 2 expected score (percentage of games)
         Sa = 0  # Team 1 actual score
@@ -93,8 +93,8 @@ class EloHandler:
         
         Ra = self.get_elo(team1) # Team 1 rating
         Rb = self.get_elo(team2) # Team 2 rating
-        Qa = 10**(Ra/250)
-        Qb = 10**(Rb/250)
+        Qa = 10**(Ra/200)
+        Qb = 10**(Rb/200)
         exp_score_1 = Qa/(Qa+Qb)
         exp_score_2 = Qb/(Qa+Qb)
         firstto = round((bestof/2) + 0.51)
