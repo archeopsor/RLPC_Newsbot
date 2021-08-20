@@ -6,6 +6,7 @@ from typing import List
 import numpy as np
 import pandas as pd
 import requests
+import carball
 
 from errors.replay_errors import *
 from passwords import BALLCHASING_TOKEN
@@ -224,8 +225,6 @@ class CarballReplay(Replay):
         Returns:
             dict: Large json style dict with game stats and metadata
         """
-        import carball
-
         try:
             analysis_manager = carball.analyze_replay_file(
                 self.path, logging_level=logging.CRITICAL)

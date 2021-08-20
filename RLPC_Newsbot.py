@@ -104,7 +104,7 @@ class Newsbot(commands.Bot):
         if int(message.channel.id) in list(channels):
 
             # Criteria is either 'record' or 'rating', followed by the threshold for an upset
-            criteria, threshold = ("record", 4)
+            criteria, threshold = ("record", 3)
 
             # Parse messages
             league = channels[message.channel.id]
@@ -164,9 +164,7 @@ class Newsbot(commands.Bot):
 
                 # Send the message out to subscribed channels
                 await self.wait_until_ready()
-                with Session().admin as session:
-                    send_to = session.find_one({'purpose': 'channels'})[
-                        'upset_alerts']
+                send_to = self.session.admin.find_one({'purpose': 'channels'})['upset_alerts']
 
                 for channel in send_to:
                     channel: discord.TextChannel = self.get_channel(channel[0])

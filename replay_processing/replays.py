@@ -233,7 +233,7 @@ class Retreiver:
                 files[name] = replays
                 
                 filepath = os.path.join(path, download).replace('/', '\\')
-                # os.remove(filepath)
+                os.remove(filepath)
                 # shutil.rmtree(filepath)
 
         return files
@@ -538,7 +538,6 @@ def temp():
 
     return update_stats
 
-    
 
 if __name__ == "__main__":
     Retreiver.download()
