@@ -164,10 +164,10 @@ class Newsbot(commands.Bot):
 
                 # Send the message out to subscribed channels
                 await self.wait_until_ready()
-                send_to = self.session.admin.find_one({'purpose': 'channels'})['upset_alerts']
+                send_to = self.session.admin.find_one({'purpose': 'channels'})['channels']['upset_alerts']
 
                 for channel in send_to:
-                    channel: discord.TextChannel = self.get_channel(channel[0])
+                    channel: discord.TextChannel = self.get_channel(channel)
 
                     if channel == None:
                         continue
