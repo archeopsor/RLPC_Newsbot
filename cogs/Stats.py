@@ -502,7 +502,10 @@ class Stats(commands.Cog):  # pragma: no cover
             await ctx.send(file=file)
             await waitingMsg.delete()
 
-            return os.remove(path)
+            try:
+                return os.remove(path)
+            except:
+                return
 
     @commands.command(aliases=())  # TODO: Finish this
     async def statsrank(self, ctx: Context, *, msg):

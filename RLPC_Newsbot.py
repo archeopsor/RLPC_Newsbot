@@ -180,22 +180,17 @@ class Newsbot(commands.Bot):
 
             # This is needed to put records in alert_message, even if using rating for the criteria
             records = self.pr_sheet.to_df("Team Wins!A1:AE17")
-            if league == "Major":
-                records = records.iloc[:, 0:3]
-            elif league == "AAA":
-                records = records.iloc[:, 4:7]
-            elif league == "AA":
-                records = records.iloc[:, 8:11]
-            elif league == "A":
-                records = records.iloc[:, 12:15]
-            elif league == "Indy":
-                records = records.iloc[:, 16:19]
-            elif league == "Mav":
-                records = records.iloc[:, 20:23]
-            elif league == "Ren":
-                records = records.iloc[:, 24:27]
-            elif league == "Pal":
-                records = records.iloc[:, 28:31]
+            records = {
+                "Major": records.iloc[:, 0:3],
+                "AAA": records.iloc[:, 4:7],
+                "AA": records.iloc[:, 8:11],
+                "A": records.iloc[:, 12:15],
+                "Indy": records.iloc[:, 16:19],
+                "Mav": records.iloc[:, 20:23],
+                "Ren": records.iloc[:, 24:27],
+                "Pal": records.iloc[:, 28:31]
+            }[league]
+
             records = records.set_index(f"{league} Teams")
             team1_record = (
                 f"({records.loc[team1, 'Wins']}-{records.loc[team1, 'Losses']})"
@@ -245,7 +240,7 @@ class Newsbot(commands.Bot):
                 ]["upset_alerts"]
 
                 for channel in send_to:
-                    channel: discord.TextChannel = self.get_channel(channel)
+                    channel: discord.TextChannel = self.get_channel(int(channel))
 
                     if channel == None:
                         continue
@@ -253,9 +248,10 @@ class Newsbot(commands.Bot):
                     new_message = UPSET_ALERT_MESSAGE
 
                     for role in channel.guild.roles:
-                        if role.name.casefold() == "upset alerts":
+                        role: discord.Role
+                        if role.name.lower() == "upset alerts":
                             new_message += (
-                                f"\n{channel.guild.get_role(role.id).mention}"
+                                f"\n{role.mention}"
                             )
                     await channel.send(new_message)
         await self.process_commands(message)
