@@ -486,7 +486,7 @@ class RLPCAnalysis:
         stats = self.analyze_replays()
 
         print("Logging data")
-        self.log_data(stats, '8/17/21 Data!A2:Z')
+        self.log_data(stats, '8/19/21 Data!A2:Z')
 
         print("Uploading Stats")
         self.upload_stats(stats)
