@@ -14,15 +14,34 @@ from rlpc import mmr
 from rlpc.stats import StatsHandler, get_latest_gameday
 from rlpc.players import Players, Identifier, Teams
 from tools.sheet import Sheet
-from settings import prefix, valid_stats, leagues, sheet_p4, sheet_indy, gdstats_sheet, divisions, leagues
+from settings import (
+    prefix,
+    valid_stats,
+    leagues,
+    sheet_p4,
+    sheet_indy,
+    gdstats_sheet,
+    divisions,
+    leagues,
+)
 
 from errors.stats_errors import *
 from errors.general_errors import *
 
 
 class Stats(commands.Cog):  # pragma: no cover
-
-    def __init__(self, bot: commands.Bot, session: Session = None, p4sheet: Sheet = None, indysheet: Sheet = None, gdsheet: Sheet = None, identifier: Identifier = None, players: Players = None, stats: StatsHandler = None, teams: Teams = None):
+    def __init__(
+        self,
+        bot: commands.Bot,
+        session: Session = None,
+        p4sheet: Sheet = None,
+        indysheet: Sheet = None,
+        gdsheet: Sheet = None,
+        identifier: Identifier = None,
+        players: Players = None,
+        stats: StatsHandler = None,
+        teams: Teams = None,
+    ):
         self.bot = bot
 
         if not session:
@@ -42,8 +61,7 @@ class Stats(commands.Cog):  # pragma: no cover
         else:
             self.gdsheet = gdsheet
         if not identifier:
-            self.identifier = Identifier(
-                session=self.session, p4sheet=self.p4sheet)
+            self.identifier = Identifier(session=self.session, p4sheet=self.p4sheet)
         else:
             self.identifier = identifier
         if not players:
@@ -54,36 +72,67 @@ class Stats(commands.Cog):  # pragma: no cover
             self.teams = teams
         if not stats:
             self.stats = StatsHandler(
-                session=self.session, p4sheet=self.p4sheet, indysheet=self.indysheet, gdsheet=self.gdsheet, teams=self.teams, identifier=self.identifier)
+                session=self.session,
+                p4sheet=self.p4sheet,
+                indysheet=self.indysheet,
+                gdsheet=self.gdsheet,
+                teams=self.teams,
+                identifier=self.identifier,
+            )
         else:
             self.stats = stats
 
-    @commands.command(aliases=('validstats', 'valid_stats',))
+    @commands.command(
+        aliases=(
+            "validstats",
+            "valid_stats",
+        )
+    )
     async def valid(self, ctx: Context):
-        await ctx.send(f"""**Valid stats**: ['Series Played', 'Games Played', 'Goals', 'Assists', 'Saves', 'Shots', 'Points (Goals+Assists)', 'Goals per game', 'Assists per game', 'Saves per game', 'Shooting %', 'Winning %', 'Wins', 'Points per Game', 'Shots Per Game'].\n**Advanced stats** (may need to specify 'db' or 'advanced' in the command to use these): {valid_stats}.""")
+        await ctx.send(
+            f"""**Valid stats**: ['Series Played', 'Games Played', 'Goals', 'Assists', 'Saves', 'Shots', 'Points (Goals+Assists)', 'Goals per game', 'Assists per game', 'Saves per game', 'Shooting %', 'Winning %', 'Wins', 'Points per Game', 'Shots Per Game'].\n**Advanced stats** (may need to specify 'db' or 'advanced' in the command to use these): {valid_stats}."""
+        )
 
-    @commands.command(aliases=('power', 'powerrankings', 'power_rankings', 'rankings', 'ranking',))
+    @commands.command(
+        aliases=(
+            "power",
+            "powerrankings",
+            "power_rankings",
+            "rankings",
+            "ranking",
+        )
+    )
     async def pr(self, ctx: Context, league: str):
         async with ctx.typing():
             try:
                 league = leagues[league.lower()]
             except KeyError:
-                return await ctx.send("Couldn't understand league: "+league)
+                return await ctx.send("Couldn't understand league: " + league)
             try:
                 rankings = self.stats.power_rankings(league)
             except PRSheetError as error:
-                await ctx.send("There was an error getting power rankings data. This has been reported, and will hopefully be fixed soon.")
-                return await self.bot.log_error(error, ctx.channel, ctx.command, ctx.kwargs)
+                await ctx.send(
+                    "There was an error getting power rankings data. This has been reported, and will hopefully be fixed soon."
+                )
+                return await self.bot.log_error(
+                    error, ctx.channel, ctx.command, ctx.kwargs
+                )
             except NoPRError:
                 return await ctx.send("There are no power rankings available.")
 
             embed = discord.Embed(
-                title=f'{league} Power Rankings', description=f"Official human-generated Power Rankings for {league}. For computer rankings, use $rank", color=0x000080)
+                title=f"{league} Power Rankings",
+                description=f"Official human-generated Power Rankings for {league}. For computer rankings, use $rank",
+                color=0x000080,
+            )
 
-            value_response = ''
+            value_response = ""
             for row in range(16):
                 value_response += f"{row+1}: {rankings.index[row]}"
-                if rankings.iloc[row] == rankings.iloc[(row+1 if row < 15 else 0)] or rankings.iloc[row] == rankings.iloc[(row-1 if row > 0 else 15)]:
+                if (
+                    rankings.iloc[row] == rankings.iloc[(row + 1 if row < 15 else 0)]
+                    or rankings.iloc[row] == rankings.iloc[(row - 1 if row > 0 else 15)]
+                ):
                     value_response += f"ᵀ ({rankings.iloc[row]})\n"
                 else:
                     value_response += f" ({rankings.iloc[row]})\n"
@@ -97,18 +146,20 @@ class Stats(commands.Cog):  # pragma: no cover
         if isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("You haven't chosen a league.")
         else:
-            return await self.bot.log_error(error.original, ctx.channel, ctx.command, ctx.kwargs)
+            return await self.bot.log_error(
+                error.original, ctx.channel, ctx.command, ctx.kwargs
+            )
 
     @commands.command()  # TODO: fix this, add error handling, etc
     async def mmr(self, ctx: Context, *, player: str):
         async with ctx.typing():
-            players = self.p4sheet.to_df('Players!A1:R')
+            return await ctx.send("This command isn't fully implemented and can't currently be used.")
+            players = self.p4sheet.to_df("Players!A1:R")
 
             # Remove case-sensitivity
-            lower_players = players['Username'].str.lower()
+            lower_players = players["Username"].str.lower()
             if player.casefold() in lower_players.values:
-                pindex = lower_players[lower_players ==
-                                       player.casefold()].index[0]
+                pindex = lower_players[lower_players == player.casefold()].index[0]
                 player = players.loc[pindex][0]
             players = players.reset_index()
 
@@ -119,47 +170,65 @@ class Stats(commands.Cog):  # pragma: no cover
                 await ctx.send(f"Coudn't find player {player}")
                 return
 
-            for url in players.loc[player, 'Tracker'].split(", "):
-                platform, name = url.split('/')[-2:]
+            for url in players.loc[player, "Tracker"].split(", "):
+                platform, name = url.split("/")[-2:]
                 mmrs[name] = {}
-                mmrs[name]['Duels'] = mmr.playlist(platform, name, '1s')
-                mmrs[name]['Doubles'] = mmr.playlist(platform, name, '2s')
-                mmrs[name]['Solo Standard'] = mmr.playlist(
-                    platform, name, 'ss')
-                mmrs[name]['Standard'] = mmr.playlist(platform, name, '3s')
+                mmrs[name]["Duels"] = mmr.playlist(platform, name, "1s")
+                mmrs[name]["Doubles"] = mmr.playlist(platform, name, "2s")
+                mmrs[name]["Solo Standard"] = mmr.playlist(platform, name, "ss")
+                mmrs[name]["Standard"] = mmr.playlist(platform, name, "3s")
 
-                embed = discord.Embed(title=f"{player}'s MMRs", color=0xffffff)
+                embed = discord.Embed(title=f"{player}'s MMRs", color=0xFFFFFF)
                 for playlist in list(mmrs[name]):
                     embed.add_field(
-                        name=playlist, value=f'{mmrs[name][playlist]["rank"]} ({mmrs[name][playlist]["rating"]})')
+                        name=playlist,
+                        value=f'{mmrs[name][playlist]["rank"]} ({mmrs[name][playlist]["rating"]})',
+                    )
 
                 await ctx.send(embed=embed)
 
-    @commands.command(aliases=("getstats", "stats", "get_stats",))
+    @commands.command(
+        aliases=(
+            "getstats",
+            "stats",
+            "get_stats",
+        )
+    )
     # TODO: Add database stats
-    async def get_player_stats(self, ctx: Context, player: str, stat: str = "all", advanced: bool = False):
+    async def get_player_stats(
+        self, ctx: Context, player: str, stat: str = "all", advanced: bool = False
+    ):
         async with ctx.typing():
             if player == "me":
-                waitingMsg: discord.Message = await ctx.send("One second, retreiving discord ID and stats")
+                waitingMsg: discord.Message = await ctx.send(
+                    "One second, retreiving discord ID and stats"
+                )
                 discord_id = str(ctx.author.id)
                 await waitingMsg.delete()
                 try:
                     player = self.stats.get_me(discord_id)
                 except FindMeError as error:
-                    return await ctx.send("You don't appear to have an up-to-date discord id on record. Try using the name that shows up on the RLPC spreadsheet.")
+                    return await ctx.send(
+                        "You don't appear to have an up-to-date discord id on record. Try using the name that shows up on the RLPC spreadsheet."
+                    )
 
             try:
                 answer = self.stats.get_player_stats(player, stat, advanced)
             except InvalidStatError:
-                return await ctx.send(f"Couldn't understand stat {stat}. If this is part of a username, surround the username in quotes.")
+                return await ctx.send(
+                    f"Couldn't understand stat {stat}. If this is part of a username, surround the username in quotes."
+                )
             except (StatsError, KeyError):
-                return await ctx.send(f"Couldn't find {player}'s stats. Contact arco if you think this is a bug.")
+                return await ctx.send(
+                    f"Couldn't find {player}'s stats. Contact arco if you think this is a bug."
+                )
 
             embed = discord.Embed(
-                title=f"{answer.values[0][0]}'s Stats", color=0x3333ff)
+                title=f"{answer.values[0][0]}'s Stats", color=0x3333FF
+            )
 
             for i, col in enumerate(answer.columns[1:]):
-                value = answer.values[0][i+1]
+                value = answer.values[0][i + 1]
                 if not value:
                     value = 0
                 embed.add_field(name=col, value=value)
@@ -169,11 +238,19 @@ class Stats(commands.Cog):  # pragma: no cover
     @get_player_stats.error
     async def stats_error(self, ctx: Context, error):
         if isinstance(error, commands.TooManyArguments):
-            return await ctx.send("Too many arguments, there should only be two. Put names or stats in quotes (\"test name\") if it contains a space.")
+            return await ctx.send(
+                'Too many arguments, there should only be two. Put names or stats in quotes ("test name") if it contains a space.'
+            )
         # else:
         #     await self.bot.log_error(error.original, ctx.channel, ctx.command, ctx.kwargs)
 
-    @commands.command(aliases=("topstats", "statslb", "stats_lb",))
+    @commands.command(
+        aliases=(
+            "topstats",
+            "statslb",
+            "stats_lb",
+        )
+    )
     async def top(self, ctx: Context, *, msg):
         async with ctx.typing():
             # Default arguments
@@ -196,54 +273,63 @@ class Stats(commands.Cog):  # pragma: no cover
                     league = leagues[word.lower()]
                     used_args.append(word)
                     continue
-                elif word.lower() in ['pg', 'pergame']:
+                elif word.lower() in ["pg", "pergame"]:
                     pergame = True
                     used_args.append(word)
                     continue
-                elif word.lower() == 'per' and msg[i+1].lower() == 'game':
+                elif word.lower() == "per" and msg[i + 1].lower() == "game":
                     pergame = True
                     used_args.append(word)
-                    used_args.append(msg[i+1])
-                    msg.remove(msg[i+1])
+                    used_args.append(msg[i + 1])
+                    msg.remove(msg[i + 1])
                     continue
-                elif word.lower() in ['asc', 'ascending', 'reverse', 'least', 'bottom', 'bot']:
+                elif word.lower() in [
+                    "asc",
+                    "ascending",
+                    "reverse",
+                    "least",
+                    "bottom",
+                    "bot",
+                ]:
                     asc = True
                     used_args.append(word)
                     continue
-                elif word.lower() in ['sheet', 'usesheet']: # TODO: Fix sheet stats
+                elif word.lower() in ["sheet", "usesheet"]:  # TODO: Fix sheet stats
                     useSheet = True
                     used_args.append(word)
                     continue
-                elif word.lower() in ['db', 'database', 'fantasy', 'fantasydb']:
+                elif word.lower() in ["db", "database", "fantasy", "fantasydb"]:
                     useSheet = False
                     used_args.append(word)
                     continue
 
-            if len(msg) > len(used_args):  # If there are still args left, it must be the stat
+            if len(msg) > len(
+                used_args
+            ):  # If there are still args left, it must be the stat
                 for i in used_args:
                     msg.remove(i)
-                stat = ' '.join(msg)
+                stat = " ".join(msg)
 
             # For common misused stat names
             statsmap = {
-                'Demos': 'Demos Inflicted',
-                'Goal': 'Goals',
-                'Assist': 'Assists',
-                'Save': 'Saves',
-                'Shot': 'Shots',
-                'Small Boosts': '# Small Boosts',
-                'Small Boost': '# Small Boosts',
-                '# Small Boost': '# Small Boosts',
-                'Large Boosts': '# Large Boosts',
-                'Large Boost': '# Large Boosts',
-                '# Large Boost': '# Large Boosts',
-                'Boost Steals': '# Boost Steals',
-                'Boost Steal': '# Boost Steals',
-                '# Boost Steal': '# Boost Steals',
-                'Boost': 'Boost Used',
-                'Win %': 'Winning %',
-                'Shot %': 'Shooting %'
-                }
+                "Demos": "Demos Inflicted",
+                "Goal": "Goals",
+                "Assist": "Assists",
+                "Save": "Saves",
+                "Shot": "Shots",
+                "Small Boosts": "# Small Boosts",
+                "Small Boost": "# Small Boosts",
+                "# Small Boost": "# Small Boosts",
+                "Large Boosts": "# Large Boosts",
+                "Large Boost": "# Large Boosts",
+                "# Large Boost": "# Large Boosts",
+                "Boost Steals": "# Boost Steals",
+                "Boost Steal": "# Boost Steals",
+                "# Boost Steal": "# Boost Steals",
+                "Boost": "Boost Used",
+                "Win %": "Winning %",
+                "Shot %": "Shooting %",
+            }
             if stat.title() in statsmap.keys():
                 stat = statsmap[stat.title()]
             else:
@@ -251,18 +337,31 @@ class Stats(commands.Cog):  # pragma: no cover
 
             try:
                 lb = self.stats.statlb(
-                    useSheet=useSheet, league=league, stat=stat, limit=limit, pergame=pergame, asc=asc)
+                    useSheet=useSheet,
+                    league=league,
+                    stat=stat,
+                    limit=limit,
+                    pergame=pergame,
+                    asc=asc,
+                )
             except InvalidStatError as error:
-                return await ctx.send(f'Could not understand stat {error.stat.title()}. Try using "$valid" for a list of available stats.')
+                return await ctx.send(
+                    f'Could not understand stat {error.stat.title()}. Try using "$valid" for a list of available stats.'
+                )
             except (FindPlayersError, StatSheetError, GetSheetError) as error:
-                await ctx.send(f"There was an error getting player data. This has been reported, and will hopefully be fixed soon.")
-                return await self.bot.log_error(error, ctx.channel, ctx.command, ctx.kwargs)
+                await ctx.send(
+                    f"There was an error getting player data. This has been reported, and will hopefully be fixed soon."
+                )
+                return await self.bot.log_error(
+                    error, ctx.channel, ctx.command, ctx.kwargs
+                )
 
-            embed = discord.Embed(title=f'{stat} {"Per Game " if pergame else ""}Leaderboard',
-                                  description=f"League: {league}, Source: {'Sheet' if useSheet else 'Fantasy Database'}")
+            embed = discord.Embed(
+                title=f'{stat} {"Per Game " if pergame else ""}Leaderboard',
+                description=f"League: {league}, Source: {'Sheet' if useSheet else 'Fantasy Database'}",
+            )
             for i, player in enumerate(lb.index):
-                embed.add_field(name=f'{i+1}) {player}',
-                                value=lb[player], inline=False)
+                embed.add_field(name=f"{i+1}) {player}", value=lb[player], inline=False)
 
         return await ctx.send(embed=embed)
 
@@ -274,48 +373,62 @@ class Stats(commands.Cog):  # pragma: no cover
             stat = None
             pergame = False
 
-            msg = msg.split(' ')
+            msg = msg.split(" ")
             used_args = []
 
             for i, arg in enumerate(msg):
-                if arg in '123456789101112131415161718':
+                if arg in "123456789101112131415161718":
                     day = int(arg)
                     used_args.append(arg)
                     continue
-                if arg == 'me':
-                    waitingMsg = await ctx.send("One second, retreiving discord ID and stats")
+                if arg == "me":
+                    waitingMsg = await ctx.send(
+                        "One second, retreiving discord ID and stats"
+                    )
                     playerid = str(ctx.author.id)
                     try:
                         player = self.stats.get_me(playerid)
                     except FindMeError:
                         await waitingMsg.delete()
-                        return await ctx.send("You don't appear to have an up-to-date discord id on record. Try using the name that shows up on the RLPC spreadsheet.")
+                        return await ctx.send(
+                            "You don't appear to have an up-to-date discord id on record. Try using the name that shows up on the RLPC spreadsheet."
+                        )
                     await waitingMsg.delete()
                     used_args.append(arg)
-                elif 'gd' in arg:
+                elif "gd" in arg:
                     used_args.append(arg)
-                elif arg == 'pg':
+                elif arg == "pg":
                     pergame = True
                     used_args.append(arg)
                 # First word of a stat
                 elif arg.lower() in [x.split()[0].lower() for x in valid_stats]:
                     stat = arg.title()
                     used_args.append(arg)
-                    if len(msg) == i+1:  # If that was the last arg in the msg
+                    if len(msg) == i + 1:  # If that was the last arg in the msg
                         break
-                    if msg[i+1].lower() in [x.split()[1].lower() if len(x.split()) > 1 else None for x in valid_stats]:  # Second word
-                        stat = stat + ' ' + msg[i+1].title()
-                        used_args.append(msg[i+1])
-                        if len(msg) == i+2:  # If the next arg is the last arg in the msg
+                    if msg[i + 1].lower() in [
+                        x.split()[1].lower() if len(x.split()) > 1 else None
+                        for x in valid_stats
+                    ]:  # Second word
+                        stat = stat + " " + msg[i + 1].title()
+                        used_args.append(msg[i + 1])
+                        if (
+                            len(msg) == i + 2
+                        ):  # If the next arg is the last arg in the msg
                             break
-                        if msg[i+2].lower() in [x.split()[2].lower() if len(x.split()) > 2 else None for x in valid_stats]:  # Third word
-                            stat = stat + ' ' + msg[i+2].title()
-                            used_args.append(msg[i+2])
+                        if msg[i + 2].lower() in [
+                            x.split()[2].lower() if len(x.split()) > 2 else None
+                            for x in valid_stats
+                        ]:  # Third word
+                            stat = stat + " " + msg[i + 2].title()
+                            used_args.append(msg[i + 2])
 
-            if len(msg) > len(used_args):  # If there are still args left, it must be the player
+            if len(msg) > len(
+                used_args
+            ):  # If there are still args left, it must be the player
                 for i in used_args:
                     msg.remove(i)
-                player = ' '.join(msg)
+                player = " ".join(msg)
 
             if day == None:
                 day = get_latest_gameday()
@@ -323,34 +436,45 @@ class Stats(commands.Cog):  # pragma: no cover
             try:
                 data = self.stats.gdstats(player, day, stat=stat, pergame=pergame)
             except InvalidDayError:
-                return await ctx.send(f'{day} is not a valid gameday. Please enter a number between 1 and 18.')
+                return await ctx.send(
+                    f"{day} is not a valid gameday. Please enter a number between 1 and 18."
+                )
             except (GDStatsSheetError, GetSheetError):
-                return await ctx.send(f"It doesn't look like there are any stats available for gameday {day}")
+                return await ctx.send(
+                    f"It doesn't look like there are any stats available for gameday {day}"
+                )
             except PlayerNotFoundError:
-                return await ctx.send(f"Could not find stats for {player} on gameday {day}.")
+                return await ctx.send(
+                    f"Could not find stats for {player} on gameday {day}."
+                )
 
             if stat == None:
                 embed = discord.Embed(
-                    title=f"{player}'s Stats on Gameday {day}", color=0x3333ff)
-                embed.add_field(name='Games Played',
-                                value=f'{data.loc["Games Played"]}')
+                    title=f"{player}'s Stats on Gameday {day}", color=0x3333FF
+                )
                 embed.add_field(
-                    name="Goals", value=f"{data.loc['Goals']}")
+                    name="Games Played", value=f'{data.loc["Games Played"]}'
+                )
+                embed.add_field(name="Goals", value=f"{data.loc['Goals']}")
+                embed.add_field(name="Assists", value=f"{data.loc['Assists']}")
+                embed.add_field(name="Saves", value=f"{data.loc['Saves']}")
+                embed.add_field(name="Shots", value=f"{data.loc['Shots']}")
                 embed.add_field(
-                    name="Assists", value=f"{data.loc['Assists']}")
-                embed.add_field(
-                    name="Saves", value=f"{data.loc['Saves']}")
-                embed.add_field(
-                    name="Shots", value=f"{data.loc['Shots']}")
-                embed.add_field(name="Fantasy Points",
-                                value=f"{data.loc['Fantasy Points']}")
+                    name="Fantasy Points", value=f"{data.loc['Fantasy Points']}"
+                )
 
                 return await ctx.send(embed=embed)
 
             else:
                 return await ctx.send(data.loc[stat.title()])
 
-    @commands.command(aliases=("ts", "statsteam", "teamstat",))
+    @commands.command(
+        aliases=(
+            "ts",
+            "statsteam",
+            "teamstat",
+        )
+    )
     async def teamstats(self, ctx: Context, *, msg):
         async with ctx.typing():
             league = None
@@ -363,23 +487,24 @@ class Stats(commands.Cog):  # pragma: no cover
             elif msg.title() in divisions.keys():
                 team = msg.title()
             else:
-                return await ctx.send(f"Couldn't understand {msg}. Please specify either a league or a team.")
+                return await ctx.send(
+                    f"Couldn't understand {msg}. Please specify either a league or a team."
+                )
 
             if league != None:
-                stats = self.stats.teamstats(league = league)
+                stats = self.stats.teamstats(league=league)
             else:
-                stats = self.stats.teamstats(team = team)
+                stats = self.stats.teamstats(team=team)
 
-
-            dfi.export(stats, "stats.png", table_conversion='matplotlib')
+            dfi.export(stats, "stats.png", table_conversion="matplotlib")
             path = os.path.abspath("stats.png")
             file = discord.File(path)
             await ctx.send(file=file)
             await waitingMsg.delete()
-            
+
             return os.remove(path)
-            
-    @commands.command(aliases=()) # TODO: Finish this
+
+    @commands.command(aliases=())  # TODO: Finish this
     async def statsrank(self, ctx: Context, *, msg):
         async with ctx.typing():
             pass
@@ -388,24 +513,38 @@ class Stats(commands.Cog):  # pragma: no cover
     async def difference(self, ctx: Context, player: str, stat: str):
         async with ctx.typing():
             if player.lower() == "me":
-                waitingMsg: discord.Message = await ctx.send("One second, retreiving discord ID and stats")
+                waitingMsg: discord.Message = await ctx.send(
+                    "One second, retreiving discord ID and stats"
+                )
                 discord_id = str(ctx.author.id)
                 await waitingMsg.delete()
                 try:
                     player = self.stats.get_me(discord_id)
                 except FindMeError as error:
                     await waitingMsg.delete()
-                    return await ctx.send("You don't appear to have an up-to-date discord id on record. Try using the name that shows up on the RLPC spreadsheet.")
-            
+                    return await ctx.send(
+                        "You don't appear to have an up-to-date discord id on record. Try using the name that shows up on the RLPC spreadsheet."
+                    )
+
             try:
                 diff, total, recent = self.stats.difference(player, stat)
                 diff = round(diff * 100)
             except InvalidStatError as e:
-                return await ctx.send("Couldn't understand stat: "+ e.stat + ". You may need to surround it in double quotes (\") to be understood correctly.")
+                return await ctx.send(
+                    "Couldn't understand stat: "
+                    + e.stat
+                    + '. You may need to surround it in double quotes (") to be understood correctly.'
+                )
             except PlayerNotFoundError as e:
-                return await ctx.send("Couldn't understand player: " + e.player + ". You may need to surround it in double quotes (\") to be understood correctly.")
+                return await ctx.send(
+                    "Couldn't understand player: "
+                    + e.player
+                    + '. You may need to surround it in double quotes (") to be understood correctly.'
+                )
             except (ZeroError, InvalidDayError):
-                return await ctx.send("There don't appear to be any stats to compare to. Contact arco if you believe this is an error.")
+                return await ctx.send(
+                    "There don't appear to be any stats to compare to. Contact arco if you believe this is an error."
+                )
 
             embed = discord.Embed(title=f"{player}: {stat.title()}")
             embed.add_field(name="Season Average", value=round(total, 2))
@@ -413,10 +552,16 @@ class Stats(commands.Cog):  # pragma: no cover
             embed.add_field(name="Difference", value=f"{diff}%")
 
             if diff > 0:
-                embed.set_footer(text=f"In their last series, {player} got {diff}% more {stat.lower()} than their season average.")
+                embed.set_footer(
+                    text=f"In their last series, {player} got {diff}% more {stat.lower()} than their season average."
+                )
             elif diff < 0:
-                embed.set_footer(text=f"In their last series, {player} got {abs(diff)}% less {stat.lower()} than their season average.")
+                embed.set_footer(
+                    text=f"In their last series, {player} got {abs(diff)}% less {stat.lower()} than their season average."
+                )
             else:
-                embed.set_footer(text=f"In their last series, {player} matched their season average for {stat.lower()}.")
+                embed.set_footer(
+                    text=f"In their last series, {player} matched their season average for {stat.lower()}."
+                )
 
         return await ctx.send(embed=embed)

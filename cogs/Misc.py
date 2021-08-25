@@ -187,26 +187,32 @@ class Misc(commands.Cog):
         async with ctx.typing():
             try:
                 data = self.streamsheet.to_df("Sheet1!C3:I")
-            except: # TODO Make this more specific
+            except:  # TODO Make this more specific
                 return await ctx.send("Couldn't find the stream schedule :(")
 
-            data = data.rename(columns={
-                'Date:': "Date",
-                "League:": "League",
-                "Series:": "Series",
-                "Time:": "Time",
-                "Streamer:": "Streamer",
-                "Play by Play:": "PBP",
-                "Color:": "Color"
-            })
-            data = data[data["League"].str.lower().isin(leagues.keys())]  # Get rid of empty rows and TBD rows
-            data['Date'] = pd.to_datetime(data['Date'], format='%m/%d/%y', errors="coerce")
+            data = data.rename(
+                columns={
+                    "Date:": "Date",
+                    "League:": "League",
+                    "Series:": "Series",
+                    "Time:": "Time",
+                    "Streamer:": "Streamer",
+                    "Play by Play:": "PBP",
+                    "Color:": "Color",
+                }
+            )
+            data = data[
+                data["League"].str.lower().isin(leagues.keys())
+            ]  # Get rid of empty rows and TBD rows
+            data["Date"] = pd.to_datetime(
+                data["Date"], format="%m/%d/%y", errors="coerce"
+            )
             monday = datetime.today() - timedelta(days=datetime.today().weekday())
             week = timedelta(days=7)
 
-            sched = data[data['Date'] > datetime.today()].set_index("Date")
+            sched = data[data["Date"] > datetime.today()].set_index("Date")
             filename = "stream_schedule.png"
-            dfi.export(sched, filename, table_conversion='matplotlib')
+            dfi.export(sched, filename, table_conversion="matplotlib")
             path = os.path.abspath(filename)
             file = discord.File(path)
 
