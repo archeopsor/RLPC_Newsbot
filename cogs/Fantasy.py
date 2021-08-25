@@ -326,7 +326,7 @@ class Fantasy(commands.Cog):
             "playerslb",
         )
     )
-    async def players(self, ctx: Context, *, message: List[str]=None):
+    async def players(self, ctx: Context, *, message=None):
         async with ctx.typing():
             league = None
             num = 10
