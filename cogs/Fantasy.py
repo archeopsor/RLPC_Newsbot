@@ -103,7 +103,7 @@ class Fantasy(commands.Cog):
                 )
             except AccountNotFoundError:
                 return await ctx.send(
-                    "You don't currently have an account! Use {prefix}new to make an account"
+                    f"You don't currently have an account! Use {prefix}new to make an account"
                 )
             except PlayerNotFoundError:
                 return await ctx.send(
