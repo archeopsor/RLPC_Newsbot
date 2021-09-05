@@ -16,6 +16,7 @@ from tools.sheet import Sheet
 
 from rlpc.players import Players, Identifier
 from rlpc.elo import EloHandler
+from rlpc.stats import get_latest_gameday, dates
 
 from settings import sheet_p4, valid_stats, gdstats_sheet
 
@@ -486,7 +487,7 @@ class RLPCAnalysis:
         stats = self.analyze_replays()
 
         print("Logging data")
-        self.log_data(stats, '9/2/21 Data!A2:Z')
+        self.log_data(stats, f'{dates[get_latest_gameday()]}A2:Z')
 
         print("Uploading Stats")
         self.upload_stats(stats)
