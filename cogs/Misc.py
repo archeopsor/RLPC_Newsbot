@@ -108,10 +108,12 @@ class Misc(commands.Cog):
     async def schedule(self, ctx: Context, *, team: str):
         async with ctx.typing():
             team: str = team.title()
+
             if team not in divisions.keys():
                 return await ctx.send("Couldn't find team " + team)
 
             league: str = self.identifier.find_league(team)
+
             sheet: Sheet = (
                 self.p4sheet
                 if league.lower() in ["major", "aaa", "aa", "a"]
