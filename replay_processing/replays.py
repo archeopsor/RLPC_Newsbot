@@ -331,10 +331,11 @@ class RLPCAnalysis:
 
             games = []
             for replay_path in replays[series]:
-                try:
-                    replay = CarballReplay(replay_path, self.session, self.playersHandler, self.identifier)
-                except:
-                    replay = BallchasingReplay(replay_path, self.session, self.playersHandler, self.identifier)
+                replay = BallchasingReplay(replay_path, self.session, self.playersHandler, self.identifier)
+                # try:
+                #     replay = CarballReplay(replay_path, self.session, self.playersHandler, self.identifier)
+                # except:
+                #     replay = BallchasingReplay(replay_path, self.session, self.playersHandler, self.identifier)
                 games.append(replay)
 
             series_obj = Series(self.session, self.identifier, len(games), games)
