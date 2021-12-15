@@ -102,7 +102,7 @@ class Retreiver:
             "US/Eastern")) - timedelta(days=1)
         for date in dates[::-1]:
             # Click the date for yesterday
-            if date.text == target_date.strftime('%m/%d/%Y'):
+            if date.text == "11/30/2021": #target_date.strftime('%m/%d/%Y'):
                 date.click()
                 break
         time.sleep(3)
@@ -488,7 +488,7 @@ class RLPCAnalysis:
         stats = self.analyze_replays()
 
         print("Logging data")
-        self.log_data(stats, f'{dates[get_latest_gameday()]}!A2:Z')
+        self.log_data(stats, "11/30/2021 Data")#f'{dates[get_latest_gameday()]}!A2:Z')
 
         print("Uploading Stats")
         self.upload_stats(stats)
@@ -503,5 +503,5 @@ class RLPCAnalysis:
 
 
 if __name__ == "__main__":
-    Retreiver.download()
+    # Retreiver.download()
     RLPCAnalysis().main()

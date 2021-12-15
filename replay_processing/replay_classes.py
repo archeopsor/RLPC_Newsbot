@@ -6,7 +6,7 @@ from typing import List
 import numpy as np
 import pandas as pd
 import requests
-import carball
+# import carball
 
 from errors.replay_errors import *
 from passwords import BALLCHASING_TOKEN

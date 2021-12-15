@@ -10,6 +10,7 @@ dnspython==2.1.0
 lxml==4.6.3
 datetime==4.3
 pytz==2021.1
+selenium==3.141.0
 
 # POTENTIAL FUTURE REQUIREMENTS
 # selenium==3.141.0
