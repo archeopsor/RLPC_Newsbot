@@ -8,6 +8,7 @@ import logging
 from zipfile import ZipFile
 from datetime import datetime, timedelta
 import pytz
+from webdriver_manager.firefox import GeckoDriverManager
 
 from replay_classes import BallchasingReplay, CarballReplay, Replay
 
@@ -78,12 +79,12 @@ class Retreiver:
             'browser.download.folderList', 2)  # custom location
         profile.set_preference(
             'browser.download.manager.showWhenStarting', False)
-        profile.set_preference('browser.download.dir', '/tmp')
+        profile.set_preference('browser.download.dir', f'{os.getcwd()}\\replay_processing\\Downloaded_Replays')
         profile.set_preference('browser.helperApps.neverAsk.saveToDisk',
                                'application/octet-stream, application/zip')
 
         browser = webdriver.Firefox(
-            profile, executable_path=r'C:\Users\Simcha\Documents\geckodriver.exe')
+            profile, executable_path=GeckoDriverManager().install())
         browser.get("https://rlpcgamelogs.com/")
 
         browser.find_element_by_xpath(
@@ -192,16 +193,16 @@ class Retreiver:
         return replays
 
     @staticmethod
-    def get_downloaded_replays(path: str = 'C:/Users/Simcha/Downloads', target: str = "./replay_processing/Replay_Files", max_age: float = 0.5) -> list:
+    def get_downloaded_replays(path: str = f'{os.getcwd()}/replay_processing/Downloaded_Replays', target: str = "./replay_processing/Replay_Files", max_age: float = 0.5) -> list:
         """
         Moves replay zip files downloaded from rlpcgamelogs.com to the target folder, and unfolds them in the process. Returns a list of retreived replays.
 
         Parameters
         ----------
         path : str, optional
-            Where the downloaded replays are located. The default is 'C:/Users/Simcha/Downloads'.
+            Where the downloaded replays are located. The default is './replay_processing/Downloaded_Replays'.
         target : str, optional
-            Where to move unfolded replays. The default is "C:/Users/Simcha/Desktop/Replay Files/".
+            Where to move unfolded replays. The default is "./replay_processing/Replay_Files".
         max_age : float, optional
             Maximum age, in days, of files to get. The default is 0.5.
 
@@ -501,8 +502,8 @@ class RLPCAnalysis:
         print("Updating fantasy points")
         self.update_fantasy(stats)
 
-        print("Creating post file")
-        self.create_post(stats)
+        # print("Creating post file")
+        # self.create_post(stats)
 
         print("FAILED: "+str(self.failed))
 

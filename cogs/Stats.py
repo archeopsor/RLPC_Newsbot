@@ -361,7 +361,10 @@ class Stats(commands.Cog):  # pragma: no cover
                 description=f"League: {league}, Source: {'Sheet' if useSheet else 'Fantasy Database'}",
             )
             for i, player in enumerate(lb.index):
-                embed.add_field(name=f"{i+1}) {player}", value=lb[player], inline=False)
+                val = lb[player]
+                if val % 1 == 0:
+                    val = round(val)
+                embed.add_field(name=f"{i+1}) {player}", value=val, inline=False)
 
         return await ctx.send(embed=embed)
 

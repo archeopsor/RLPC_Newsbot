@@ -63,13 +63,13 @@ def get_own_replay_files(path = 'C:/Users/Simcha/Documents/My Games/Rocket Leagu
         replays.append(f"{path}/{file}")
     return replays
 
-def get_rlpc_replays(path='C:/Users/Simcha/Downloads', download_files = True) -> list:
+def get_rlpc_replays(path=f'{os.getcwd()}\\replay_processing\\Downloaded_Replays', download_files = True) -> list:
     """
 
     Parameters
     ----------
     path : str, optional
-        Where to get the downloaded replay files from. The default is 'C:/Users/Owner/Downloads'.
+        Where to get the downloaded replay files from. The default is './replay_processing/Downloaded_Replays'.
         
     download_files : bool, optional
         Whether or not to download replay files from the rlpcgamelogs website. The default is True.

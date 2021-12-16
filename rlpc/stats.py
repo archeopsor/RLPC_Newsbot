@@ -15,8 +15,8 @@ from errors.sheets_errors import GetSheetError, SheetToDfError
 from errors.general_errors import *
 
 
-dates = {1: '7/20/21 Data', 2: '7/22/21 Data', 3: '7/27/21 Data', 4: '7/29/21 Data', 5: '8/3/21 Data', 6: '8/5/21 Data', 7: '8/10/21 Data', 8: '8/12/21 Data', 9: '8/17/21 Data',
-        10: '8/19/21 Data', 11: '8/24/21 Data', 12: '8/26/21 Data', 13: '8/31/21 Data', 14: '9/2/21 Data', 15: '9/7/21 Data', 16: '9/9/21 Data', 17: '9/14/21 Data', 18: '9/16/21 Data'}
+dates = {1: '11/30/21 Data', 2: '12/2/21 Data', 3: '12/7/21 Data', 4: '12/9/21 Data', 5: '12/14/21 Data', 6: '12/16/21 Data', 7: '12/21/21 Data', 8: '12/28/21 Data', 9: '1/4/22 Data',
+        10: '1/6/22 Data', 11: '1/11/22 Data', 12: '1/13/22 Data', 13: '1/18/22 Data', 14: '1/20/22 Data', 15: '1/25/22 Data', 16: '1/27/22 Data', 17: '2/1/22 Data', 18: '2/3/22 Data'}
 
 def get_latest_gameday() -> int:
     day = datetime.datetime.now(tz=pytz.timezone("US/Eastern"))
