@@ -254,7 +254,7 @@ class Stats(commands.Cog):  # pragma: no cover
     async def top(self, ctx: Context, *, msg):
         async with ctx.typing():
             # Default arguments
-            useSheet = True
+            useSheet = False
             league = "all"
             stat = "Points"
             limit = 10

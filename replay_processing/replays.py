@@ -83,7 +83,7 @@ class Retreiver:
                                'application/octet-stream, application/zip')
 
         browser = webdriver.Firefox(
-            profile, executable_path=r'C:\Users\Simi\Documents\geckodriver.exe')
+            profile, executable_path=r'C:\Users\Simcha\Documents\geckodriver.exe')
         browser.get("https://rlpcgamelogs.com/")
 
         browser.find_element_by_xpath(
@@ -102,7 +102,7 @@ class Retreiver:
             "US/Eastern")) - timedelta(days=1)
         for date in dates[::-1]:
             # Click the date for yesterday
-            if date.text == "11/30/2021": #target_date.strftime('%m/%d/%Y'):
+            if date.text == target_date.strftime('%m/%d/%Y'):
                 date.click()
                 break
         time.sleep(3)
@@ -171,14 +171,14 @@ class Retreiver:
         return browser.quit()
 
     @staticmethod
-    def get_own_replays(path='C:/Users/Simi/Documents/My Games/Rocket League/TAGame/Demos') -> list:
+    def get_own_replays(path='C:/Users/Simcha/Documents/My Games/Rocket League/TAGame/Demos') -> list:
         """
         Gets a list of replays from the file at the given path
 
         Parameters
         ----------
         path : str, optional
-            Where to get the replay files from. The default is 'C:/Users/Simi/Documents/My Games/Rocket League/TAGame/Demos'.
+            Where to get the replay files from. The default is 'C:/Users/Simcha/Documents/My Games/Rocket League/TAGame/Demos'.
 
         Returns
         -------
@@ -192,16 +192,16 @@ class Retreiver:
         return replays
 
     @staticmethod
-    def get_downloaded_replays(path: str = 'C:/Users/Simi/Downloads', target: str = "./replay_processing/Replay_Files", max_age: float = 0.5) -> list:
+    def get_downloaded_replays(path: str = 'C:/Users/Simcha/Downloads', target: str = "./replay_processing/Replay_Files", max_age: float = 0.5) -> list:
         """
         Moves replay zip files downloaded from rlpcgamelogs.com to the target folder, and unfolds them in the process. Returns a list of retreived replays.
 
         Parameters
         ----------
         path : str, optional
-            Where the downloaded replays are located. The default is 'C:/Users/Simi/Downloads'.
+            Where the downloaded replays are located. The default is 'C:/Users/Simcha/Downloads'.
         target : str, optional
-            Where to move unfolded replays. The default is "C:/Users/Simi/Desktop/Replay Files/".
+            Where to move unfolded replays. The default is "C:/Users/Simcha/Desktop/Replay Files/".
         max_age : float, optional
             Maximum age, in days, of files to get. The default is 0.5.
 
@@ -271,6 +271,7 @@ class Series:
         player_stats = pd.DataFrame(columns=valid_stats)
 
         for replay in self.replays:
+            replay.process()
             if replay.failed:
                 print(f"REPLAY FAILED: {replay.path}")
                 self.failed.append(replay.path)
@@ -325,23 +326,27 @@ class RLPCAnalysis:
         stats = pd.DataFrame(columns=valid_stats)
         counter = 1
         replays = self.get_replays()
+        series_list = []
 
         for series in list(replays):
-            print(f'Analyzing series {counter} of {len(list(replays))} ({round(((counter-1)/len(list(replays)))*100)}%)')
+            print(f'Uploading series {counter} of {len(list(replays))} ({round(((counter-1)/len(list(replays)))*100)}%)')
 
             games = []
             for replay_path in replays[series]:
                 replay = BallchasingReplay(replay_path, self.session, self.playersHandler, self.identifier)
-                # try:
-                #     replay = CarballReplay(replay_path, self.session, self.playersHandler, self.identifier)
-                # except:
-                #     replay = BallchasingReplay(replay_path, self.session, self.playersHandler, self.identifier)
                 games.append(replay)
 
             series_obj = Series(self.session, self.identifier, len(games), games)
+            series_list.append(series_obj)
 
-            series_stats = series_obj.get_stats()
-            failed = series_obj.failed
+            counter += 1
+
+        counter = 1
+        for series in series_list:
+            print(f'Analyzing series {counter} of {len(list(replays))} ({round(((counter-1)/len(list(replays)))*100)}%)')
+
+            series_stats = series.get_stats()
+            failed = series.failed
 
             stats = stats.append(series_stats)
             self.failed.append(failed)        
@@ -481,14 +486,14 @@ class RLPCAnalysis:
                 pass
 
     def main(self):
-        print("Checks")
-        self.checks()
+        # print("Checks")
+        # self.checks()
 
         print("Getting replays")
         stats = self.analyze_replays()
 
         print("Logging data")
-        self.log_data(stats, "11/30/2021 Data")#f'{dates[get_latest_gameday()]}!A2:Z')
+        self.log_data(stats, f'{dates[get_latest_gameday()]}!A2:Z')
 
         print("Uploading Stats")
         self.upload_stats(stats)
@@ -503,5 +508,5 @@ class RLPCAnalysis:
 
 
 if __name__ == "__main__":
-    # Retreiver.download()
+    Retreiver.download()
     RLPCAnalysis().main()

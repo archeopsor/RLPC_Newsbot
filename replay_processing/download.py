@@ -12,7 +12,7 @@ profile.set_preference('browser.download.manager.showWhenStarting', False)
 profile.set_preference('browser.download.dir', '/tmp')
 profile.set_preference('browser.helperApps.neverAsk.saveToDisk', 'application/octet-stream, application/zip')
 
-browser = webdriver.Firefox(profile, executable_path=r'C:\Users\Simi\Documents\geckodriver.exe')
+browser = webdriver.Firefox(profile, executable_path=r'C:\Users\Simcha\Documents\geckodriver.exe')
 browser.get("https://rlpcgamelogs.com/")
 
 browser.find_element_by_xpath("/html/body/app-root/div/app-main/div/div[1]/div[4]").click() # Click "Status" tab

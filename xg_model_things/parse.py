@@ -7,7 +7,7 @@ def parse(file_path: str) -> dict:
     return replay
 
 def test():
-    parse(r'C:\Users\Simi\Documents\My Games\Rocket League\TAGame\Demos\CA6509C8416BF65001C3A99F3501B356.replay')
+    parse(r'C:\Users\Simcha\Documents\My Games\Rocket League\TAGame\Demos\CA6509C8416BF65001C3A99F3501B356.replay')
 
 if __name__ == "__main__":
     import timeit

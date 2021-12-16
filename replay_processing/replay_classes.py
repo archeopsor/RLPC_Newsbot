@@ -58,7 +58,7 @@ class BallchasingReplay(Replay):
         super().__init__(file_path, session, playersHandler, identifier)
         self.token = BALLCHASING_TOKEN
         self.uploaded = False
-        self.stats = self.process()
+        self.upload()
 
     def upload(self) -> str:
         """Uploads a replay to the season 15 replays group on ballchasing.com
@@ -72,19 +72,24 @@ class BallchasingReplay(Replay):
 
         files = {'file': open(self.path, 'rb')}
         
-        r = requests.post(upload_url, headers={
-                        'Authorization': self.token}, files=files)
+        r = requests.post(upload_url, headers={'Authorization': self.token}, files=files)
+        r_json = r.json()
 
         files['file'].close()
 
         if r.status_code == 201:    # replay successfully created, return it's id
             self.uploaded = True
-            return r.json()['id']
+            self.replay_id = r.json()['id']
+            r.close()
+            return r_json['id']
         elif r.status_code == 409:  # duplicate replay, return existing replay id
             self.uploaded = True
-            return r.json()['id']
+            self.replay_id = r_json['id']
+            r.close()
+            return r_json['id']
         elif r.status_code == 429:  # rate limit, wait 2 seconds and try again
             sleep(2)
+            r.close()
             return self.upload()
         else:                       # raise an error for other status codes (50x, ...)
             r.raise_for_status()
@@ -99,22 +104,26 @@ class BallchasingReplay(Replay):
             dict: Json with all the ballchasing.com data for the given replay
         """
         if not self.uploaded:
-            replay_id = self.upload()
+            self.replay_id = self.upload()
 
-        replay_url = f"https://ballchasing.com/api/replays/{replay_id}"
-        r = requests.get(replay_url, headers={
-            'Authorization': self.token})
+        replay_url = f"https://ballchasing.com/api/replays/{self.replay_id}"
+        r = requests.get(replay_url, headers={'Authorization': self.token})
+        r_json = r.json()
 
         if r.status_code == 429:            # Rate limit, wait 2 seconds and try again     
             sleep(2)
             return self.process()
-        elif r['status'] == 'ok':           # Success, return stats json
-            return r
-        elif r['status'] == 'pending':      # Replay not processed yet, wait 5 seconds and try again
+        elif r_json['status'] == 'ok':  
+            r.close()         # Success, return stats json
+            self.stats = r_json
+            return r_json
+        elif r_json['status'] == 'pending':      # Replay not processed yet, wait 5 seconds and try again
             sleep(5)
+            r.close()
             return self.process()
-        elif r['status'] == 'failed':       # Replay could not be processed
+        elif r_json['status'] == 'failed':       # Replay could not be processed
             self.failed = True
+            r.close()
             raise ReplayFailedError(self.path)
 
     def get_teams(self) -> List[str]:
@@ -192,7 +201,7 @@ class BallchasingReplay(Replay):
             # Add player's stats
             player_stats = player_stats.append(pd.Series(name=name, dtype=object)).fillna(0)
             player_stats.loc[name, 'Games Played'] += 1
-            if player['id']['id'] in [x['id']['id'] for x in stats[winner][players]]:
+            if player['id']['id'] in [x['id']['id'] for x in stats[winner]['players']]:
                 # Add 1 game won only if they won
                 player_stats.loc[name, 'Games Won'] += 1
             player_stats.loc[name, 'Goals'] += player['stats']['core']['goals']
@@ -208,8 +217,8 @@ class BallchasingReplay(Replay):
             player_stats.loc[name, 'Time Slow'] += player['stats']['movement']['time_slow_speed']
             player_stats.loc[name, 'Time Boost'] += player['stats']['movement']['time_boost_speed']
             player_stats.loc[name, 'Time Supersonic'] += player['stats']['movement']['time_supersonic_speed']
-            player_stats.loc[name, 'Demos Inflicted'] += player['stats']['demos']['inflicted']
-            player_stats.loc[name, 'Demos Taken'] += player['stats']['demos']['taken']
+            player_stats.loc[name, 'Demos Inflicted'] += player['stats']['demo']['inflicted']
+            player_stats.loc[name, 'Demos Taken'] += player['stats']['demo']['taken']
 
         return player_stats
 

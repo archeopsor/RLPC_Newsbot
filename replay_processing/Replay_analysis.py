@@ -44,13 +44,13 @@ def get_replay_stats(replay: str) -> dict:
     
     return stats
 
-def get_own_replay_files(path = 'C:/Users/Simi/Documents/My Games/Rocket League/TAGame/Demos') -> list:
+def get_own_replay_files(path = 'C:/Users/Simcha/Documents/My Games/Rocket League/TAGame/Demos') -> list:
     """
 
     Parameters
     ----------
     path : str, optional
-        Where to get the replay files from. The default is 'C:/Users/Simi/Documents/My Games/Rocket League/TAGame/Demos'.
+        Where to get the replay files from. The default is 'C:/Users/Simcha/Documents/My Games/Rocket League/TAGame/Demos'.
 
     Returns
     -------
@@ -63,7 +63,7 @@ def get_own_replay_files(path = 'C:/Users/Simi/Documents/My Games/Rocket League/
         replays.append(f"{path}/{file}")
     return replays
 
-def get_rlpc_replays(path='C:/Users/Simi/Downloads', download_files = True) -> list:
+def get_rlpc_replays(path='C:/Users/Simcha/Downloads', download_files = True) -> list:
     """
 
     Parameters
@@ -92,15 +92,15 @@ def get_rlpc_replays(path='C:/Users/Simi/Downloads', download_files = True) -> l
             teams = download.split(" - ")[0].split(" vs. ")
             name = f"{teams[0]} - {teams[1]}"
             with ZipFile(f"{path}/{download}", 'r') as zip_ref:
-                zip_ref.extractall(f"C:/Users/Simi/Desktop/Replay Files/{name}") # Extract files to new folder
-            for folder in os.listdir(f"C:/Users/Simi/Desktop/Replay Files/{name}"):
-                filename = os.listdir(f"C:/Users/Simi/Desktop/Replay Files/{name}/{folder}")[0]
-                replays.append(f"C:/Users/Simi/Desktop/Replay Files/{name}/{folder}/{filename}")
+                zip_ref.extractall(f"C:/Users/Simcha/Desktop/Replay Files/{name}") # Extract files to new folder
+            for folder in os.listdir(f"C:/Users/Simcha/Desktop/Replay Files/{name}"):
+                filename = os.listdir(f"C:/Users/Simcha/Desktop/Replay Files/{name}/{folder}")[0]
+                replays.append(f"C:/Users/Simcha/Desktop/Replay Files/{name}/{folder}/{filename}")
             files[name] = replays
     return files
 
 def clear_replays():
-    path = r'C:\Users\Simi\Desktop\Replay Files'
+    path = r'C:\Users\Simcha\Desktop\Replay Files'
     for file in os.listdir(path):
         filepath = os.path.join(path, file)
         shutil.rmtree(filepath)

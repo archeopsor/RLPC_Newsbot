@@ -133,9 +133,12 @@ class Players:
                 if not fixed:
                     # Can't find the id anywhere in db, so add a new player
                     playerinfo = sheetdata.loc[sheetdata['Username'] == player]
-                    self.add_player(player, playerinfo['Region'].values[0], playerinfo['Platform'].values[0], playerinfo['Sheet MMR'].values[0],
-                                    playerinfo['Team'].values[0], playerinfo['League'].values[0], int(playerinfo['Discord ID'].values[0]), ids=playerinfo['Unique IDs'].tolist())
-                    logger.info(f'{player} added')
+                    try:
+                        self.add_player(player, playerinfo['Region'].values[0], playerinfo['Platform'].values[0], playerinfo['Sheet MMR'].values[0],
+                                        playerinfo['Team'].values[0], playerinfo['League'].values[0], int(playerinfo['Discord ID'].values[0]), ids=playerinfo['Unique IDs'].tolist())
+                        logger.info(f'{player} added')
+                    except:
+                        logger.info(f'{player} failed to add')
 
             else:  # Player's username is found in db
                 doc = self.session.players.find_one({'username': player})
