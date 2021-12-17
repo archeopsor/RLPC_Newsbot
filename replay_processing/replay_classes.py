@@ -5,14 +5,20 @@ from typing import List
 
 import numpy as np
 import pandas as pd
+import os
 import requests
-# import carball
 
 from errors.replay_errors import *
-from passwords import BALLCHASING_TOKEN
 from rlpc.players import Identifier, Players
 from settings import valid_stats
 from tools.mongo import Session, teamIds
+
+try:
+    from passwords import BALLCHASING_TOKEN
+except:
+    from dotenv import load_dotenv
+    load_dotenv(f'{os.getcwd()}/.env')
+    BALLCHASING_TOKEN = os.getenv("BALLCHASING_TOKEN")
 
 
 def id_player(player: dict, identifier: Identifier):

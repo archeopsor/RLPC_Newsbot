@@ -12,6 +12,7 @@ datetime==4.3
 pytz==2021.1
 selenium==3.141.0
 webdriver_manager==3.5.2
+python-dotenv==0.19.2
 
 # POTENTIAL FUTURE REQUIREMENTS
 # selenium==3.141.0

@@ -1,6 +1,8 @@
 from typing_extensions import Literal
 import os
 from random import choice
+from dotenv import load_dotenv
+load_dotenv('.env')
 
 import discord
 from discord.ext import commands
@@ -31,10 +33,8 @@ from settings import (
     gdstats_sheet,
 )
 
-try:
-    from passwords import BOT_TOKEN
-except:
-    BOT_TOKEN = os.environ.get("BOT_TOKEN")
+# This will get actual bot token in production but test bot in testing
+BOT_TOKEN = os.environ.get("BOT_TOKEN")
 
 
 class Newsbot(commands.Bot):
@@ -265,6 +265,5 @@ class Newsbot(commands.Bot):
 
 
 if __name__ == "__main__":
-    # from passwords import TEST_BOT_TOKEN as BOT_TOKEN
     bot = Newsbot(BOT_TOKEN)
     bot.run()

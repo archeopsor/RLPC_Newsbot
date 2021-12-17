@@ -153,7 +153,7 @@ class EloHandler:
             team2 = game.split()[-1].title()
             if team2 == "Jackets":
                 team2 = "Yellow Jackets"
-            elif team2 == "The":
+            elif team2 == "Snowmen":
                 team2 = "The Snowmen"
             score = ""
             if team1 not in ["Yellow Jackets", "The Snowmen"]:
@@ -169,26 +169,3 @@ class EloHandler:
                 self.add_game_manual(league, team1, team2, team1, score)
             except:
                 return f"{game} failed"
-
-
-if __name__ == "__main__":
-    scores = """The Snowmen 3-1 Pelicans
-Ravens 3-1 Genesis
-Embers 3-2 Cardinals
-Yellow Jackets 3-0 Sockeyes
-Wolves 3-2 Galaxy
-Wildcats 3-0 Grizzlies
-Rhinos 3-0 Centurions
-Admirals 3-2 Toucans
-Wizards 3-0 Dragons
-Beavers 3-0 Scorpions
-Thrashers 3-0 Cyclones
-Hornets 3-0 Piranhas
-Solar 3-2 Terriers
-Pandas 3-2 Jackrabbits
-Macaws 3-2 Captains
-Yetis 3-2 Mages
-Otters 3-0 Camels
-Tides 3-2 Raptors"""
-    elo = EloHandler()
-    elo.autoparse(scores)

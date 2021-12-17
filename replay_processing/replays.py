@@ -9,6 +9,7 @@ from zipfile import ZipFile
 from datetime import datetime, timedelta
 import pytz
 from webdriver_manager.firefox import GeckoDriverManager
+from errors.replay_errors import ReplayFailedError
 
 from replay_classes import BallchasingReplay, CarballReplay, Replay
 
@@ -272,7 +273,13 @@ class Series:
         player_stats = pd.DataFrame(columns=valid_stats)
 
         for replay in self.replays:
-            replay.process()
+            try:
+                replay.process()
+            except ReplayFailedError:
+                print(f"REPLAY FAILED: {replay.path}")
+                self.failed.append(replay.path)
+                self.length -= 1
+                continue
             if replay.failed:
                 print(f"REPLAY FAILED: {replay.path}")
                 self.failed.append(replay.path)
@@ -486,6 +493,7 @@ class RLPCAnalysis:
             except IndexError:
                 pass
 
+
     def main(self):
         # print("Checks")
         # self.checks()
@@ -509,5 +517,5 @@ class RLPCAnalysis:
 
 
 if __name__ == "__main__":
-    Retreiver.download()
+    Retreiver.download(update_elo=False)
     RLPCAnalysis().main()
