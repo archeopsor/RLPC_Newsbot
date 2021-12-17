@@ -495,8 +495,8 @@ class RLPCAnalysis:
 
 
     def main(self):
-        # print("Checks")
-        # self.checks()
+        print("Checks")
+        self.checks()
 
         print("Getting replays")
         stats = self.analyze_replays()
