@@ -349,7 +349,7 @@ class StatsHandler:
 
     def get_me(self, discord_id: str) -> str:
         ids = self.p4sheet.to_df(
-            'PlayerIDs!A1:B').set_index('Discord ID')
+            'Trackers!A1:B').set_index('Discord ID')
         try:
             player = ids.loc[discord_id, 'Username']
         except:
