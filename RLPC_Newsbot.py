@@ -164,7 +164,7 @@ class Newsbot(commands.Bot):
         if int(message.channel.id) in list(channels):
 
             # Criteria is either 'record' or 'rating', followed by the threshold for an upset
-            criteria, threshold = ("record", 3)
+            criteria, threshold = ("record", 4)
 
             # Parse messages
             league = channels[message.channel.id]

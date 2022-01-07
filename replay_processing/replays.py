@@ -93,7 +93,7 @@ class Retreiver:
         time.sleep(3)
         browser.find_element_by_xpath(
             "/html/body/app-root/div/app-main/div/div[2]/div[1]").click()  # Click "Logs" tab
-        time.sleep(3)
+        time.sleep(10)
         browser.find_element_by_xpath(
             "/html/body/app-root/div/app-main/div/app-logs-status/div/div[2]/p-dropdown/div/label").click()
         time.sleep(3)
@@ -165,7 +165,7 @@ class Retreiver:
                     scores += '\n'
                 scores += score
 
-            time.sleep(13)
+            time.sleep(20)
 
         if update_elo:
             EloHandler().autoparse(scores)
