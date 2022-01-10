@@ -110,7 +110,7 @@ class Misc(commands.Cog):
             team: str = team.title()
 
             if team not in divisions.keys():
-                return await ctx.send("Couldn't find team " + team)
+                return await ctx.send(f"Couldn't find team `{team}`")
 
             league: str = self.identifier.find_league(team)
 
