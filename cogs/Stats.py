@@ -107,7 +107,7 @@ class Stats(commands.Cog):  # pragma: no cover
             try:
                 league = leagues[league.lower()]
             except KeyError:
-                return await ctx.send("Couldn't understand league: " + league)
+                return await ctx.send(f"Couldn't understand league: `{league}`")
             try:
                 rankings = self.stats.power_rankings(league)
             except PRSheetError as error:
@@ -216,11 +216,11 @@ class Stats(commands.Cog):  # pragma: no cover
                 answer = self.stats.get_player_stats(player, stat, advanced)
             except InvalidStatError:
                 return await ctx.send(
-                    f"Couldn't understand stat {stat}. If this is part of a username, surround the username in quotes."
+                    f"Couldn't understand stat `{stat}`. If this is part of a username, surround the username in quotes."
                 )
             except (StatsError, KeyError):
                 return await ctx.send(
-                    f"Couldn't find {player}'s stats. Contact arco if you think this is a bug."
+                    f"Couldn't find `{player}`'s stats. Contact arco if you think this is a bug."
                 )
 
             embed = discord.Embed(
@@ -346,7 +346,7 @@ class Stats(commands.Cog):  # pragma: no cover
                 )
             except InvalidStatError as error:
                 return await ctx.send(
-                    f'Could not understand stat {error.stat.title()}. Try using "$valid" for a list of available stats.'
+                    f'Could not understand stat `{error.stat.title()}`. Try using "$valid" for a list of available stats.'
                 )
             except (FindPlayersError, StatSheetError, GetSheetError) as error:
                 await ctx.send(
@@ -440,15 +440,15 @@ class Stats(commands.Cog):  # pragma: no cover
                 data = self.stats.gdstats(player, day, stat=stat, pergame=pergame)
             except InvalidDayError:
                 return await ctx.send(
-                    f"{day} is not a valid gameday. Please enter a number between 1 and 18."
+                    f"`{day}` is not a valid gameday. Please enter a number between 1 and 18."
                 )
             except (GDStatsSheetError, GetSheetError):
                 return await ctx.send(
-                    f"It doesn't look like there are any stats available for gameday {day}"
+                    f"It doesn't look like there are any stats available for gameday `{day}`"
                 )
             except PlayerNotFoundError:
                 return await ctx.send(
-                    f"Could not find stats for {player} on gameday {day}."
+                    f"Could not find stats for `{player}` on gameday `{day}`."
                 )
 
             if stat == None:
@@ -491,7 +491,7 @@ class Stats(commands.Cog):  # pragma: no cover
                 team = msg.title()
             else:
                 return await ctx.send(
-                    f"Couldn't understand {msg}. Please specify either a league or a team."
+                    f"Couldn't understand `{msg}`. Please specify either a league or a team."
                 )
 
             if league != None:
@@ -544,7 +544,7 @@ class Stats(commands.Cog):  # pragma: no cover
             except PlayerNotFoundError as e:
                 return await ctx.send(
                     "Couldn't understand player: "
-                    + e.player
+                    + f"`{e.player}`"
                     + '. You may need to surround it in double quotes (") to be understood correctly.'
                 )
             except (ZeroError, InvalidDayError):

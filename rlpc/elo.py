@@ -133,7 +133,7 @@ class EloHandler:
         count = self.session.teams.count_documents({'league': league})
 
         if count == 0:
-            return league + "appears to be an invalid league"
+            return f" `{league}` appears to be an invalid league"
 
         for i in range(count):
             team = teams.next()
