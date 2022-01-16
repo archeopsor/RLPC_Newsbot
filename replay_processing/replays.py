@@ -86,7 +86,7 @@ class Retreiver:
 
         # To set headless mode, needed to run without firefox actually installed
         options = webdriver.FirefoxOptions()
-        options.set_headless()
+        options.add_argument('--headless')
 
         browser = webdriver.Firefox(profile, executable_path=GeckoDriverManager().install(), firefox_options=options)
         browser.get("https://rlpcgamelogs.com/")
@@ -520,5 +520,5 @@ class RLPCAnalysis:
 
 
 if __name__ == "__main__":
-    Retreiver.download(update_elo=True)
+    Retreiver.download(update_elo=False)
     RLPCAnalysis().main()
