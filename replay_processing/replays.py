@@ -541,5 +541,5 @@ class RLPCAnalysis:
 
 
 if __name__ == "__main__":
-    Retreiver.download(update_elo=True)
+    Retreiver.download(update_elo=False)
     RLPCAnalysis().main()

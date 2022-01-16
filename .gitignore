@@ -141,8 +141,6 @@ passwords.py
 creds.json
 
 # Random stuff
-replay_processing/Replay_Files/
-replay_processing/Downloaded_Replays/
 post.txt
 .prof
 .log
