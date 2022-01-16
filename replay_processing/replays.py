@@ -218,7 +218,7 @@ class Retreiver:
         return replays
 
     @staticmethod
-    def get_downloaded_replays(path: str = f'{os.getcwd()}/replay_processing/Downloaded_Replays', target: str = "./replay_processing/Replay_Files", max_age: float = 0.5) -> list:
+    def get_downloaded_replays(path: str = f'{os.getcwd()}/replay_processing/Downloaded_Replays', target: str = f"{os.getcwd()}/replay_processing/Replay_Files", max_age: float = 0.5) -> list:
         """
         Moves replay zip files downloaded from rlpcgamelogs.com to the target folder, and unfolds them in the process. Returns a list of retreived replays.
 
@@ -266,7 +266,7 @@ class Retreiver:
         return files
 
     @staticmethod
-    def clean_folder(path: str = './replay_processing/Replay_Files'):
+    def clean_folder(path: str = f'{os.getcwd()}/replay_processing/Replay_Files'):
         for file in os.listdir(path):
             filepath = os.path.join(path, file)
             try:
