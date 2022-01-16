@@ -8,9 +8,11 @@ import logging
 from zipfile import ZipFile
 from datetime import datetime, timedelta
 import pytz
+from selenium import webdriver
+from selenium.webdriver.firefox.options import Options
 from webdriver_manager.firefox import GeckoDriverManager
-from errors.replay_errors import ReplayFailedError
 
+from errors.replay_errors import ReplayFailedError
 from replay_classes import BallchasingReplay, CarballReplay, Replay
 
 from tools.mongo import Session, teamIds, findCategory
@@ -72,7 +74,6 @@ class Retreiver:
         None.
 
         """
-        from selenium import webdriver
 
         # To prevent download dialog
         profile = webdriver.FirefoxProfile()
@@ -85,10 +86,11 @@ class Retreiver:
                                'application/octet-stream, application/zip')
 
         # To set headless mode, needed to run without firefox actually installed
-        options = webdriver.FirefoxOptions()
+        options = Options()
         options.add_argument('--headless')
+        options.profile = profile
 
-        browser = webdriver.Firefox(profile, executable_path=GeckoDriverManager().install(), firefox_options=options)
+        browser = webdriver.Firefox(executable_path=GeckoDriverManager().install(), options=options)
         browser.get("https://rlpcgamelogs.com/")
 
         browser.find_element_by_xpath(
