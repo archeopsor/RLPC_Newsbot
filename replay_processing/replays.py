@@ -10,7 +10,11 @@ from datetime import datetime, timedelta
 import pytz
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
 from webdriver_manager.firefox import GeckoDriverManager
+
+from dotenv import load_dotenv
+load_dotenv(f'{os.getcwd()}.env')
 
 from errors.replay_errors import ReplayFailedError
 from replay_classes import BallchasingReplay, CarballReplay, Replay
@@ -83,14 +87,29 @@ class Retreiver:
             'browser.download.manager.showWhenStarting', False)
         profile.set_preference('browser.download.dir', f'{os.getcwd()}\\replay_processing\\Downloaded_Replays')
         profile.set_preference('browser.helperApps.neverAsk.saveToDisk',
-                               'application/octet-stream, application/zip')
+                            'application/octet-stream, application/zip')
 
-        # To set headless mode, needed to run without firefox actually installed
         options = Options()
-        options.add_argument('--headless')
         options.profile = profile
+        options.add_argument('-headless')
 
-        browser = webdriver.Firefox(executable_path=GeckoDriverManager().install(), options=options)
+        if os.environ.get('PROD') == "false": # Running on a machine with firefox downloaded
+
+            browser = webdriver.Firefox(executable_path=GeckoDriverManager().install(), options=options)
+
+        else: # Running on a heroku server using firefox buildpack
+            options.add_argument("-remote-debugging-port=9224")
+            options.add_argument("-disable-gpu")
+            options.add_argument("-no-sandbox")
+
+            binary = FirefoxBinary(os.environ.get('FIREFOX_BIN'))
+
+            browser = webdriver.Firefox(
+                firefox_binary=binary,
+                executable_path=os.environ.get('GECKODRIVER_PATH'),
+                options=options
+            )
+
         browser.get("https://rlpcgamelogs.com/")
 
         browser.find_element_by_xpath(
