@@ -126,12 +126,19 @@ class Retreiver:
             '/html/body/app-root/div/app-main/div/app-logs-status/div/div[2]/p-dropdown[1]/div/div[4]/div/ul/li')
         target_date = datetime.now(tz=pytz.timezone(
             "US/Eastern")) - timedelta(days=1)
+
+        games_available = False
         for date in dates[::-1]:
             # Click the date for yesterday
             if date.text == target_date.strftime('%m/%d/%Y'):
                 date.click()
+                games_available = True
                 break
         time.sleep(3)
+
+        if not games_available:
+            browser.quit()
+            return False
 
         browser.find_element_by_xpath(
             '/html/body/app-root/div/app-main/div/app-logs-status/div/div[2]/p-dropdown[2]/div/label').click()  # Click "League" tab
@@ -194,7 +201,8 @@ class Retreiver:
         if update_elo:
             EloHandler().autoparse(scores)
 
-        return browser.quit()
+        browser.quit()
+        return True
 
     @staticmethod
     def get_own_replays(path='C:/Users/Simcha/Documents/My Games/Rocket League/TAGame/Demos') -> list:
@@ -541,5 +549,6 @@ class RLPCAnalysis:
 
 
 if __name__ == "__main__":
-    Retreiver.download(update_elo=False)
-    RLPCAnalysis().main()
+    download = Retreiver.download(update_elo=True)
+    if download:
+        RLPCAnalysis().main() # Only run if there were files to download
