@@ -84,8 +84,11 @@ class Retreiver:
         profile.set_preference('browser.helperApps.neverAsk.saveToDisk',
                                'application/octet-stream, application/zip')
 
-        browser = webdriver.Firefox(
-            profile, executable_path=GeckoDriverManager().install())
+        # To set headless mode, needed to run without firefox actually installed
+        options = webdriver.FirefoxOptions()
+        options.set_headless()
+
+        browser = webdriver.Firefox(profile, executable_path=GeckoDriverManager().install(), firefox_options=options)
         browser.get("https://rlpcgamelogs.com/")
 
         browser.find_element_by_xpath(
