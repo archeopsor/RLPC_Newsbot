@@ -187,7 +187,7 @@ class Retreiver:
 
                 try:
                     row.find_element_by_xpath('td[7]/div').click()  # Download logs
-                    print(f"Downloaded {winner} vs. {loser}")
+                    print(os.listdir(f'{os.getcwd()}/replay_processing/Downloaded_Replays'))
                 except:
                     pass  # If no logs are available
 
