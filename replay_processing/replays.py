@@ -80,18 +80,20 @@ class Retreiver:
         """
 
         # To prevent download dialog
-        profile = webdriver.FirefoxProfile()
-        profile.set_preference(
-            'browser.download.folderList', 2)  # custom location
-        profile.set_preference(
-            'browser.download.manager.showWhenStarting', False)
-        profile.set_preference('browser.download.dir', f'{os.getcwd()}\\replay_processing\\Downloaded_Replays')
-        profile.set_preference('browser.helperApps.neverAsk.saveToDisk',
-                            'application/octet-stream, application/zip')
+        # profile = webdriver.FirefoxProfile()
+
 
         options = Options()
-        options.profile = profile
+        # options.profile = profile
         options.add_argument('-headless')
+
+        options.set_preference(
+            'browser.download.folderList', 2)  # custom location
+        options.set_preference(
+            'browser.download.manager.showWhenStarting', False)
+        options.set_preference('browser.download.dir', f'{os.getcwd()}\\replay_processing\\Downloaded_Replays')
+        options.set_preference('browser.helperApps.neverAsk.saveToDisk',
+                            'application/octet-stream, application/zip')
 
         if os.environ.get('PROD') == "false": # Running on a machine with firefox downloaded
 
