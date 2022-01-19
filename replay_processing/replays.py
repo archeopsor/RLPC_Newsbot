@@ -186,8 +186,8 @@ class Retreiver:
                     continue
 
                 try:
-                    row.find_element_by_xpath(
-                        'td[7]/div').click()  # Download logs
+                    row.find_element_by_xpath('td[7]/div').click()  # Download logs
+                    print(f"Downloaded {winner} vs. {loser}")
                 except:
                     pass  # If no logs are available
 
@@ -245,6 +245,7 @@ class Retreiver:
             List of replay file paths unfolded and retreived
 
         """
+        print(os.listdir(path))
         Retreiver.clean_folder()
         
         files = {}
@@ -549,6 +550,6 @@ class RLPCAnalysis:
 
 
 if __name__ == "__main__":
-    download = Retreiver.download(update_elo=True)
+    download = Retreiver.download(update_elo=False)
     if download:
         RLPCAnalysis().main() # Only run if there were files to download
