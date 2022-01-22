@@ -17,7 +17,7 @@ try:
     from passwords import BALLCHASING_TOKEN
 except:
     from dotenv import load_dotenv
-    load_dotenv(f'{os.getcwd()}/.env')
+    load_dotenv(f'{os.getcwd()}\.env')
     BALLCHASING_TOKEN = os.getenv("BALLCHASING_TOKEN")
 
 

@@ -14,7 +14,7 @@ from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
 from webdriver_manager.firefox import GeckoDriverManager
 
 from dotenv import load_dotenv
-load_dotenv(f'{os.getcwd()}.env')
+load_dotenv(f'{os.getcwd()}\.env')
 
 from errors.replay_errors import ReplayFailedError
 from replay_classes import BallchasingReplay, CarballReplay, Replay
@@ -189,7 +189,6 @@ class Retreiver:
 
                 try:
                     row.find_element_by_xpath('td[7]/div').click()  # Download logs
-                    print(os.listdir(f'{os.getcwd()}/replay_processing/Downloaded_Replays'))
                 except:
                     pass  # If no logs are available
 
@@ -202,6 +201,11 @@ class Retreiver:
 
         if update_elo:
             EloHandler().autoparse(scores)
+
+        print(os.listdir())
+        print(os.listdir('..\\replay_processing\\replay_processing\\Downloaded_Replays'))
+        os.chdir('..')
+        print(os.listdir)
 
         browser.quit()
         return True
@@ -279,6 +283,8 @@ class Retreiver:
     @staticmethod
     def clean_folder(path: str = f'{os.getcwd()}/replay_processing/Replay_Files'):
         for file in os.listdir(path):
+            if 'gitignore' in file:
+                continue
             filepath = os.path.join(path, file)
             try:
                 shutil.rmtree(filepath)
@@ -552,6 +558,6 @@ class RLPCAnalysis:
 
 
 if __name__ == "__main__":
-    download = Retreiver.download(update_elo=False)
-    if download:
-        RLPCAnalysis().main() # Only run if there were files to download
+    download = Retreiver.download(update_elo=Fakse)
+    # if download:
+    #     RLPCAnalysis().main() # Only run if there were files to download
