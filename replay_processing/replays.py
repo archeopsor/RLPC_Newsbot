@@ -270,7 +270,11 @@ class Retreiver:
                     replays.append(f"{target}/{name}/{folder}/{filename}")
                 files[name] = replays
                 
-                filepath = os.path.join(path, download).replace('/', '\\')
+                if os.environ.get('PROD') == 'false':
+                    filepath = os.path.join(path, download).replace('/', '\\')
+                else:
+                    filepath = f'Downloads/{download}'
+                
                 os.remove(filepath)
                 # shutil.rmtree(filepath)
 
