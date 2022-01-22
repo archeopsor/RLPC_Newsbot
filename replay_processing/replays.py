@@ -365,9 +365,11 @@ class RLPCAnalysis:
     def get_replays(self):
         if os.environ.get('PROD') == 'false':
             path = f'./replay_processing/Downloaded_Replays'
+            target = f'./replay_processing/Replay_Files'
         else:
             path = './Downloads'
-        replays = Retreiver.get_downloaded_replays(path=path)
+            target = f'./replay_processing/Replay_Files'
+        replays = Retreiver.get_downloaded_replays(path=path, target=target)
         self.replays = replays
         return replays
 
