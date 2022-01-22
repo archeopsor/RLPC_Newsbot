@@ -203,9 +203,8 @@ class Retreiver:
             EloHandler().autoparse(scores)
 
         print(os.listdir())
-        print(os.listdir('..\\replay_processing\\replay_processing\\Downloaded_Replays'))
-        os.chdir('..')
-        print(os.listdir)
+        print(os.listdir('replay_processing'))
+        print(os.listdir('replay_processing\\replay_processing\\Downloaded_Replays'))
 
         browser.quit()
         return True
