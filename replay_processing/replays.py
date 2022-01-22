@@ -204,6 +204,8 @@ class Retreiver:
         if update_elo:
             EloHandler().autoparse(scores)
 
+        print(os.listdir('../Downloads'))
+
         browser.quit()
         return True
 
