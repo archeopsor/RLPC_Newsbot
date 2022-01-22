@@ -366,7 +366,11 @@ class RLPCAnalysis:
         self.playersHandler.download_ids()
 
     def get_replays(self):
-        replays = Retreiver.get_downloaded_replays()
+        if os.environ.get('PROD') == 'false':
+            path = f'./replay_processing/Downloaded_Replays'
+        else:
+            path = '../Downloads'
+        replays = Retreiver.get_downloaded_replays(path=path)
         self.replays = replays
         return replays
 
