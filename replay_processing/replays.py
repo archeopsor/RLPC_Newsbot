@@ -248,7 +248,7 @@ class Retreiver:
 
         """
         print(os.listdir(path))
-        Retreiver.clean_folder()
+        Retreiver.clean_folder(path=target)
         
         files = {}
         for download in os.listdir(path):
