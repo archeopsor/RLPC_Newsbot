@@ -100,6 +100,8 @@ class Retreiver:
             browser = webdriver.Firefox(executable_path=GeckoDriverManager().install(), options=options)
 
         else: # Running on a heroku server using firefox buildpack
+            os.chdir('replay_processing') # Set current working directory
+
             options.add_argument("-remote-debugging-port=9224")
             options.add_argument("-disable-gpu")
             options.add_argument("-no-sandbox")
@@ -201,10 +203,6 @@ class Retreiver:
 
         if update_elo:
             EloHandler().autoparse(scores)
-
-        print(os.listdir())
-        print(os.listdir('replay_processing'))
-        print(os.listdir('replay_processing\\replay_processing\\Downloaded_Replays'))
 
         browser.quit()
         return True
