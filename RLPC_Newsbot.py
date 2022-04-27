@@ -253,7 +253,7 @@ class Newsbot(commands.Bot):
                             new_message += (
                                 f"\n{role.mention}"
                             )
-                    await channel.send(new_message)
+                    #await channel.send(new_message) (TEMPORARILY DISABLED)
         await self.process_commands(message)
 
     async def close(self):
