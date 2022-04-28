@@ -120,7 +120,7 @@ class Misc(commands.Cog):
                 else self.indysheet
             )
 
-            all_games: pd.DataFrame = sheet.to_df(f"{league} Schedule!O4:X")
+            all_games: pd.DataFrame = sheet.to_df(f"{league} Schedule!O4:X188")
             if all_games.empty:
                 return await ctx.send(
                     "Schedules couldn't be found, possibly because they aren't on the sheet. Contact arco if you believe this is an error."

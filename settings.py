@@ -1,7 +1,7 @@
 prefix = '$'
 k = 40
 sheet_p4 = '1k_2u8zetvYpBqcW2akudLGmUMVajecaoZSHx4Sh0FYQ'
-sheet_indy = '1XZfwWVk_m0Emd8ci52QMmZ4NEMQphA9daWJ_iuAQaPY '
+sheet_indy = '1XZfwWVk_m0Emd8ci52QMmZ4NEMQphA9daWJ_iuAQaPY'
 test_sheet = '1gHlqD-xekmpwFDpblAiJfpuCvxRliK6C-AjYoEUU8tc'
 power_rankings_sheet = '1Tlc_TgGMrY5aClFF-Pb5xvtKrJ1Hn2PJOLy2fUDDdFI'
 gdstats_sheet = '1zWzGUUURyNQ1I7ShJinbkS_CsAWmrUQqKuL0pD9H3VA'
