@@ -178,6 +178,8 @@ class ELO(commands.Cog):
             }[league]
 
             data = self.fc_sheet.to_df(datarange).set_index("Teams")
+            if '' in data.values:
+                return await ctx.send("There don't seem to be any forecasts currently available for this league.")
 
             league = leagues[league]
 

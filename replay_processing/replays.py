@@ -449,10 +449,9 @@ class RLPCAnalysis:
             stats['League'] = stats.apply(lambda row: self.identifier.find_league(self.identifier.find_team([row.name])), axis=1)
         fantasy = self.session.fantasy.find()
 
-        if fantasy.count() == 0:
-            return
-
         while fantasy.alive:
+            if fantasy.count() == 0:
+                break
             account = fantasy.next()
             for player in account['players']:
                 username = self.session.players.find_one({'_id': player})['username']

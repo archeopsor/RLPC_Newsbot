@@ -351,7 +351,7 @@ class StatsHandler:
         ids = self.p4sheet.to_df(
             'Trackers!A1:B').set_index('Discord ID')
         try:
-            player = ids.loc[discord_id, 'Username']
+            player = ids.loc[discord_id, 'Username'][0]
         except:
             raise FindMeError(discord_id)
         
