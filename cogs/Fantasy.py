@@ -344,6 +344,9 @@ class Fantasy(commands.Cog):
 
             lb = self.fantasy.player_lb(league=league, num=num, pergame=pergame)
 
+            if lb.size == 0:
+                return await ctx.send("There seem to be no players with fantasy points. Contact arco if you think this is a bug.")
+
             num = min(num, lb.size)
 
             message = f"**1)** {lb.index[0]} ({lb[lb.index[0]]})"
