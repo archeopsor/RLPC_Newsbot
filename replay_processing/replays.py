@@ -564,8 +564,6 @@ class RLPCAnalysis:
 
 
 if __name__ == "__main__":
-    # download = Retreiver.download(update_elo=True)
-    # if download:
-    #     RLPCAnalysis().main() # Only run if there were files to download
-
-    RLPCAnalysis.checks()
+    download = Retreiver.download(update_elo=True)
+    if download:
+        RLPCAnalysis().main() # Only run if there were files to download
