@@ -64,7 +64,10 @@ class BallchasingReplay(Replay):
         super().__init__(file_path, session, playersHandler, identifier)
         self.token = BALLCHASING_TOKEN
         self.uploaded = False
-        self.upload()
+        try:
+            self.upload()
+        except requests.exceptions.ConnectionError:
+            print("REPLAY FAILED (Host Connection Error): " + file_path)
 
     def upload(self) -> str:
         """Uploads a replay to the season 15 replays group on ballchasing.com

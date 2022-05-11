@@ -16,6 +16,10 @@ from webdriver_manager.firefox import GeckoDriverManager
 from dotenv import load_dotenv
 load_dotenv(f'{os.getcwd()}\.env')
 
+# Allow imports when running script from within project dir
+import sys
+[sys.path.append(i) for i in ['.', '..']]
+
 from errors.replay_errors import ReplayFailedError
 from replay_classes import BallchasingReplay, CarballReplay, Replay
 
@@ -389,7 +393,8 @@ class RLPCAnalysis:
             games = []
             for replay_path in replays[series]:
                 replay = BallchasingReplay(replay_path, self.session, self.playersHandler, self.identifier)
-                games.append(replay)
+                if replay.uploaded:
+                    games.append(replay)
 
             series_obj = Series(self.session, self.identifier, len(games), games)
             series_list.append(series_obj)
@@ -400,11 +405,14 @@ class RLPCAnalysis:
         for series in series_list:
             print(f'Analyzing series {counter} of {len(list(replays))} ({round(((counter-1)/len(list(replays)))*100)}%)')
 
-            series_stats = series.get_stats()
-            failed = series.failed
-
-            stats = stats.append(series_stats)
-            self.failed.append(failed)        
+            try:
+                series_stats = series.get_stats()
+                failed = series.failed
+                stats = stats.append(series_stats)
+                self.failed.append(failed)   
+            except KeyError:
+                print("SERIES FAILED")  
+                self.failed.append("SERIES " + str(counter))   
 
             counter += 1         
 
@@ -435,11 +443,15 @@ class RLPCAnalysis:
                 print("PLAYER STATS FAILED: "+player)
                 continue
 
-    def update_fantasy(self, stats: pd.DataFrame):
+    def update_fantasy(self, stats: pd.DataFrame) -> None:
         if 'League' not in stats.columns:
             stats['Fantasy Points'] = stats.apply(lambda row: fantasy_formula(row), axis=1)
             stats['League'] = stats.apply(lambda row: self.identifier.find_league(self.identifier.find_team([row.name])), axis=1)
         fantasy = self.session.fantasy.find()
+
+        if fantasy.count() == 0:
+            return
+
         while fantasy.alive:
             account = fantasy.next()
             for player in account['players']:
@@ -543,7 +555,7 @@ class RLPCAnalysis:
 
     def main(self):
         print("Checks")
-        self.checks()
+        # self.checks()
 
         print("Getting replays")
         stats = self.analyze_replays()
@@ -564,6 +576,6 @@ class RLPCAnalysis:
 
 
 if __name__ == "__main__":
-    download = Retreiver.download(update_elo=True)
+    download = Retreiver.download(update_elo=False)
     if download:
         RLPCAnalysis().main() # Only run if there were files to download
