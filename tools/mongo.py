@@ -486,7 +486,9 @@ def findCategory(stat: str) -> str:
         return "general"
     elif stat in statsCategories["boost"]:
         return "boost"
-    elif stat in statsCategories["possession"]:
-        return "possession"
+    elif stat in statsCategories["movement"]:
+        return "movement"
+    elif stat in statsCategories["positioning"]:
+        return "positioning"
     else:
         return None

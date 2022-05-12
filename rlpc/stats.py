@@ -389,13 +389,12 @@ class StatsHandler:
     def get_me(self, discord_id: str) -> str:
         ids = self.p4sheet.to_df(
             'Trackers!A1:B').set_index('Discord ID')
-        try:
+        try: 
             player = ids.loc[discord_id, 'Username']
+            if type(player) == pd.core.series.Series:
+                player = player[0]
         except:
-            try: 
-                player = ids.loc[discord_id, 'Username'][0]
-            except:
-                raise FindMeError(discord_id)
+            raise FindMeError(discord_id)
         
         return player
 
