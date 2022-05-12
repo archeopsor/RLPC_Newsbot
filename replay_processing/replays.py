@@ -58,10 +58,6 @@ def fantasy_formula(row: pd.Series) -> int:
     points += (row['Shots']/gp)*3
     points += (row['Saves']/gp)*13
     points += (row['Demos Inflicted']/gp)*6
-    points += (row['Clears']/gp)*4
-    points += (row['Passes']/gp)*2
-    points += (row['Turnovers Won']/gp)*0.6
-    points += (row['Turnovers Lost']/gp)*(-0.3)
     points += (row['Series Won'])*5
     points += (row['Games Won'])*1
     
@@ -554,7 +550,7 @@ class RLPCAnalysis:
 
     def main(self):
         print("Checks")
-        self.checks()
+        # self.checks()
 
         print("Getting replays")
         stats = self.analyze_replays()
@@ -566,7 +562,7 @@ class RLPCAnalysis:
         self.upload_stats(stats)
 
         print("Updating fantasy points")
-        self.update_fantasy(stats)
+        # self.update_fantasy(stats)
 
         # print("Creating post file")
         # self.create_post(stats)

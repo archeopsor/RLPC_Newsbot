@@ -116,7 +116,10 @@ class BallchasingReplay(Replay):
             self.replay_id = self.upload()
 
         replay_url = f"https://ballchasing.com/api/replays/{self.replay_id}"
-        r = requests.get(replay_url, headers={'Authorization': self.token})
+        try:
+            r = requests.get(replay_url, headers={'Authorization': self.token})
+        except requests.exceptions.ConnectionError:
+            raise ReplayFailedError(self.path)
         r_json = r.json()
 
         if r.status_code == 429:            # Rate limit, wait 2 seconds and try again     
@@ -213,21 +216,45 @@ class BallchasingReplay(Replay):
             if player['id']['id'] in [x['id']['id'] for x in stats[winner]['players']]:
                 # Add 1 game won only if they won
                 player_stats.loc[name, 'Games Won'] += 1
+
+            player_stats.loc[name, 'MVPs'] += player['stats']['core']['mvp']
             player_stats.loc[name, 'Goals'] += player['stats']['core']['goals']
             player_stats.loc[name, 'Assists'] += player['stats']['core']['assists']
             player_stats.loc[name, 'Saves'] += player['stats']['core']['saves']
             player_stats.loc[name, 'Shots'] += player['stats']['core']['shots']
+            player_stats.loc[name, 'Goals Against'] += player['stats']['core']['goals_against']
+            player_stats.loc[name, 'Shots Against'] += player['stats']['core']['shots_against']
+            player_stats.loc[name, 'Demos Inflicted'] += player['stats']['demo']['inflicted']
+            player_stats.loc[name, 'Demos Taken'] += player['stats']['demo']['taken']
+
             player_stats.loc[name, 'Boost Used'] += player['stats']['boost']['amount_collected']
             player_stats.loc[name, 'Wasted Collection'] += player['stats']['boost']['amount_overfill']
             player_stats.loc[name, 'Wasted Usage'] += player['stats']['boost']['amount_used_while_supersonic']
             player_stats.loc[name, '# Small Boosts'] += player['stats']['boost']['count_collected_small']
             player_stats.loc[name, '# Large Boosts'] += player['stats']['boost']['count_collected_big']
             player_stats.loc[name, '# Boost Steals'] += player['stats']['boost']['count_stolen_big']
+            player_stats.loc[name, 'Time Empty'] += player['stats']['boost']['time_boost_0_25']
+
             player_stats.loc[name, 'Time Slow'] += player['stats']['movement']['time_slow_speed']
             player_stats.loc[name, 'Time Boost'] += player['stats']['movement']['time_boost_speed']
             player_stats.loc[name, 'Time Supersonic'] += player['stats']['movement']['time_supersonic_speed']
-            player_stats.loc[name, 'Demos Inflicted'] += player['stats']['demo']['inflicted']
-            player_stats.loc[name, 'Demos Taken'] += player['stats']['demo']['taken']
+            player_stats.loc[name, 'Time Powerslide'] += player['stats']['movement']['time_powerslide']
+            player_stats.loc[name, 'Time Ground'] += player['stats']['movement']['time_ground']
+            player_stats.loc[name, 'Time Low Air'] += player['stats']['movement']['time_low_air']
+            player_stats.loc[name, 'Time High Air'] += player['stats']['movement']['time_high_air']
+
+            player_stats.loc[name, 'Time Behind Ball'] += player['stats']['positioning']['time_behind_ball']
+            player_stats.loc[name, 'Time Infront Ball'] += player['stats']['positioning']['time_infront_ball']
+            player_stats.loc[name, 'Time Defensive Half'] += player['stats']['positioning']['time_defensive_half']
+            player_stats.loc[name, 'Time Offensive Half'] += player['stats']['positioning']['time_offensive_half']
+            player_stats.loc[name, 'Time Most Back'] += player['stats']['positioning']['time_most_back']
+            player_stats.loc[name, 'Time Most Forward'] += player['stats']['positioning']['time_most_forward']
+            player_stats.loc[name, 'Time Closest'] += player['stats']['positioning']['time_closest_to_ball']
+            player_stats.loc[name, 'Time Furthest'] += player['stats']['positioning']['time_farthest_from_ball']
+            try:
+                player_stats.loc[name, 'Conceded When Last'] += player['stats']['positioning']['goals_against_while_last_defender']
+            except:
+                pass
 
         return player_stats
 
