@@ -471,7 +471,7 @@ class StatsHandler:
         else:
             stats = pd.DataFrame()
             for player in roster:
-                stats = stats.append(self.get_player_stats(player))
+                stats = stats.append(self.get_player_stats_sheet(player))
             
             stats.rename(columns={
                 'Series Played': 'Series',

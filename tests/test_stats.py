@@ -7,7 +7,7 @@ statsHandler = StatsHandler()
 
 class TestStats(unittest.TestCase):
     def test_player_stats(self):
-        stats = statsHandler.get_player_stats("Zayo")
+        stats = statsHandler.get_player_stats_sheet("Zayo")
         self.assertEqual(stats.shape, (1, 16))
 
     def test_power_rankings(self):
