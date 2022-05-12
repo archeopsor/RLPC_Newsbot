@@ -90,7 +90,9 @@ class Stats(commands.Cog):  # pragma: no cover
     )
     async def valid(self, ctx: Context):
         await ctx.send(
-            f"""**Valid stats**: ['Series Played', 'Games Played', 'Goals', 'Assists', 'Saves', 'Shots', 'Points (Goals+Assists)', 'Goals per game', 'Assists per game', 'Saves per game', 'Shooting %', 'Winning %', 'Wins', 'Points per Game', 'Shots Per Game'].\n**Advanced stats** (may need to specify 'db' or 'advanced' in the command to use these): {valid_stats}."""
+            f"""**Valid stats** (may need to specify 'sheet' at the end of the command to use these): ['Series Played', 'Games Played', 'Goals', 'Assists', 'Saves', 'Shots', 'Points', 'Goals per game', 'Assists per game', 'Saves per game', 'Shooting %', 'Winning %', 'Wins', 'Points per Game', 'Shots Per Game'].
+            **Advanced stats** (may need to specify 'db' or 'advanced' at the end of the command to use these): {valid_stats}.
+            **Compound stats**: Coming soon!"""
         )
 
     @commands.command(
@@ -156,12 +158,7 @@ class Stats(commands.Cog):  # pragma: no cover
             return await ctx.send("This command isn't fully implemented and can't currently be used.")
             players = self.p4sheet.to_df("Players!A1:R")
 
-            # Remove case-sensitivity
-            lower_players = players["Username"].str.lower()
-            if player.casefold() in lower_players.values:
-                pindex = lower_players[lower_players == player.casefold()].index[0]
-                player = players.loc[pindex][0]
-            players = players.reset_index()
+            player, league = self.capitalize_username(player)
 
             mmrs = {}
             try:
@@ -194,9 +191,8 @@ class Stats(commands.Cog):  # pragma: no cover
             "get_stats",
         )
     )
-    # TODO: Add database stats
     async def get_player_stats(
-        self, ctx: Context, player: str, stat: str = "all", advanced: bool = False
+        self, ctx: Context, player: str, source: str = "db", stat: str = "all", pergame: str = "False"
     ):
         async with ctx.typing():
             if player == "me":
@@ -204,36 +200,58 @@ class Stats(commands.Cog):  # pragma: no cover
                     "One second, retreiving discord ID and stats"
                 )
                 discord_id = str(ctx.author.id)
-                await waitingMsg.delete()
+                
                 try:
                     player = self.stats.get_me(discord_id)
+                    await waitingMsg.delete()
                 except FindMeError as error:
-                    return await ctx.send(
+                    await ctx.send(
                         "You don't appear to have an up-to-date discord id on record. Try using the name that shows up on the RLPC spreadsheet."
                     )
+                    return await waitingMsg.delete()
+
+            advanced = False
+            if source in ['db', 'advanced', 'adv']:
+                advanced = True
+
+            if pergame in ['pg', 'pergame', 'rate']:
+                pergame = True
+            else:
+                pergame = False
 
             try:
-                answer = self.stats.get_player_stats(player, stat, advanced)
+                if advanced:
+                    if stat.lower() in ['pg', 'pergame', 'rate']:
+                        answer = self.stats.get_player_stats_db(player, pergame=True)
+                    else:
+                        answer = self.stats.get_player_stats_db(player, stat, pergame)
+                else:
+                    answer = self.stats.get_player_stats_sheet(player, stat)
             except InvalidStatError:
                 return await ctx.send(
                     f"Couldn't understand stat `{stat}`. If this is part of a username, surround the username in quotes."
                 )
-            except (StatsError, KeyError):
+            except (StatsError, KeyError, FindPlayersError):
                 return await ctx.send(
                     f"Couldn't find `{player}`'s stats. Contact arco if you think this is a bug."
                 )
 
             embed = discord.Embed(
-                title=f"{answer.values[0][0]}'s Stats", color=0x3333FF
+                title=f"{answer.values[0][0]}'s Stats", color=0x3333FF,
+                description=f"Source: {'Fantasy Database' if advanced else 'Sheet'} {', Per Game: True' if pergame else ''}"
             )
 
             for i, col in enumerate(answer.columns[1:]):
                 value = answer.values[0][i + 1]
                 if not value:
                     value = 0
+                if value % 1 == 0.0:
+                    value = int(value)
                 embed.add_field(name=col, value=value)
 
         await ctx.send(embed=embed)
+        if advanced:
+            return await ctx.send("Add 'boost', 'movement', or 'positioning' to the end of your command (but before 'pg' if you want to see per game stats) to see more stats.")
 
     @get_player_stats.error
     async def stats_error(self, ctx: Context, error):
@@ -280,7 +298,6 @@ class Stats(commands.Cog):  # pragma: no cover
                 elif word.lower() == "per" and msg[i + 1].lower() == "game":
                     pergame = True
                     used_args.append(word)
-                    used_args.append(msg[i + 1])
                     msg.remove(msg[i + 1])
                     continue
                 elif word.lower() in [
@@ -347,6 +364,10 @@ class Stats(commands.Cog):  # pragma: no cover
             except InvalidStatError as error:
                 return await ctx.send(
                     f'Could not understand stat `{error.stat.title()}`. Try using "$valid" for a list of available stats.'
+                )
+            except StatsError as error:
+                return await ctx.send(
+                    f'To use stats from the sheet, you must specify a league.'
                 )
             except (FindPlayersError, StatSheetError, GetSheetError) as error:
                 await ctx.send(

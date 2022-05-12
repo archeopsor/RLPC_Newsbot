@@ -64,7 +64,52 @@ class StatsHandler:
         else:
             self.identifier = identifier
 
-    def get_player_stats(self, player: str, stat: str = "all", advanced: bool = False) -> pd.DataFrame:
+    def capitalize_username(self, username: str) -> List[str]:
+        try:
+            players = self.p4sheet.to_df('Players!A1:I')
+        except SheetToDfError:
+            raise StatSheetError("Players!A1:I")
+
+        lower_players = players['Username'].str.lower()
+        if username.lower() in lower_players.values:
+            pindex = lower_players[lower_players == username.lower()].index[0]
+            player = players.loc[pindex][0]
+        players = players.set_index("Username")
+        try:
+            league = players.loc[player, "League"]
+        except UnboundLocalError:
+            raise FindPlayersError(None, None)
+        if type(league) == pd.Series:
+            league = league[0]
+
+        return player, league
+    
+    def get_player_stats_db(self, player: str, category: str = "all", pergame: bool = False) -> pd.DataFrame:
+
+        player, league = self.capitalize_username(player)
+        db_stats = self.session.players.find_one({'username': player})
+        stats = pd.DataFrame()
+        stats.loc[0, 'Player'] = player
+
+        if category not in statsCategories.keys() and category != "all":
+            raise InvalidStatError(category)
+
+        games = 1
+        if pergame:
+            games = max(db_stats['stats']['general']['Games Played'], 1)
+
+        if category == "all":
+            for stat in db_stats['stats']['general'].keys():
+                stats.loc[0, stat] = round(db_stats['stats']['general'][stat] / games, 1)
+        else:
+            for stat in db_stats['stats'][category].keys():
+                stats.loc[0, stat] = round(db_stats['stats'][category][stat] / games, 1)
+
+        return stats
+
+
+
+    def get_player_stats_sheet(self, player: str, stat: str = "all") -> pd.DataFrame:
         """
         Gets the stats from the RLPC Spreadsheet for a given player
 
@@ -81,6 +126,7 @@ class StatsHandler:
             Series containing player's stats
         """
         # Make sure the program understands the specified stat if it's mis-capitalized or whatever
+        # TODO: Replace with structural pattern matching in python 3.10
         if stat.lower() in ["sp", "series", "series_played", "series-played", "splayed", "seris", "sieries", "seiries"]:
             stat = "Series Played"
         elif stat.lower() in ["gp", "games", "games_played", "games-played", "gplayed"]:
@@ -117,14 +163,7 @@ class StatsHandler:
         except SheetToDfError:
             raise StatSheetError("Players!A1:I")
 
-        lower_players = players['Username'].str.lower()
-        if player.lower() in lower_players.values:
-            pindex = lower_players[lower_players == player.lower()].index[0]
-            player = players.loc[pindex][0]
-        players = players.set_index("Username")
-        league = players.loc[player, "League"]
-        if type(league) == pd.Series:
-            league = league[0]
+        player, league = self.capitalize_username(player)
 
         try:
             stats = self.p4sheet.to_df(f"{league} League Stat Database!C3:R")
@@ -202,14 +241,14 @@ class StatsHandler:
             pd.Series: Sorted series containing players and their stats
         """
         if useSheet == True and league == "all":
-            return "Must choose a specific league to use sheet stats"
+            raise StatsError(player=None, stat=stat)
         if league != "all":
             try:
                 league = leagues[league.lower()]
             except:
                 return f"Could not understand league {league}."
 
-        extended_stats = {
+        compound_stats = {
             'Winning %': ['Games Won', 'Games Played'],
             'Shooting %': ['Shots', 'Games Played'],
             'Points': ['Goals', 'Assists']
@@ -287,7 +326,7 @@ class StatsHandler:
         
         # DATABASE STATS
         else:
-            if stat not in valid_stats and stat not in extended_stats.keys():
+            if stat not in valid_stats and stat not in compound_stats.keys():
                 raise InvalidStatError(stat)
             else:
                 stat = stat.title()
@@ -295,7 +334,7 @@ class StatsHandler:
             players = self.session.players
             data = pd.Series(name=stat, dtype=float)
 
-            if stat not in extended_stats.keys():
+            if stat not in compound_stats.keys():
                 category = findCategory(stat)
                 if not category:
                     raise InvalidStatError(stat)
@@ -321,7 +360,7 @@ class StatsHandler:
                 filter = {}
                 if league != "all":
                     filter['info.league'] = league
-                necessary = extended_stats[stat]
+                necessary = compound_stats[stat]
                 for i in necessary:
                     filter[f'stats.{findCategory(i)}.{i}'] = {'$gt': 0}
                 
@@ -351,9 +390,12 @@ class StatsHandler:
         ids = self.p4sheet.to_df(
             'Trackers!A1:B').set_index('Discord ID')
         try:
-            player = ids.loc[discord_id, 'Username'][0]
+            player = ids.loc[discord_id, 'Username']
         except:
-            raise FindMeError(discord_id)
+            try: 
+                player = ids.loc[discord_id, 'Username'][0]
+            except:
+                raise FindMeError(discord_id)
         
         return player
 

@@ -457,8 +457,6 @@ statsCategories = {
         "# Large Boosts",
         "# Boost Steals",
         "Time Empty", 
-        "Wasted Big",
-        "Wasted Small",
     ],
     "movement": [
         "Time Slow",
@@ -480,24 +478,6 @@ statsCategories = {
         "Time Furthest", 
         "Conceded When Last",
     ],
-    "possession": [
-        "Dribbles",
-        "Passes",
-        "Aerials",
-        "Turnovers Lost",
-        "Defensive Turnovers Lost",
-        "Offensive Turnovers Lost",
-        "Turnovers Won",
-        "Hits",
-        "Flicks",
-        "Clears",
-    ],
-    "kickoffs": [
-        "Kickoffs",
-        "First Touches",
-        "Kickoff Cheats",
-        "Kickoff Boosts",
-    ],
 }
 
 
@@ -506,10 +486,6 @@ def findCategory(stat: str) -> str:
         return "general"
     elif stat in statsCategories["boost"]:
         return "boost"
-    elif stat in statsCategories["kickoffs"]:
-        return "kickoffs"
-    elif stat in statsCategories["movement"]:
-        return "movement"
     elif stat in statsCategories["possession"]:
         return "possession"
     else:
