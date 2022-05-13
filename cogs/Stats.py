@@ -192,15 +192,19 @@ class Stats(commands.Cog):  # pragma: no cover
         )
     )
     async def get_player_stats(
-        self, ctx: Context, player: str, source: str = "db", stat: str = "all", pergame: str = "False"
+        self, ctx: Context, player: str, *, args: str = None
     ):
         async with ctx.typing():
+
+            advanced: bool = True
+            stat: str = "all"
+            pergame: bool = False
+
             if player == "me":
                 waitingMsg: discord.Message = await ctx.send(
                     "One second, retreiving discord ID and stats"
                 )
                 discord_id = str(ctx.author.id)
-                
                 try:
                     player = self.stats.get_me(discord_id)
                     await waitingMsg.delete()
@@ -210,28 +214,37 @@ class Stats(commands.Cog):  # pragma: no cover
                     )
                     return await waitingMsg.delete()
 
-            advanced = False
-            if source in ['db', 'advanced', 'adv']:
-                advanced = True
 
-            if pergame in ['pg', 'pergame', 'rate']:
-                pergame = True
-            else:
-                pergame = False
+            if args:
+                args = args.split()
+                # TODO: Replace with structural pattern matching
+                remaining: list[str] = []
+                for i, word in enumerate(args):
+                    if word.lower() in ['db', 'advanced', 'adv']:
+                        advanced = True
+                    elif word.lower() in ['sheet', 'usesheet']:
+                        advanced = False
+                    elif word.lower() in ['pg', 'pergame', 'rate']:
+                        pergame = True
+                    elif word.lower() == "per" and args[i + 1].lower() == "game":
+                        pergame = True
+                        args.remove(args[i + 1])
+                    else:
+                        remaining.append(word)
+
+                if len(remaining) > 0:
+                    stat = ' '.join(remaining)
 
             try:
                 if advanced:
-                    if stat.lower() in ['pg', 'pergame', 'rate']:
-                        answer = self.stats.get_player_stats_db(player, pergame=True)
-                    else:
-                        answer = self.stats.get_player_stats_db(player, stat, pergame)
+                    answer = self.stats.get_player_stats_db(player, stat, pergame)
                 else:
                     answer = self.stats.get_player_stats_sheet(player, stat)
             except InvalidStatError:
                 return await ctx.send(
                     f"Couldn't understand stat `{stat}`. If this is part of a username, surround the username in quotes."
                 )
-            except (StatsError, KeyError, FindPlayersError):
+            except (StatsError, KeyError, FindPlayersError, PlayerNotFoundError):
                 return await ctx.send(
                     f"Couldn't find `{player}`'s stats. Contact arco if you think this is a bug."
                 )
@@ -245,8 +258,13 @@ class Stats(commands.Cog):  # pragma: no cover
                 value = answer.values[0][i + 1]
                 if not value:
                     value = 0
-                if value % 1 == 0.0:
-                    value = int(value)
+                try:
+                    # Drop trailing zeros if possible
+                    value = float(value)
+                    if value % 1 == 0.0:
+                        value = int(value)
+                except (ValueError, TypeError):
+                    value = value
                 embed.add_field(name=col, value=value)
 
         await ctx.send(embed=embed)

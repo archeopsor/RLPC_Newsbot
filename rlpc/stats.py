@@ -88,6 +88,8 @@ class StatsHandler:
 
         player, league = self.capitalize_username(player)
         db_stats = self.session.players.find_one({'username': player})
+        if db_stats == None:
+            raise PlayerNotFoundError(player, 0)
         stats = pd.DataFrame()
         stats.loc[0, 'Player'] = player
 
@@ -106,8 +108,6 @@ class StatsHandler:
                 stats.loc[0, stat] = round(db_stats['stats'][category][stat] / games, 1)
 
         return stats
-
-
 
     def get_player_stats_sheet(self, player: str, stat: str = "all") -> pd.DataFrame:
         """
