@@ -91,8 +91,8 @@ class Stats(commands.Cog):  # pragma: no cover
     async def valid(self, ctx: Context):
         await ctx.send(
             f"""**Valid stats** (may need to specify 'sheet' at the end of the command to use these): ['Series Played', 'Games Played', 'Goals', 'Assists', 'Saves', 'Shots', 'Points', 'Goals per game', 'Assists per game', 'Saves per game', 'Shooting %', 'Winning %', 'Wins', 'Points per Game', 'Shots Per Game'].
-            **Advanced stats** (may need to specify 'db' or 'advanced' at the end of the command to use these): {valid_stats}.
-            **Compound stats**: Coming soon!"""
+**Advanced stats** (may need to specify 'db' or 'advanced' at the end of the command to use these): {valid_stats}.
+**Compound stats** (may need to specify 'db' or 'advanced' at the end of the command to use these):  ['Winning %', 'Shooting %', 'Shooting % Against', 'Points' *(Goals + Assists)*, 'MVP Rate' *(MVPs / Games Won)*, '% Time Slow', '% Time Boost', '% Time Supersonic', '% Time Ground', '% Time Low Air', '% Time High Air', '% Most Back', '% Most Forward', '% Goals Responsible' *(Conceded When Last / Goals Against)*, 'Position Ratio *(Time Infront Ball / Time Behind Ball)*]"""
         )
 
     @commands.command(
@@ -268,7 +268,7 @@ class Stats(commands.Cog):  # pragma: no cover
                 embed.add_field(name=col, value=value)
 
         await ctx.send(embed=embed)
-        if advanced:
+        if advanced and stat != "all":
             return await ctx.send("Add 'boost', 'movement', or 'positioning' to the end of your command (but before 'pg' if you want to see per game stats) to see more stats.")
 
     @get_player_stats.error

@@ -250,8 +250,20 @@ class StatsHandler:
 
         compound_stats = {
             'Winning %': ['Games Won', 'Games Played'],
-            'Shooting %': ['Shots', 'Games Played'],
-            'Points': ['Goals', 'Assists']
+            'Shooting %': ['Goals', 'Shots'],
+            'Shooting % Against': ['Goals Against', 'Shots Against'],
+            'Points': ['Goals', 'Assists'],
+            'MVP Rate': ['MVPs', 'Games Won'],
+            '% Time Slow': ['Time Slow', 'Time Boost', 'Time Supersonic'],
+            '% Time Boost': ['Time Slow', 'Time Boost', 'Time Supersonic'],
+            '% Time Supersonic': ['Time Slow', 'Time Boost', 'Time Supersonic'],
+            '% Time Ground': ['Time Ground', 'Time Low Air', 'Time High Air'],
+            '% Time Low Air': ['Time Ground', 'Time Low Air', 'Time High Air'],
+            '% Time High Air': ['Time Ground', 'Time Low Air', 'Time High Air'],
+            '% Most Back': ['Time Most Back', 'Time Defensive Half', 'Time Offensive Half'],
+            '% Most Forward': ['Time Most Forward', 'Time Defensive Half', 'Time Offensive Half'],
+            '% Goals Responsible': ['Conceded When Last', 'Goals Against'],
+            'Position Ratio': ['Time Infront Ball', 'Time Behind Ball'],
         }
 
         stat = stat.title()
@@ -326,10 +338,12 @@ class StatsHandler:
         
         # DATABASE STATS
         else:
-            if stat not in valid_stats and stat not in compound_stats.keys():
+            if stat not in valid_stats and stat not in compound_stats.keys() and stat != 'Mvp Rate':
                 raise InvalidStatError(stat)
             else:
                 stat = stat.title()
+                if stat == 'Mvp Rate':
+                    stat = 'MVP Rate'
 
             players = self.session.players
             data = pd.Series(name=stat, dtype=float)
@@ -376,10 +390,51 @@ class StatsHandler:
                         datapoint = round((info['stats']['general']['Games Won'] / info['stats']['general']['Games Played']), 2)
                     elif stat == 'Shooting %':
                         datapoint = round((info['stats']['general']['Goals'] / info['stats']['general']['Shots']), 2)
+                    elif stat == 'Shooting % Against':
+                        datapoint = round((info['stats']['general']['Goals Against'] / info['stats']['general']['Shots Against']), 2)
                     elif stat == 'Points':
-                        datapoint = round((info['stats']['general']['Goals'] / info['stats']['general']['Assists']), 2)
+                        datapoint = round((info['stats']['general']['Goals'] + info['stats']['general']['Assists']), 2)
                         if pergame:
                             datapoint = round((datapoint / info['stats']['general']['Games Played']), 2)
+                    elif stat == 'MVP Rate':
+                        datapoint = round(info['stats']['general']['MVPs'] / info['stats']['general']['Games Won'], 2)
+                    elif stat == '% Time Slow':
+                        datapoint = round(
+                            info['stats']['movement']['Time Slow'] / (info['stats']['movement']['Time Slow'] + info['stats']['movement']['Time Boost'] + info['stats']['movement']['Time Supersonic'])
+                        , 2)
+                    elif stat == '% Time Boost':
+                        datapoint = round(
+                            info['stats']['movement']['Time Boost'] / (info['stats']['movement']['Time Slow'] + info['stats']['movement']['Time Boost'] + info['stats']['movement']['Time Supersonic'])
+                        , 2)
+                    elif stat == '% Time Supersonic':
+                        datapoint = round(
+                            info['stats']['movement']['Time Boost'] / (info['stats']['movement']['Time Slow'] + info['stats']['movement']['Time Boost'] + info['stats']['movement']['Time Supersonic'])
+                        , 2)
+                    elif stat == '% Time Ground':
+                        datapoint = round(
+                            info['stats']['movement']['Time Ground'] / (info['stats']['movement']['Time Ground'] + info['stats']['movement']['Time Low Air'] + info['stats']['movement']['Time High Air'])
+                        , 2)
+                    elif stat == '% Time Low Air':
+                        datapoint = round(
+                            info['stats']['movement']['Time Low Air'] / (info['stats']['movement']['Time Ground'] + info['stats']['movement']['Time Low Air'] + info['stats']['movement']['Time High Air'])
+                        , 2)
+                    elif stat == '% Time High Air':
+                        datapoint = round(
+                            info['stats']['movement']['Time High Air'] / (info['stats']['movement']['Time Ground'] + info['stats']['movement']['Time Low Air'] + info['stats']['movement']['Time High Air'])
+                        , 2)
+                    elif stat == '% Most Back':
+                        datapoint = round(
+                            info['stats']['positioning']['Time Most Back'] / (info['stats']['positioning']['Time Defensive Half'] + info['stats']['positioning']['Time Offensive Half'])
+                        , 2)
+                    elif stat == '% Most Forward':
+                        datapoint = round(
+                            info['stats']['positioning']['Time Most Forward'] / (info['stats']['positioning']['Time Defensive Half'] + info['stats']['positioning']['Time Offensive Half'])
+                        , 2)
+                    elif stat == '% Goals Responsible':
+                        datapoint = round(info['stats']['positioning']['Conceded When Last'] / info['stats']['general']['Goals Against'], 2)
+                    elif stat == 'Position Ratio':
+                        datapoint = round(info['stats']['positioning']['Time Infront Ball'] / info['stats']['positioning']['Time Behind Ball'], 2)
+                    
                     data[info['username']] = datapoint
                 
                 return data.sort_values(ascending=asc).head(limit)
