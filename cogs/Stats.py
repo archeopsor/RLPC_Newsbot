@@ -270,7 +270,7 @@ class Stats(commands.Cog):  # pragma: no cover
                 embed.add_field(name=col, value=value)
 
         await ctx.send(embed=embed)
-        if advanced and stat != "all":
+        if advanced and stat == "all":
             return await ctx.send("Add 'boost', 'movement', or 'positioning' to the end of your command (but before 'pg' if you want to see per game stats) to see more stats.")
 
     @get_player_stats.error
