@@ -562,7 +562,7 @@ class RLPCAnalysis:
         self.upload_stats(stats)
 
         print("Updating fantasy points")
-        self.update_fantasy(stats)
+        # self.update_fantasy(stats)
 
         # print("Creating post file")
         # self.create_post(stats)
