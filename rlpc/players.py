@@ -292,7 +292,6 @@ class PlayersHandler:
                 pass
 
 
-
 class Identifier:
     def __init__(self, session: Session = None, p4sheet: Sheet = None):
         if not p4sheet:
@@ -446,7 +445,7 @@ class Identifier:
             return None
 
 
-class Teams: 
+class TeamsHandler: 
     def __init__(self, refresh_cooldown: int = 30, session: Session = None):
         self.cooldown = refresh_cooldown
 

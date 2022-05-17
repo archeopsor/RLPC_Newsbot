@@ -13,7 +13,7 @@ import os
 
 from tools.sheet import Sheet
 from tools.mongo import Session
-from rlpc.players import Identifier, Teams
+from rlpc.players import Identifier, TeamsHandler
 
 from settings import prefix, leagues, divisions, sheet_p4, sheet_indy, stream_sheet
 from errors.player_errors import TeamNotFoundError
@@ -27,7 +27,7 @@ class Misc(commands.Cog):
         identifier: Identifier = None,
         p4sheet: Sheet = None,
         indysheet: Sheet = None,
-        teams: Teams = None,
+        teams: TeamsHandler = None,
     ):
         self.bot = bot
 
@@ -48,7 +48,7 @@ class Misc(commands.Cog):
         else:
             self.indysheet = indysheet
         if not teams:
-            self.teams = Teams(session=self.session, p4sheet=self.p4sheet)
+            self.teams = TeamsHandler(session=self.session, p4sheet=self.p4sheet)
         else:
             self.teams = teams
         self.streamsheet = Sheet(stream_sheet)

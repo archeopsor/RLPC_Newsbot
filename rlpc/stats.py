@@ -6,7 +6,7 @@ import pytz
 
 from tools.sheet import Sheet
 from tools.mongo import Session, findCategory, teamIds, statsCategories
-from rlpc.players import Teams, Identifier
+from rlpc.players import TeamsHandler, Identifier
 
 from settings import valid_stats, leagues, sheet_p4, sheet_indy, power_rankings_sheet, gdstats_sheet
 
@@ -34,7 +34,7 @@ def get_latest_gameday() -> int:
         
 
 class StatsHandler:
-    def __init__(self, session: Session = None, p4sheet: Sheet = None, indysheet: Sheet = None, powerrankings: Sheet = None, gdsheet: Sheet = None, teams: Teams = None, identifier: Identifier = None):
+    def __init__(self, session: Session = None, p4sheet: Sheet = None, indysheet: Sheet = None, powerrankings: Sheet = None, gdsheet: Sheet = None, teams: TeamsHandler = None, identifier: Identifier = None):
         if not session:
             self.session = Session()
         else:
@@ -56,7 +56,7 @@ class StatsHandler:
         else:
             self.gdsheet = gdsheet
         if not teams:
-            self.teams = Teams(session=self.session)
+            self.teams = TeamsHandler(session=self.session)
         else:
             self.teams = teams
         if not identifier:

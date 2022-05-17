@@ -20,7 +20,7 @@ from cogs.Misc import Misc
 from fantasy_infrastructure import FantasyHandler
 from rlpc.elo import EloHandler
 from rlpc.stats import StatsHandler
-from rlpc.players import Identifier, PlayersHandler, Teams
+from rlpc.players import Identifier, PlayersHandler, TeamsHandler
 from tools.mongo import Session
 from tools.sheet import Sheet
 
@@ -51,7 +51,7 @@ class Newsbot(commands.Bot):
         self.elo = EloHandler(self.session, self.identifier)
         self.fantasy = FantasyHandler(self.session)
         self.players = PlayersHandler(self.session, self.p4sheet)
-        self.teams = Teams(session=self.session)
+        self.teams = TeamsHandler(session=self.session)
         self.stats = StatsHandler(
             session=self.session,
             p4sheet=self.p4sheet,
