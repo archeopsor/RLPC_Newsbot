@@ -26,7 +26,7 @@ from replay_classes import BallchasingReplay, CarballReplay, Replay
 from tools.mongo import Session, teamIds, findCategory
 from tools.sheet import Sheet
 
-from rlpc.players import Players, Identifier
+from rlpc.players import PlayersHandler, Identifier
 from rlpc.elo import EloHandler
 from rlpc.stats import get_latest_gameday, dates
 
@@ -342,7 +342,7 @@ class Series:
 
 
 class RLPCAnalysis:
-    def __init__(self, session: Session = None, identifier: Identifier = None, p4sheet: Sheet = None, playersHandler: Players = None) -> None:
+    def __init__(self, session: Session = None, identifier: Identifier = None, p4sheet: Sheet = None, playersHandler: PlayersHandler = None) -> None:
         if not session:
             self.session = Session()
         else:
@@ -352,7 +352,7 @@ class RLPCAnalysis:
         else:
             self.p4sheet = p4sheet
         if not playersHandler:
-            self.playersHandler = Players(self.session, self.p4sheet)
+            self.playersHandler = PlayersHandler(self.session, self.p4sheet)
         else:
             self.playersHandler = playersHandler
         if not identifier:

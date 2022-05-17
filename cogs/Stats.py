@@ -12,7 +12,7 @@ import dataframe_image as dfi
 from tools.mongo import Session
 from rlpc import mmr
 from rlpc.stats import StatsHandler, get_latest_gameday
-from rlpc.players import Players, Identifier, Teams
+from rlpc.players import PlayersHandler, Identifier, Teams
 from tools.sheet import Sheet
 from settings import (
     prefix,
@@ -38,7 +38,7 @@ class Stats(commands.Cog):  # pragma: no cover
         indysheet: Sheet = None,
         gdsheet: Sheet = None,
         identifier: Identifier = None,
-        players: Players = None,
+        players: PlayersHandler = None,
         stats: StatsHandler = None,
         teams: Teams = None,
     ):
@@ -65,7 +65,7 @@ class Stats(commands.Cog):  # pragma: no cover
         else:
             self.identifier = identifier
         if not players:
-            self.players = Players(session=self.session, p4sheet=self.p4sheet)
+            self.players = PlayersHandler(session=self.session, p4sheet=self.p4sheet)
         if not teams:
             self.teams = Teams(session=self.session)
         else:

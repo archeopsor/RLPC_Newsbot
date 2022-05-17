@@ -9,7 +9,7 @@ import os
 import requests
 
 from errors.replay_errors import *
-from rlpc.players import Identifier, Players
+from rlpc.players import Identifier, PlayersHandler
 from settings import valid_stats
 from tools.mongo import Session, teamIds
 
@@ -35,7 +35,7 @@ def id_player(player: dict, identifier: Identifier):
 
 class Replay(ABC):
     @abstractmethod
-    def __init__(self, file_path: str, session: Session, playersHandler: Players, identifier: Identifier):
+    def __init__(self, file_path: str, session: Session, playersHandler: PlayersHandler, identifier: Identifier):
         self.session = session
         self.playersHandler = playersHandler
         self.identifier = identifier
@@ -60,7 +60,7 @@ class Replay(ABC):
 
 
 class BallchasingReplay(Replay):
-    def __init__(self, file_path: str, session: Session, playersHandler: Players, identifier: Identifier):
+    def __init__(self, file_path: str, session: Session, playersHandler: PlayersHandler, identifier: Identifier):
         super().__init__(file_path, session, playersHandler, identifier)
         self.token = BALLCHASING_TOKEN
         self.uploaded = False
@@ -260,7 +260,7 @@ class BallchasingReplay(Replay):
 
 
 class CarballReplay(Replay):
-    def __init__(self, file_path: str, session: Session, playersHandler: Players, identifier: Identifier):
+    def __init__(self, file_path: str, session: Session, playersHandler: PlayersHandler, identifier: Identifier):
         super().__init__(file_path, session, playersHandler, identifier)
         self.stats = self.process()
 

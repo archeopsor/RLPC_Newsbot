@@ -13,7 +13,7 @@ from errors.player_errors import *
 logger = logging.getLogger(__name__)
 
 
-class Players:
+class PlayersHandler:
     def __init__(self, session: Session = None, p4sheet: Sheet = None):
         if not p4sheet:
             self.p4sheet = Sheet(sheet_p4)
@@ -513,5 +513,5 @@ class Teams:
 
 
 if __name__ == "__main__":
-    players = Players()
+    players = PlayersHandler()
     players.check_players()

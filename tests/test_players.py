@@ -1,9 +1,9 @@
-from rlpc.players import Session, Players, Identifier
+from rlpc.players import Session, PlayersHandler, Identifier
 import pymongo
 import unittest
 
 session = Session()
-players = Players()
+players = PlayersHandler()
 identifier = Identifier()
 
 
