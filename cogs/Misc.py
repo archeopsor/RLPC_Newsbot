@@ -188,7 +188,7 @@ class Misc(commands.Cog):
     async def stream(self, ctx: Context):
         async with ctx.typing():
             try:
-                data = self.streamsheet.to_df("Sheet1!C3:I")
+                data = self.streamsheet.to_df("S17 Stream Schedule!D3:K")
             except:  # TODO Make this more specific
                 return await ctx.send("Couldn't find the stream schedule :(")
 
@@ -204,7 +204,7 @@ class Misc(commands.Cog):
                 }
             )
             data = data[
-                data["League"].str.lower().isin(leagues.keys())
+                (data["League"].str.lower().isin(leagues.keys())) & (data['Series'].str.strip() != "-") & (data['Date'].str.strip() != "")
             ]  # Get rid of empty rows and TBD rows
             data["Date"] = pd.to_datetime(
                 data["Date"], format="%m/%d/%y", errors="coerce"
