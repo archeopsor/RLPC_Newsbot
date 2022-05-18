@@ -126,6 +126,10 @@ class Misc(commands.Cog):
                     "Schedules couldn't be found, possibly because they aren't on the sheet. Contact arco if you believe this is an error."
                 )
 
+            # If any non-preseason results are in, get rid of the preseason games
+            if 'N' in all_games[all_games['Score'] != ""]['Preseason'].values:
+                all_games = all_games[all_games['Preseason'] == "N"]
+
             all_games.columns.values[3] = "Team 1"
             all_games.columns.values[5] = "Team 2"
             all_games.columns.values[8] = "Logs"
