@@ -4,6 +4,10 @@ import time
 import os
 from bson import ObjectId
 
+# Allow imports when running script from within project dir
+import sys
+[sys.path.append(i) for i in ['.', '..']]
+
 from tools.mongo import Session, teamIds
 from tools.sheet import Sheet
 
