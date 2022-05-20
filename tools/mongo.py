@@ -18,8 +18,9 @@ class Session:
         self.time_loaded = time.time()
 
         self.fantasy = self.db['fantasy']
-        self.teams = self.db['teams']
+        self.teams = self.db['old_teams']
         self.players = self.db['players']
+        self.all_players = self.db['all_players']
         self.games = self.db['games']
         self.admin = self.db['admin']
 
