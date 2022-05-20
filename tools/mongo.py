@@ -19,7 +19,6 @@ class Session:
 
         self.fantasy = self.db['fantasy']
         self.teams = self.db['teams']
-        self.players = self.db['players']
         self.all_players = self.db['all_players']
         self.games = self.db['games']
         self.admin = self.db['admin']

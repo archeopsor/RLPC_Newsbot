@@ -5,6 +5,7 @@ from enum import Enum
 from datetime import datetime
 from bson.objectid import ObjectId
 import numpy as np
+import pandas as pd
 
 # Allow imports when running script from within project dir
 import sys
@@ -12,7 +13,7 @@ import sys
 
 from tools.mongo import Session
 from tools.sheet import Sheet
-from settings import sheet_p4
+from settings import sheet_p4, valid_stats
 
 ###########
 ## UTILS ##
@@ -360,6 +361,13 @@ class Stats:
         # Shortcut since this one isn't nested
         return Stats(*doc.values())
 
+    @classmethod
+    def from_series(cls, series: pd.Series) -> Stats:
+        stats = Stats()
+        for val in series.index:
+            setattr(stats, val, series.loc[val])
+        return stats
+    
     def __add__(self, stats: Stats) -> Stats:
         sum = Stats()
         for field in fields(self):
@@ -368,6 +376,14 @@ class Stats:
             setattr(sum, field.name, value + additive)
 
         return sum
+
+    def to_series(self) -> pd.Series:
+        df = pd.Series(index=valid_stats)
+        for field in fields(self):
+            value = getattr(self, field.name)
+            df[field.name] = ValueError
+        
+        return df
 
 
 @dataclass

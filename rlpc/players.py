@@ -11,12 +11,13 @@ import sys
 
 from tools.mongo import Session, teamIds
 from tools.sheet import Sheet
-from rlpc.db_models import Player, Games, Region, Platform, MMRData, JoinMethod, LeaveMethod
+from rlpc.db_models import Player, Game, Region, Platform, MMRData, JoinMethod, LeaveMethod
 
 from settings import sheet_p4, current_season
 from errors.player_errors import *
 
 logger = logging.getLogger(__name__)
+logging.basicConfig(level = logging.DEBUG)
 
 
 class PlayersHandler:
@@ -369,7 +370,7 @@ class PlayersHandler:
         logger.info("DEPARTED")
         for player in departed.index:
             discord_id: str = departed.loc[player, 'Discord ID']
-            doc = self.session.players.find_one({'_id': discord_id})
+            doc = self.session.all_players.find_one({'_id': discord_id})
             if doc == None:
                 continue
             if doc['current_team'] != "Departed":

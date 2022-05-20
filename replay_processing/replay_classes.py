@@ -10,8 +10,9 @@ import requests
 
 from errors.replay_errors import *
 from rlpc.players import Identifier, PlayersHandler
-from settings import valid_stats
+from rlpc.db_models import Game, Stats
 from tools.mongo import Session, teamIds
+from settings import valid_stats
 
 try:
     from passwords import BALLCHASING_TOKEN
@@ -183,6 +184,7 @@ class BallchasingReplay(Replay):
         player_stats = pd.DataFrame(columns=valid_stats)
         teams = self.teams
         players = []
+        unknown = []
         winner = "blue" if stats['blue']['stats']['core']['goals'] > stats['blue']['stats']['core']['goals_against'] else 'orange'
         
         for player in stats['blue']['players']:
@@ -199,16 +201,13 @@ class BallchasingReplay(Replay):
         for player in players:
             name = id_player(player, self.identifier)
                 
-            # Handle subs
+            # Handle unknown players
             try:
-                doc = self.session.players.find_one({'username': name})
-                if doc['info']['team'] not in [teamIds[teams[0]], teamIds[teams[1]]]:
-                    # Player is on a different team (sub)
-                    continue
+                doc = self.session.all_players.find_one({'username': name})
             except: 
                 # Player isn't in database at all
                 print("PLAYER FAILED: " + name)
-                continue
+                unknown.append(name)
 
             # Add player's stats
             player_stats = player_stats.append(pd.Series(name=name, dtype=object)).fillna(0)
@@ -256,7 +255,7 @@ class BallchasingReplay(Replay):
             except:
                 pass
 
-        return player_stats
+        return player_stats, unknown
 
 
 class CarballReplay(Replay):

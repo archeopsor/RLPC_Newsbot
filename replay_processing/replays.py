@@ -11,6 +11,8 @@ import pytz
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
+from selenium.webdriver.remote.remote_connection import LOGGER as seleniumLogger
+from urllib3.connectionpool import log as urllibLogger
 from webdriver_manager.firefox import GeckoDriverManager
 
 from dotenv import load_dotenv
@@ -31,6 +33,9 @@ from rlpc.elo import EloHandler
 from rlpc.stats import get_latest_gameday, dates
 
 from settings import sheet_p4, valid_stats, gdstats_sheet
+
+seleniumLogger.setLevel(logging.WARNING)
+urllibLogger.setLevel(logging.WARNING)
 
 def fantasy_formula(row: pd.Series) -> int:
     """
@@ -295,6 +300,7 @@ class Retreiver:
 class Series:
     def __init__(self, session: Session, identifier: Identifier, length: int, replays: List[Replay]) -> None:
         self.failed = []
+        self.unknown = []
         self.session = session
         self.identifier = identifier
         self.length = 5
@@ -327,8 +333,9 @@ class Series:
                 self.length -= 1  # Not sure if I should keep this in
                 continue
             else:
-                stats = replay.convert()
+                stats, unknown = replay.convert()
                 player_stats = player_stats.append(stats)
+                self.unknown = [*unknown, *self.unknown]
 
         player_stats = player_stats.groupby(player_stats.index).sum()
 
@@ -465,7 +472,7 @@ class RLPCAnalysis:
                     )
         
         for player in stats.index:
-            self.session.players.update_one(
+            self.session.all_players.update_one(
                 {'username': player},
                 {'$inc': {'fantasy.fantasy_points': int(stats.loc[player, 'Fantasy Points'])}}
             )
@@ -488,7 +495,7 @@ class RLPCAnalysis:
         self.log_data(stats, f'{dates[get_latest_gameday()]}!A2:Z')
 
         print("Uploading Stats")
-        self.upload_stats(stats)
+        # self.upload_stats(stats)
 
         print("Updating fantasy points")
         # self.update_fantasy(stats)
@@ -497,6 +504,6 @@ class RLPCAnalysis:
 
 
 if __name__ == "__main__":
-    download = Retreiver.download(update_elo=True)
+    download = Retreiver.download(update_elo=False)
     if download:
         RLPCAnalysis().main() # Only run if there were files to download
