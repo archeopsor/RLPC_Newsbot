@@ -364,7 +364,7 @@ class RLPCAnalysis:
 
     def checks(self):
         self.playersHandler.check_players()
-        self.playersHandler.download_ids()
+        # self.playersHandler.download_ids()
 
     def get_replays(self):
         if os.environ.get('PROD') == 'false':
@@ -456,9 +456,6 @@ class RLPCAnalysis:
                     continue
 
                 points = int(stats.loc[username, 'Fantasy Points'])
-                # index = next((i for (i, d) in enumerate(account['player_history']) if d["Player"] == player), None)
-                # if index == None:
-                #     continue
                 self.session.fantasy.update_one(
                     {'_id': account['_id'], 'player_history.Player': player},
                     {'$inc': {'player_history.$.Points': points, 'points': points}}
@@ -477,77 +474,6 @@ class RLPCAnalysis:
 
         Sheet(gdstats_sheet).push_df(range, stats.reset_index().fillna(value=0))
 
-    def create_post(self, stats: pd.DataFrame):
-        if 'League' not in stats.columns:
-            stats['Fantasy Points'] = stats.apply(lambda row: fantasy_formula(row), axis=1)
-            stats['League'] = stats.apply(lambda row: self.identifier.find_league(self.identifier.find_team([row.name])), axis=1)
-
-        stats.sort_values(by="Fantasy Points", ascending=False, inplace=True)
-
-        with open("post.txt", 'a') as file:
-            file.write("**__Gameday __**\n\nFantasy Leaders:\n\n")
-
-            file.write("Player Leaders:\n")
-            leaders = stats.head(3).index
-            file.write(f"1. {leaders[0]} - {round(stats.loc[leaders[0], 'Fantasy Points'])}\n")
-            file.write(f"2. {leaders[1]} - {round(stats.loc[leaders[1], 'Fantasy Points'])}\n")
-            file.write(f"3. {leaders[2]} - {round(stats.loc[leaders[2], 'Fantasy Points'])}\n\n")
-
-            try:
-                leaders = stats[stats['League']=='Major'].head(3).index
-                file.write("Major MVPs:\n")
-                file.write(f"1. {leaders[0]} - {round(stats.loc[leaders[0], 'Fantasy Points'])}\n")
-                file.write(f"2. {leaders[1]} - {round(stats.loc[leaders[1], 'Fantasy Points'])}\n")
-                file.write(f"3. {leaders[2]} - {round(stats.loc[leaders[2], 'Fantasy Points'])}\n\n")
-            except IndexError:
-                pass
-
-            try:
-                leaders = stats[stats['League']=='AAA'].head(3).index
-                file.write("AAA MVPs:\n")
-                file.write(f"1. {leaders[0]} - {round(stats.loc[leaders[0], 'Fantasy Points'])}\n")
-                file.write(f"2. {leaders[1]} - {round(stats.loc[leaders[1], 'Fantasy Points'])}\n")
-                file.write(f"3. {leaders[2]} - {round(stats.loc[leaders[2], 'Fantasy Points'])}\n\n")
-            except IndexError:
-                pass
-
-            try:
-                leaders = stats[stats['League']=='AA'].head(3).index
-                file.write("AA MVPs:\n")
-                file.write(f"1. {leaders[0]} - {round(stats.loc[leaders[0], 'Fantasy Points'])}\n")
-                file.write(f"2. {leaders[1]} - {round(stats.loc[leaders[1], 'Fantasy Points'])}\n")
-                file.write(f"3. {leaders[2]} - {round(stats.loc[leaders[2], 'Fantasy Points'])}\n\n")
-            except IndexError:
-                pass
-
-            try:
-                leaders = stats[stats['League']=='A'].head(3).index
-                file.write("A MVPs:\n")
-                file.write(f"1. {leaders[0]} - {round(stats.loc[leaders[0], 'Fantasy Points'])}\n")
-                file.write(f"2. {leaders[1]} - {round(stats.loc[leaders[1], 'Fantasy Points'])}\n")
-                file.write(f"3. {leaders[2]} - {round(stats.loc[leaders[2], 'Fantasy Points'])}\n\n")
-            except IndexError:
-                pass
-
-            try:
-                leaders = stats[stats['League']=='Independent'].head(3).index
-                file.write("Indy MVPs:\n")
-                file.write(f"1. {leaders[0]} - {round(stats.loc[leaders[0], 'Fantasy Points'])}\n")
-                file.write(f"2. {leaders[1]} - {round(stats.loc[leaders[1], 'Fantasy Points'])}\n")
-                file.write(f"3. {leaders[2]} - {round(stats.loc[leaders[2], 'Fantasy Points'])}\n\n")
-            except IndexError:
-                pass
-
-            try:
-                leaders = stats[stats['League']=='Maverick'].head(3).index
-                file.write("Mav MVPs:\n")
-                file.write(f"1. {leaders[0]} - {round(stats.loc[leaders[0], 'Fantasy Points'])}\n")
-                file.write(f"2. {leaders[1]} - {round(stats.loc[leaders[1], 'Fantasy Points'])}\n")
-                file.write(f"3. {leaders[2]} - {round(stats.loc[leaders[2], 'Fantasy Points'])}\n\n")
-            except IndexError:
-                pass
-
-
     def main(self):
         print("Checks")
         # self.checks()
@@ -563,9 +489,6 @@ class RLPCAnalysis:
 
         print("Updating fantasy points")
         # self.update_fantasy(stats)
-
-        # print("Creating post file")
-        # self.create_post(stats)
 
         print("FAILED: "+str(self.failed))
 

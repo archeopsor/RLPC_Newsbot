@@ -4,6 +4,7 @@ from dataclasses import dataclass, asdict, fields
 from enum import Enum
 from datetime import datetime
 from bson.objectid import ObjectId
+import numpy as np
 
 # Allow imports when running script from within project dir
 import sys
@@ -28,6 +29,8 @@ def convert_enums(obj: dict) -> dict:
     """
     if isinstance(obj, (str, int, float)):
         return obj
+    elif isinstance(obj, np.int64):
+        return obj.item()
     elif isinstance(obj, list):
         for i, val in enumerate(obj):
             obj[i] = convert_enums(obj[i])
@@ -39,7 +42,6 @@ def convert_enums(obj: dict) -> dict:
             obj[key] = convert_enums(obj[key])
 
     return obj
-
 
 ###########
 ## ENUMS ##
@@ -106,6 +108,7 @@ class LeaveMethod(Enum):
     RELEASE = "release"
     CONTRACT = "contract"
     TRADE = "trade"
+    NONPLAYING = "non-playing"
     NA = "n/a" # If the player hasn't left the team
     OTHER = None
 
@@ -120,6 +123,8 @@ class LeaveMethod(Enum):
             return LeaveMethod.CONTRACT
         elif label == "trade":
             return LeaveMethod.TRADE
+        elif label == "non-playing":
+            return LeaveMethod.NONPLAYING
         else:
             return LeaveMethod.OTHER
 
@@ -193,6 +198,9 @@ class TeamData:
 
     @classmethod
     def from_db(cls, doc: dict) -> TeamData:
+        if not doc:
+            return None
+
         return(
             doc['name'],
             League.from_str(doc['league']),
@@ -464,6 +472,14 @@ class Player:
 
     @classmethod
     def from_db(cls, doc: dict) -> Player:
+        team_history = []
+        if doc['team_history']:
+            if doc['team_history'][0]:
+                team_history = [TeamData.from_db(team) for team in doc['team_history']]
+        seasons = []
+        if doc['seasons']:
+            seasons = [PlayerSeason.from_db(season) for season in doc['seasons']]
+
         return Player(
             doc['_id'],
             doc['username'],
@@ -478,9 +494,8 @@ class Player:
                 doc['mmr']['mmr_history']
             ),
             doc['current_team'],
-            [TeamData.from_db(team) for team in doc['team_history']],
-            [PlayerSeason.from_db(season) for season in doc['seasons']]
-
+            team_history,
+            seasons
         )
 
     def insert_new(self, session: Session):

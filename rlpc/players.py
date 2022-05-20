@@ -182,9 +182,9 @@ class PlayersHandler:
         new_team = {
                     "name": new,
                     "league": self.identifier.find_league(new),
-                    "join_date": datetime.now(),
+                    "join_season": current_season,
                     "join_method": join_method.value,
-                    "leave_date": None,
+                    "leave_season": None,
                     "leave_method": None
                 }
         new_player = {
@@ -198,18 +198,24 @@ class PlayersHandler:
         # Update player
         self.session.all_players.find_one_and_update({"_id": id}, {
             "$set": {
-                "current_team": new, 
-                f"team_history.{len(player_doc['team_history']) - 1}.leave_season": current_season,
-                f"team_history.{len(player_doc['team_history']) - 1}.leave_method": leave_method.value,
-                "seasons.$[season].teams.$[team].leave_season": current_season,
-                "seasons.$[season].teams.$[team].leave_method": leave_method.value,
-            }}, array_filters = [{'season.season_num': current_season}, {"team.name": old, "team.leave_season": None}])
-        self.session.all_players.find_one_and_update({"_id": id}, {
-            "$push": {
-                "seasons.$[season].teams": new_team,
-                "team_history": new_team,
+                "current_team": new,
             }
-        }, array_filters = [{'season.season_num': current_season}])
+        })
+        if old_doc:
+            self.session.all_players.find_one_and_update({"_id": id}, {
+                "$set": {
+                    f"team_history.{len(player_doc['team_history']) - 1}.leave_season": current_season,
+                    f"team_history.{len(player_doc['team_history']) - 1}.leave_method": leave_method.value,
+                    "seasons.$[season].teams.$[team].leave_season": current_season,
+                    "seasons.$[season].teams.$[team].leave_method": leave_method.value,
+                }}, array_filters = [{'season.season_num': current_season}, {"team.name": old, "team.leave_season": None}])
+        if new_doc:
+            self.session.all_players.find_one_and_update({"_id": id}, {
+                "$push": {
+                    "seasons.$[season].teams": new_team,
+                    "team_history": new_team,
+                }
+            }, array_filters = [{'season.season_num': current_season}])
         
         # Update old team (assuming the old team isn't a non-playing team)
         if old_doc:
@@ -248,20 +254,18 @@ class PlayersHandler:
         sheetdata['Tracker'] = sheetdata['Tracker'].map(lambda x: x.split(', '))
         sheetdata['Sheet MMR'] = sheetdata['Sheet MMR'].map(lambda x: int(x))
         sheetdata['Tracker MMR'] = sheetdata['Tracker MMR'].map(lambda x: int(x))
-        sheetdata = sheetdata.drop_duplicates(subset='Username')
         sheetdata = sheetdata.loc[sheetdata['Username'] != ""]
         sheetdata = sheetdata.loc[sheetdata['Team'] != "N/A"] # This should never happen unless sheets team puts it here, /shrug
-        sheetdata = sheetdata.loc[sheetdata['Departed'] == "FALSE"]
-        sheetdata = sheetdata.loc[sheetdata['Not Playing'] == "FALSE"]
-        sheetdata = sheetdata.set_index('Username')
+        sheetdata = sheetdata.loc[sheetdata['Departed'] != "TRUE"]
+        sheetdata = sheetdata.loc[sheetdata['Not Playing'] != "TRUE"]
+        sheetdata = sheetdata.set_index('Discord ID')
 
-        players = self.session.players
         all_players = self.session.all_players
         teams = self.session.teams
 
         # NEW CHECKS
-        for player in sheetdata.index:
-            discord_id: str = sheetdata.loc[player, 'Discord ID']
+        for discord_id in sheetdata.index:
+            player: str = sheetdata.loc[discord_id, 'Username']
 
             # First check if the player is already in the database
             doc = self.session.all_players.find_one({"_id": discord_id})
@@ -270,15 +274,15 @@ class PlayersHandler:
             if doc == None:
                 logger.debug(f"Adding {player} to database")
                 data = Player(
-                    _id = sheetdata.loc[player, 'Discord ID'],
+                    _id = discord_id,
                     username = player,
                     date_joined = datetime.now(),
-                    rl_id = sheetdata.loc[player, 'Unique IDs'],
-                    tracker_links = sheetdata.loc[player, 'Tracker'],
-                    region = Region.from_str(sheetdata.loc[player, 'Region']),
-                    platform = Platform.from_str(sheetdata.loc[player, 'Platform']),
-                    mmr = MMRData(sheetdata.loc[player, 'Sheet MMR'], sheetdata.loc[player, 'Tracker MMR'], {datetime.now().strftime("%m/%d/%y"): sheetdata.loc[player, 'Tracker MMR']}), 
-                    current_team = sheetdata.loc[player, 'Team'],
+                    rl_id = sheetdata.loc[discord_id, 'Unique IDs'],
+                    tracker_links = sheetdata.loc[discord_id, 'Tracker'],
+                    region = Region.from_str(sheetdata.loc[discord_id, 'Region']),
+                    platform = Platform.from_str(sheetdata.loc[discord_id, 'Platform']),
+                    mmr = MMRData(sheetdata.loc[discord_id, 'Sheet MMR'], sheetdata.loc[discord_id, 'Tracker MMR'], {datetime.now().strftime("%m/%d/%y"): sheetdata.loc[discord_id, 'Tracker MMR']}), 
+                    current_team = sheetdata.loc[discord_id, 'Team'],
                     team_history = None,
                     seasons = None              # Will be added later in this function if needed
                 ).insert_new(self.session)
@@ -293,8 +297,8 @@ class PlayersHandler:
                     all_players.find_one_and_update({"_id": discord_id}, {"$set": {"username": player}})
                     logger.debug(f"{data.username} has changed their name to {player}")
 
-                # rl id
-                for playerid in sheetdata.loc[player, 'Unique IDs']:
+                # rl ids
+                for playerid in sheetdata.loc[discord_id, 'Unique IDs']:
                     if playerid == '':
                         continue # No ids are available, so just ignore
                     elif playerid not in data.rl_id:
@@ -303,7 +307,7 @@ class PlayersHandler:
                         logger.debug(f"Added id '{playerid}' for {player}")
 
                 # tracker links
-                for tracker in sheetdata.loc[player, 'Tracker']:
+                for tracker in sheetdata.loc[discord_id, 'Tracker']:
                     if tracker == '':
                         continue # No trackers are available, so just ignore
                     elif tracker not in data.tracker_links:
@@ -312,97 +316,29 @@ class PlayersHandler:
                         logger.debug(f"Added tracker {tracker} for {player}")
 
                 # Region
-                if data.region != Region.from_str(sheetdata.loc[player, 'Region']):
-                    data.region = Region.from_str(sheetdata.loc[player, 'Region'])
-                    all_players.find_one_and_update({"_id": discord_id}, {"$set": {"region": sheetdata.loc[player, 'Region']}})
+                if data.region != Region.from_str(sheetdata.loc[discord_id, 'Region']):
+                    data.region = Region.from_str(sheetdata.loc[discord_id, 'Region'])
+                    all_players.find_one_and_update({"_id": discord_id}, {"$set": {"region": sheetdata.loc[discord_id, 'Region']}})
                     logger.debug(f"Moved {player} to {data.region}")
 
                 # Platform
-                if data.platform != Platform.from_str(sheetdata.loc[player, 'Platform']):
-                    data.platform = Platform.from_str(sheetdata.loc[player, 'Platform'])
-                    all_players.find_one_and_update({"_id": discord_id}, {"$set": {"platform": sheetdata.loc[player, 'Platform']}})
+                if data.platform != Platform.from_str(sheetdata.loc[discord_id, 'Platform']):
+                    data.platform = Platform.from_str(sheetdata.loc[discord_id, 'Platform'])
+                    all_players.find_one_and_update({"_id": discord_id}, {"$set": {"platform": sheetdata.loc[discord_id, 'Platform']}})
                     logger.debug(f"Switched {player} to {data.platform}")
 
                 # MMR
-                if data.mmr.current_official_mmr != sheetdata.loc[player, 'Sheet MMR']:
-                    data.mmr.current_official_mmr = sheetdata.loc[player, 'Sheet MMR']
-                    all_players.find_one_and_update({"_id": discord_id}, {"$set": {"mmr.current_official_mmr": sheetdata.loc[player, 'Sheet MMR']}})
+                if data.mmr.current_official_mmr != sheetdata.loc[discord_id, 'Sheet MMR']:
+                    data.mmr.current_official_mmr = sheetdata.loc[discord_id, 'Sheet MMR']
+                    all_players.find_one_and_update({"_id": discord_id}, {"$set": {"mmr.current_official_mmr": sheetdata.loc[discord_id, 'Sheet MMR']}})
                     logger.debug(f"Updated {player}'s Sheet MMR to {data.mmr.current_official_mmr}")
 
                 # Team
-                if data.current_team != sheetdata.loc[player, 'Team']:
+                if data.current_team != sheetdata.loc[discord_id, 'Team']:
                     old = data.current_team
-                    new = sheetdata.loc[player, 'Team']
+                    new = sheetdata.loc[discord_id, 'Team']
                     data.current_team = new
                     self.move_teams(discord_id, old, new) # TODO: Figure out join/leave methods
-
-
-        # OLD CHECKS
-        for player in sheetdata.index:
-            if sheetdata.loc[player, 'Team'] in ['Not Playing', 'Ineligible', 'Future Star', 'Departed', 'Banned', 'Waitlist', 'Below MMR']:
-                # See if player's document exists and/or needs to be updated
-                players.find_one_and_update(
-                    {'username': player}, {"$set": {"info.team": sheetdata.loc[player, 'Team']}})
-                continue
-
-            # Player's username doesn't appear in the database
-            if not players.find_one({'username': player}):
-                fixed = False
-
-                # Look through ids on the sheet, see if it maches any in the database
-                # Any matches indicate a name change
-                for playerid in sheetdata.loc[player, 'Unique IDs']:
-                    if playerid == '':
-                        continue  # No ids are available, so just ignore
-                    else:
-                        doc = self.session.players.find_one_and_update(
-                            {'info.id': playerid}, {'$set': {'username': player}})
-                        if not doc:
-                            continue  # There were no players in database with this id
-                        old_username = doc['username']
-                        fixed = True
-                        logger.info(
-                            f'{old_username} has changed their name to {player}')
-                        break
-
-                if not fixed:
-                    # Can't find the id anywhere in db, so add a new player
-                    playerinfo = sheetdata.loc[player]
-                    self.add_player(player, playerinfo['Region'], playerinfo['Platform'], playerinfo['Sheet MMR'],
-                                    playerinfo['Team'], playerinfo['League'], playerinfo['Discord ID'], ids=playerinfo['Unique IDs'])
-                    logger.info(f'{player} added')
-
-            playerdata = players.find_one({'username': player})
-            info = playerdata['info']
-            if info['region'] != sheetdata.loc[player, 'Region']:
-                players.update_one({'username': player}, {
-                                   "$set": {'info.region': sheetdata.loc[player, 'Region']}})
-                logger.info(f"{player} updated")
-            if info['platform'] != sheetdata.loc[player, 'Platform']:
-                players.update_one({'username': player}, {
-                                   "$set": {'info.platform': sheetdata.loc[player, 'Platform']}})
-                logger.info(f"{player} updated")
-            if info['mmr'] != int(sheetdata.loc[player, 'Sheet MMR']):
-                players.update_one({'username': player}, {
-                                   "$set": {'info.mmr': int(sheetdata.loc[player, 'Sheet MMR'])}})
-                logger.info(f"{player} updated")
-            if info['team'] != teamIds[sheetdata.loc[player, 'Team']]:
-                players.update_one({'username': player}, {
-                                   "$set": {'info.team': teamIds[sheetdata.loc[player, 'Team']]}})
-                # Add player to team in teams collection
-                self.session.teams.find_one_and_update(
-                    {"_id": teamIds[sheetdata.loc[player, 'Team']]},
-                    {"$push": {"players": playerdata['_id']}}
-                )
-                logger.info(f"{player} updated")
-            if info['league'] != sheetdata.loc[player, 'League']:
-                players.update_one({'username': player}, {
-                                   "$set": {'info.league': sheetdata.loc[player, 'League']}})
-                logger.info(f"{player} updated")
-            if info['discord_id'] != sheetdata.loc[player, 'Discord ID']:
-                players.update_one({'username': player}, {
-                                   "$set": {'info.discord_id': sheetdata.loc[player, 'Discord ID']}})
-                logger.info(f"{player} updated")
 
         self.remove_not_playing()
         logger.info("Done checking players.")
@@ -421,29 +357,23 @@ class PlayersHandler:
         not_playing = sheetdata.loc[sheetdata['Not Playing'] == "TRUE"]
         departed = sheetdata.loc[sheetdata['Departed'] == "TRUE"]
 
-        print("NOT PLAYING")
+        logger.info("NOT PLAYING")
         for player in not_playing.index:
-            doc = self.session.players.find_one({'username': player})
+            discord_id: str = not_playing.loc[player, 'Discord ID']
+            doc = self.session.all_players.find_one({'_id': discord_id})
             if doc == None:
                 continue
-            if doc['info']['team'] != "Not Playing":
-                self.session.players.update_one({'username': player}, {'$set': {'info.team': "Not Playing"}})
+            if doc['current_team'] != "Not Playing":
+                self.move_teams(discord_id, doc['current_team'], "Not Playing", JoinMethod.OTHER, LeaveMethod.NONPLAYING)
         
-        print("DEPARTED")
+        logger.info("DEPARTED")
         for player in departed.index:
-            doc = self.session.players.find_one({'username': player})
+            discord_id: str = departed.loc[player, 'Discord ID']
+            doc = self.session.players.find_one({'_id': discord_id})
             if doc == None:
                 continue
-            if doc['info']['team'] != "Departed":
-                self.session.players.update_one({'username': player}, {'$set': {'info.team': "Departed"}})
-
-        #self.session.players.delete_many({'info.team': {"$in": ['Not Playing', 'Deleted']}, 'stats.general.Games Played': 0})
-
-    def check_teams(self): # TODO: Finish this and handle removing players from teams
-        players = self.session.players.find()
-        for player in players:
-            if player['info']['team'] == "Not Playing":
-                pass
+            if doc['current_team'] != "Departed":
+                self.move_teams(discord_id, doc['current_team'], "Departed", JoinMethod.OTHER, LeaveMethod.NONPLAYING)
 
 
 class Identifier:
@@ -572,6 +502,9 @@ class Identifier:
         if self.leagues.get(team):
             return self.leagues.get(team)
 
+        if team in ['Not Playing', 'Departed', 'Waitlist', 'Free Agent']:
+            return None
+
         doc = self.session.teams.find_one({"_id": team})
         self.leagues[team] = doc['league']
         return doc['league']
@@ -667,5 +600,4 @@ class TeamsHandler:
 
 if __name__ == "__main__":
     players = PlayersHandler()
-    # players.check_players()
-    players.move_teams("549088262480723988", "Admirals", "Wildcats")
+    players.check_players()
