@@ -338,7 +338,7 @@ class PlayersHandler:
                     old = data.current_team
                     new = sheetdata.loc[discord_id, 'Team']
                     data.current_team = new
-                    self.move_teams(discord_id, old, new) # TODO: Figure out join/leave methods
+                    self.move_teams(discord_id, old, new)
 
         self.remove_not_playing()
         logger.info("Done checking players.")

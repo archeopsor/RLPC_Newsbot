@@ -138,7 +138,7 @@ class Sheet:
             # Assumes first line is header!
             header = gsheet.get('values', [])[0]
             values = gsheet.get('values', [])[1:]  # Everything else is data.
-        except AttributeError as error: # TODO: Figure out when this happens, specify error handling
+        except AttributeError as error:
             raise SheetToDfError("Error converting range to df", self.sheet_id, data_range)
         if not values:
             raise SheetToDfError("Error converting range to df", self.sheet_id, data_range)
@@ -181,7 +181,7 @@ class Sheet:
         body = {"values": [[value]]}
         try:
             return self.service.spreadsheets().values().update(spreadsheetId=self.sheet_id, range=cell, body=body, valueInputOption="USER_ENTERED").execute()
-        except Exception as error: # TODO: Figure out when this happens, and make it more specific
+        except Exception as error:
             raise UpdateCellError("Couldn't update cell", self.sheet_id, cell)
 
     def append(self, data_range: str, values: list, insertDataOption: str = "INSERT_ROWS", majorDimension: str = "ROWS") -> dict:
@@ -212,7 +212,7 @@ class Sheet:
                 if "permission" in error.error_details:
                     raise NoPermissionError("You do not have permission to access this sheet", self.sheet_id)
                 else:
-                    raise AppendError("Couldn't append values", self.sheet_id, data_range) # TODO: Make this more specific
+                    raise AppendError("Couldn't append values", self.sheet_id, data_range) 
 
     def clear(self, data_range: str) -> dict:
         """

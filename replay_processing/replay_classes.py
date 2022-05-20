@@ -146,7 +146,7 @@ class BallchasingReplay(Replay):
         """
         choices = self.path.split('/')[-3].split(' - ')
         self._teams = choices
-        return choices # TODO: Add support to get teams from ids instead of hoping the path works
+        return choices 
     
     def get_players(self) -> List[str]:
         """Gets a list of all the valid (non-sub) players
@@ -291,7 +291,7 @@ class CarballReplay(Replay):
         """
         choices = self.path.split('/')[-3].split(' - ')
         self._teams = choices
-        return choices # TODO: Add support to get teams from ids instead of hoping the path works
+        return choices 
 
     def get_players(self) -> List[str]:
         """Gets a list of all the valid (non-sub) players

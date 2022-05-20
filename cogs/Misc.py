@@ -193,7 +193,7 @@ class Misc(commands.Cog):
         async with ctx.typing():
             try:
                 data = self.streamsheet.to_df("S17 Stream Schedule!D3:K")
-            except:  # TODO Make this more specific
+            except: 
                 return await ctx.send("Couldn't find the stream schedule :(")
 
             data = data.rename(

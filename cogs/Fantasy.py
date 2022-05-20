@@ -241,7 +241,7 @@ class Fantasy(commands.Cog):
             team.add_field(name="Total Points", value=answer["points"], inline=True)
         await ctx.send(embed=team)
 
-    # TODO: Add field to show how many teams the player is on
+    # TODO: Add field to show how many fantasy teams the player is on
     @commands.command(
         aliases=(
             "player",

@@ -445,9 +445,8 @@ class RLPCAnalysis:
             stats['League'] = stats.apply(lambda row: self.identifier.find_league(self.identifier.find_team([row.name])), axis=1)
         fantasy = self.session.fantasy.find()
 
-        reset_transfers = False
         if datetime.now(tz=pytz.timezone("US/Eastern")).weekday() == 4:
-            reset_transfers = True
+            self.session.fantasy.update_many({}, {'$set': {'transfers_left': 2}})
 
         while fantasy.alive:
             if fantasy.count() == 0:

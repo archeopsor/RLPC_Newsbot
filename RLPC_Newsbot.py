@@ -104,7 +104,6 @@ class Newsbot(commands.Bot):
         for cog in self.COGS:
             self.add_cog(cog)
 
-    # TODO: Add more error handling
     async def on_command_error(
         self, ctx: Context, error: discord.errors.DiscordException
     ):
