@@ -1,4 +1,4 @@
-from fantasy_infrastructure import FantasyHandler
+from rlpc.fantasy_infrastructure import FantasyHandler
 from tools.accounts import create_account
 import pandas as pd
 import unittest

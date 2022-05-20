@@ -4,7 +4,7 @@ from discord.ext import commands
 import discord
 from discord.ext.commands.context import Context
 
-from fantasy_infrastructure import FantasyHandler
+from rlpc.fantasy_infrastructure import FantasyHandler
 from rlpc import mmr
 from tools import accounts
 from tools.sheet import Sheet

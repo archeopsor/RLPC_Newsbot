@@ -17,7 +17,7 @@ from cogs.Reddit import Reddit
 from cogs.Stats import Stats
 from cogs.Misc import Misc
 
-from fantasy_infrastructure import FantasyHandler
+from rlpc.fantasy_infrastructure import FantasyHandler
 from rlpc.elo import EloHandler
 from rlpc.stats import StatsHandler
 from rlpc.players import Identifier, PlayersHandler, TeamsHandler

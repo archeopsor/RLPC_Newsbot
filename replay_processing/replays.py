@@ -445,12 +445,16 @@ class RLPCAnalysis:
             stats['League'] = stats.apply(lambda row: self.identifier.find_league(self.identifier.find_team([row.name])), axis=1)
         fantasy = self.session.fantasy.find()
 
+        reset_transfers = False
+        if datetime.now(tz=pytz.timezone("US/Eastern")).weekday() == 4:
+            reset_transfers = True
+
         while fantasy.alive:
             if fantasy.count() == 0:
                 break
             account = fantasy.next()
             for player in account['players']:
-                username = self.session.players.find_one({'_id': player})['username']
+                username = self.session.all_players.find_one({'_id': player})['username']
 
                 if username not in stats.index: # They didn't have stats for this gameday
                     continue

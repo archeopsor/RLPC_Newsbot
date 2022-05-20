@@ -275,16 +275,16 @@ fantasyStructure = {
     "username": None,
     "discord_id": None,
     "account_league": "",
-    "players": [
-        # ObjectId() | None,
-        # ObjectId() | None,
-        # ObjectId() | None,
-        # ObjectId() | None,
-        # ObjectId() | None,
+    "players": [ # Discord IDs
+        # str | None,
+        # str | None,
+        # str | None,
+        # str | None,
+        # str | None,
     ],
     "player_history": [
         # {
-        #     "Player": ObjectId(),
+        #     "Player": str,
         #     "Date in": "",
         #     "Date out": "" | None,
         #     "Points": 0,
@@ -298,7 +298,7 @@ fantasyStructure = {
         #     "Timestamp": "",
         #     "Type": "", # in | out
         #     "Player": {
-        #         "id": ObjectId(""),
+        #         "id": str,
         #         "salary": 0,
         #         "points": 0,
         #     },

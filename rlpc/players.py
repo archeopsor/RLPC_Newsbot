@@ -11,7 +11,7 @@ import sys
 
 from tools.mongo import Session, teamIds
 from tools.sheet import Sheet
-from rlpc.db_models import Player, Region, Platform, MMRData, JoinMethod, LeaveMethod
+from rlpc.db_models import Player, Games, Region, Platform, MMRData, JoinMethod, LeaveMethod
 
 from settings import sheet_p4, current_season
 from errors.player_errors import *
