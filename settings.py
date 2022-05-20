@@ -1,5 +1,6 @@
 prefix = '$'
 k = 40
+current_season = 17
 sheet_p4 = '1k_2u8zetvYpBqcW2akudLGmUMVajecaoZSHx4Sh0FYQ'
 sheet_indy = '1XZfwWVk_m0Emd8ci52QMmZ4NEMQphA9daWJ_iuAQaPY'
 test_sheet = '1gHlqD-xekmpwFDpblAiJfpuCvxRliK6C-AjYoEUU8tc'

@@ -50,7 +50,7 @@ class Newsbot(commands.Bot):
         self.identifier = Identifier(self.session, self.p4sheet)
         self.elo = EloHandler(self.session, self.identifier)
         self.fantasy = FantasyHandler(self.session)
-        self.players = PlayersHandler(self.session, self.p4sheet)
+        self.players = PlayersHandler(self.session, self.p4sheet, self.identifier)
         self.teams = TeamsHandler(session=self.session)
         self.stats = StatsHandler(
             session=self.session,

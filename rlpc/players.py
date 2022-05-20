@@ -1,6 +1,7 @@
+from __future__ import annotations
 import pandas as pd
 import logging
-import time
+from datetime import datetime
 import os
 from bson import ObjectId
 
@@ -10,15 +11,16 @@ import sys
 
 from tools.mongo import Session, teamIds
 from tools.sheet import Sheet
+from rlpc.db_models import Player, Region, Platform, MMRData, JoinMethod, LeaveMethod
 
-from settings import sheet_p4
+from settings import sheet_p4, current_season
 from errors.player_errors import *
 
 logger = logging.getLogger(__name__)
 
 
 class PlayersHandler:
-    def __init__(self, session: Session = None, p4sheet: Sheet = None):
+    def __init__(self, session: Session = None, p4sheet: Sheet = None, identifier: Identifier = None):
         if not p4sheet:
             self.p4sheet = Sheet(sheet_p4)
         else:
@@ -27,6 +29,10 @@ class PlayersHandler:
             self.session = Session()
         else:
             self.session = session
+        if not identifier:
+            self.identifier = Identifier()
+        else:
+            self.identifier = identifier
 
     def add_player(self, username: str, region: str, platform: str, mmr: int, team: str, league: str, discord_id: int, ids: list = []):
         """
@@ -165,6 +171,67 @@ class PlayersHandler:
 
         logger.info("Done downloading ids.")
 
+    def move_teams(self, id: str, old: str, new: str, join_method: JoinMethod = JoinMethod.OTHER, leave_method: LeaveMethod = LeaveMethod.OTHER):
+        player_doc = self.session.all_players.find_one({"_id": id})
+        old_doc = self.session.teams.find_one({"_id": old})
+        new_doc = self.session.teams.find_one({"_id": new})
+        if old_doc and new_doc:
+            leave_method = LeaveMethod.TRADE
+            join_method = JoinMethod.TRADE
+
+        new_team = {
+                    "name": new,
+                    "league": self.identifier.find_league(new),
+                    "join_date": datetime.now(),
+                    "join_method": join_method.value,
+                    "leave_date": None,
+                    "leave_method": None
+                }
+        new_player = {
+                    "playerid": id,
+                    "join_date": datetime.now(),
+                    "join_method": join_method.value,
+                    "leave_date": None,
+                    "leave_method": None
+                }
+
+        # Update player
+        self.session.all_players.find_one_and_update({"_id": id}, {
+            "$set": {
+                "current_team": new, 
+                f"team_history.{len(player_doc['team_history']) - 1}.leave_season": current_season,
+                f"team_history.{len(player_doc['team_history']) - 1}.leave_method": leave_method.value,
+                "seasons.$[season].teams.$[team].leave_season": current_season,
+                "seasons.$[season].teams.$[team].leave_method": leave_method.value,
+            }}, array_filters = [{'season.season_num': current_season}, {"team.name": old, "team.leave_season": None}])
+        self.session.all_players.find_one_and_update({"_id": id}, {
+            "$push": {
+                "seasons.$[season].teams": new_team,
+                "team_history": new_team,
+            }
+        }, array_filters = [{'season.season_num': current_season}])
+        
+        # Update old team (assuming the old team isn't a non-playing team)
+        if old_doc:
+            self.session.teams.find_one_and_update({"_id": old}, {
+                "$pull": {"current_players": id},
+                "$push": {"previous_players": id},
+                "$set": {
+                    "seasons.$[season].players.$[player].leave_date": datetime.now(),
+                    "seasons.$[season].players.$[player].leave_method": leave_method.value,
+                }
+            }, array_filters = [{'season.season_num': current_season}, {"player.playerid": id, "player.leave_date": None}])
+
+        # Update new team (assuming the new team isn't a non_playing team)
+        if new_doc:
+            self.session.teams.find_one_and_update({"_id": new}, 
+            {
+                "$push": {
+                    "current_players": id,
+                    "seasons.$[season].players": new_player
+                }
+            }, array_filters = [{"season.season_num": current_season}])
+
     def check_players(self):
         """
         Compares the rlpc sheet to the database to ensure that all players are present and have accurate info
@@ -177,8 +244,10 @@ class PlayersHandler:
 
         logger.info("Checking players...")
         sheetdata = self.p4sheet.to_df("Players!A1:AG")
-        sheetdata['Unique IDs'] = sheetdata['Unique IDs'].map(
-            lambda x: x.split(","))
+        sheetdata['Unique IDs'] = sheetdata['Unique IDs'].map(lambda x: x.split(","))
+        sheetdata['Tracker'] = sheetdata['Tracker'].map(lambda x: x.split(', '))
+        sheetdata['Sheet MMR'] = sheetdata['Sheet MMR'].map(lambda x: int(x))
+        sheetdata['Tracker MMR'] = sheetdata['Tracker MMR'].map(lambda x: int(x))
         sheetdata = sheetdata.drop_duplicates(subset='Username')
         sheetdata = sheetdata.loc[sheetdata['Username'] != ""]
         sheetdata = sheetdata.loc[sheetdata['Team'] != "N/A"] # This should never happen unless sheets team puts it here, /shrug
@@ -187,7 +256,88 @@ class PlayersHandler:
         sheetdata = sheetdata.set_index('Username')
 
         players = self.session.players
+        all_players = self.session.all_players
+        teams = self.session.teams
 
+        # NEW CHECKS
+        for player in sheetdata.index:
+            discord_id: str = sheetdata.loc[player, 'Discord ID']
+
+            # First check if the player is already in the database
+            doc = self.session.all_players.find_one({"_id": discord_id})
+
+            # If the player is not in the database, add them as a player
+            if doc == None:
+                logger.debug(f"Adding {player} to database")
+                data = Player(
+                    _id = sheetdata.loc[player, 'Discord ID'],
+                    username = player,
+                    date_joined = datetime.now(),
+                    rl_id = sheetdata.loc[player, 'Unique IDs'],
+                    tracker_links = sheetdata.loc[player, 'Tracker'],
+                    region = Region.from_str(sheetdata.loc[player, 'Region']),
+                    platform = Platform.from_str(sheetdata.loc[player, 'Platform']),
+                    mmr = MMRData(sheetdata.loc[player, 'Sheet MMR'], sheetdata.loc[player, 'Tracker MMR'], {datetime.now().strftime("%m/%d/%y"): sheetdata.loc[player, 'Tracker MMR']}), 
+                    current_team = sheetdata.loc[player, 'Team'],
+                    team_history = None,
+                    seasons = None              # Will be added later in this function if needed
+                ).insert_new(self.session)
+            
+            # Otherwise, check fields to see if any of them changed
+            else:
+                data = Player.from_db(doc)
+
+                # Username
+                if data.username != player:
+                    data.username = player
+                    all_players.find_one_and_update({"_id": discord_id}, {"$set": {"username": player}})
+                    logger.debug(f"{data.username} has changed their name to {player}")
+
+                # rl id
+                for playerid in sheetdata.loc[player, 'Unique IDs']:
+                    if playerid == '':
+                        continue # No ids are available, so just ignore
+                    elif playerid not in data.rl_id:
+                        data.rl_id.append(playerid)
+                        all_players.find_one_and_update({"_id": discord_id}, {"$push": {"rl_id": playerid}})
+                        logger.debug(f"Added id '{playerid}' for {player}")
+
+                # tracker links
+                for tracker in sheetdata.loc[player, 'Tracker']:
+                    if tracker == '':
+                        continue # No trackers are available, so just ignore
+                    elif tracker not in data.tracker_links:
+                        data.tracker_links.append(tracker)
+                        all_players.find_one_and_update({"_id": discord_id}, {"$push": {"tracker_links": tracker}})
+                        logger.debug(f"Added tracker {tracker} for {player}")
+
+                # Region
+                if data.region != Region.from_str(sheetdata.loc[player, 'Region']):
+                    data.region = Region.from_str(sheetdata.loc[player, 'Region'])
+                    all_players.find_one_and_update({"_id": discord_id}, {"$set": {"region": sheetdata.loc[player, 'Region']}})
+                    logger.debug(f"Moved {player} to {data.region}")
+
+                # Platform
+                if data.platform != Platform.from_str(sheetdata.loc[player, 'Platform']):
+                    data.platform = Platform.from_str(sheetdata.loc[player, 'Platform'])
+                    all_players.find_one_and_update({"_id": discord_id}, {"$set": {"platform": sheetdata.loc[player, 'Platform']}})
+                    logger.debug(f"Switched {player} to {data.platform}")
+
+                # MMR
+                if data.mmr.current_official_mmr != sheetdata.loc[player, 'Sheet MMR']:
+                    data.mmr.current_official_mmr = sheetdata.loc[player, 'Sheet MMR']
+                    all_players.find_one_and_update({"_id": discord_id}, {"$set": {"mmr.current_official_mmr": sheetdata.loc[player, 'Sheet MMR']}})
+                    logger.debug(f"Updated {player}'s Sheet MMR to {data.mmr.current_official_mmr}")
+
+                # Team
+                if data.current_team != sheetdata.loc[player, 'Team']:
+                    old = data.current_team
+                    new = sheetdata.loc[player, 'Team']
+                    data.current_team = new
+                    self.move_teams(discord_id, old, new) # TODO: Figure out join/leave methods
+
+
+        # OLD CHECKS
         for player in sheetdata.index:
             if sheetdata.loc[player, 'Team'] in ['Not Playing', 'Ineligible', 'Future Star', 'Departed', 'Banned', 'Waitlist', 'Below MMR']:
                 # See if player's document exists and/or needs to be updated
@@ -422,7 +572,7 @@ class Identifier:
         if self.leagues.get(team):
             return self.leagues.get(team)
 
-        doc = self.session.teams.find_one({"team": team})
+        doc = self.session.teams.find_one({"_id": team})
         self.leagues[team] = doc['league']
         return doc['league']
 
@@ -471,7 +621,7 @@ class TeamsHandler:
 
         return data
 
-    def get_gm(self,data: pd.Series) -> str:
+    def get_gm(self, data: pd.Series) -> str:
         return data.loc['GM']
 
     def get_agm(self, data: pd.Series) -> str:
@@ -517,4 +667,5 @@ class TeamsHandler:
 
 if __name__ == "__main__":
     players = PlayersHandler()
-    players.check_players()
+    # players.check_players()
+    players.move_teams("549088262480723988", "Admirals", "Wildcats")

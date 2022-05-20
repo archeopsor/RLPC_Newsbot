@@ -65,7 +65,7 @@ class Stats(commands.Cog):  # pragma: no cover
         else:
             self.identifier = identifier
         if not players:
-            self.players = PlayersHandler(session=self.session, p4sheet=self.p4sheet)
+            self.players = PlayersHandler(session=self.session, p4sheet=self.p4sheet, identifier=self.identifier)
         if not teams:
             self.teams = TeamsHandler(session=self.session)
         else:

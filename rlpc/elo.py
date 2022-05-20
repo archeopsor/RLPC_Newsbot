@@ -20,12 +20,12 @@ class EloHandler:
             self.identifier = identifier
 
     def get_elo(self, team: str) -> int:
-        doc = self.session.teams.find_one({'team': team.title()})
+        doc = self.session.teams.find_one({'_id': team.title()})
         return doc['elo']['elo']
 
     def set_elo(self, team: str, elo: int) -> None:
-        doc = self.session.teams.find_one({'team': team.title()})
-        self.session.teams.find_one_and_update({"_id": doc['_id']}, {'$set': {'elo.elo': elo, 'elo.previous': doc['elo']['elo']}})
+        doc = self.session.teams.find_one({'_id': team.title()})
+        self.session.teams.find_one_and_update({"_id": team.title()}, {'$set': {'elo.elo': elo, 'elo.previous': doc['elo']['elo']}}) #TODO
 
     def add_game_manual(self, league: str, team1: str, team2: str, winner: str, score: str) -> None:
         if 'ff' in score:

@@ -351,14 +351,14 @@ class RLPCAnalysis:
             self.p4sheet = Sheet(sheet_p4)
         else:
             self.p4sheet = p4sheet
-        if not playersHandler:
-            self.playersHandler = PlayersHandler(self.session, self.p4sheet)
-        else:
-            self.playersHandler = playersHandler
         if not identifier:
             self.identifier = Identifier(self.session, self.p4sheet)
         else:
             self.identifier = identifier
+        if not playersHandler:
+            self.playersHandler = PlayersHandler(self.session, self.p4sheet, self.identifier)
+        else:
+            self.playersHandler = playersHandler
 
         self.failed = []
 
