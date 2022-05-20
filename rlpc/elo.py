@@ -3,7 +3,7 @@ import pandas as pd
 
 from rlpc.players import Identifier
 from tools.mongo import Session, teamIds
-from settings import k, leagues
+from settings import k, leagues, current_season
 
 from errors.elo_errors import *
 
@@ -21,11 +21,20 @@ class EloHandler:
 
     def get_elo(self, team: str) -> int:
         doc = self.session.teams.find_one({'_id': team.title()})
-        return doc['elo']['elo']
+        return doc['current_elo']
 
     def set_elo(self, team: str, elo: int) -> None:
         doc = self.session.teams.find_one({'_id': team.title()})
-        self.session.teams.find_one_and_update({"_id": team.title()}, {'$set': {'elo.elo': elo, 'elo.previous': doc['elo']['elo']}}) #TODO
+        self.session.teams.find_one_and_update({"_id": team.title()}, 
+        {
+            '$set': {
+                'current_elo': elo, 
+                'previous_elo': doc['elo']['elo']
+                },
+            '$push': {
+                'seasons.$[season].elo_history': elo
+            }
+        }, array_filters = [{'season.season_num': current_season}])
 
     def add_game_manual(self, league: str, team1: str, team2: str, winner: str, score: str) -> None:
         if 'ff' in score:
@@ -137,7 +146,7 @@ class EloHandler:
 
         for i in range(count):
             team = teams.next()
-            lb.loc[team['team']] = [team['elo']['elo'], team['elo']['previous']]
+            lb.loc[team['_id']] = [team['current_elo'], team['previous_elo']]
 
         lb.sort_values(by='Elo', ascending=False, inplace=True)
         return lb
