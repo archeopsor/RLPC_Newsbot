@@ -253,6 +253,13 @@ class Identifier:
         self.leagues = {}
         self.tracker_ids = {}
 
+    @staticmethod
+    def is_discord_id(string: str) -> bool:
+        if len(string) == 18 and string.isnumeric():
+            return True
+        else:
+            return False
+
     def identify(self, id: str) -> str:
         """
         Determines which player matches a given ID
@@ -271,7 +278,7 @@ class Identifier:
         if self.ids.get(id):
             return self.ids.get(id)
 
-        player = self.session.all_players.find_one({'_id': id})
+        player = self.session.all_players.find_one({'rl_id': id})
         if not player:
             return None
         else:
@@ -311,14 +318,18 @@ class Identifier:
         teams = self.p4sheet.to_df("Teams!F1:P129")
 
         for player in names:
-            doc = self.session.all_players.find_one({'username': player})
+            if self.is_discord_id(player):
+                doc = self.session.all_players.find_one({"_id": player})
+            else:
+                doc = self.session.all_players.find_one({'username': player})
             team: str = doc['current_team']
             if team in ['Free Agent', 'Not Playing', 'Departed', 'Waitlist']:
                 continue
-            try:
-                team = self.session.teams.find_one({'_id': team})
-            except TypeError:
-                continue
+            # Not sure why this was here, keeping it just in case
+            # try:
+            #     team = self.session.teams.find_one({'_id': team})
+            # except TypeError:
+            #     continue
 
             if choices:
                 choice_league = self.find_league(choices[0])

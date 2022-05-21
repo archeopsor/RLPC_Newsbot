@@ -30,9 +30,9 @@ from tools.sheet import Sheet
 
 from rlpc.players import PlayersHandler, Identifier
 from rlpc.elo import EloHandler
-from rlpc.stats import get_latest_gameday, dates
+from rlpc.stats import StatsHandler, get_latest_gameday, dates
 
-from settings import sheet_p4, valid_stats, gdstats_sheet
+from settings import sheet_p4, valid_stats, gdstats_sheet, current_season
 
 seleniumLogger.setLevel(logging.WARNING)
 urllibLogger.setLevel(logging.WARNING)
@@ -317,7 +317,7 @@ class Series:
         Returns:
             pd.DataFrame: Dataframe with usernames as indexes, containing stats aggregated from each replay
         """
-        player_stats = pd.DataFrame(columns=valid_stats)
+        player_stats = pd.DataFrame(columns=["Username", *valid_stats])
 
         for replay in self.replays:
             try:
@@ -337,7 +337,7 @@ class Series:
                 player_stats = player_stats.append(stats)
                 self.unknown = [*unknown, *self.unknown]
 
-        player_stats = player_stats.groupby(player_stats.index).sum()
+        player_stats = player_stats.groupby(player_stats.index).agg(lambda x: x.sum() if x.dtype=='float64' else x[0])
 
         # Add Series Played and Series Won stats
         for player in player_stats.index:
@@ -368,6 +368,7 @@ class RLPCAnalysis:
             self.playersHandler = playersHandler
 
         self.failed = []
+        self.unknown = []
 
     def checks(self):
         self.playersHandler.check_players()
@@ -385,7 +386,7 @@ class RLPCAnalysis:
         return replays
 
     def analyze_replays(self):
-        stats = pd.DataFrame(columns=valid_stats)
+        stats = pd.DataFrame(columns=["Username", *valid_stats])
         counter = 1
         replays = self.get_replays()
         series_list = []
@@ -407,12 +408,15 @@ class RLPCAnalysis:
         counter = 1
         for series in series_list:
             print(f'Analyzing series {counter} of {len(list(replays))} ({round(((counter-1)/len(list(replays)))*100)}%)')
+            series: Series
 
             try:
                 series_stats = series.get_stats()
                 failed = series.failed
+                unknown = series.unknown
                 stats = stats.append(series_stats)
-                self.failed.append(failed)   
+                self.failed = [*self.failed, *failed]  
+                self.unknown = [*self.unknown, *unknown] 
             except KeyError:
                 print("SERIES FAILED")  
                 self.failed.append("SERIES " + str(counter))   
@@ -423,24 +427,25 @@ class RLPCAnalysis:
         return stats
 
     def upload_stats(self, stats: pd.DataFrame):
-        if 'League' in stats.columns:
-            stats = stats.drop(columns=['Fantasy Points', 'League'])
-
         for player in stats.index:
             update = {'$inc': {}}
 
             for col in stats.columns:
-                category = findCategory(col)
+                if col in ('Username', 'Fantasy Points', 'League'):
+                    continue
+
+                snake_stat = StatsHandler.snakecase_stat(col)
                 if type(stats.loc[player, col]) == np.int64:
                     datapoint = int(stats.loc[player, col])
                 else:
-                    datapoint = float(stats.loc[player, col])
-                update['$inc'][f'stats.{category}.{col}'] = datapoint
+                    datapoint = round(float(stats.loc[player, col]), 2)
+                update['$inc'][f'seasons.$[season].season_stats.{snake_stat}'] = datapoint
 
             try:
-                self.session.players.update_one(
-                    {'username': player},
-                    update
+                self.session.all_players.update_one(
+                    {'_id': player},
+                    update,
+                    array_filters = [{"season.season_num": current_season}]
                 )
             except:
                 print("PLAYER STATS FAILED: "+player)
@@ -482,7 +487,12 @@ class RLPCAnalysis:
             stats['Fantasy Points'] = stats.apply(lambda row: fantasy_formula(row), axis=1)
             stats['League'] = stats.apply(lambda row: self.identifier.find_league(self.identifier.find_team([row.name])), axis=1)
 
-        Sheet(gdstats_sheet).push_df(range, stats.reset_index().fillna(value=0))
+        known = stats.loc[~stats.index.isin(self.unknown)]
+        unknown = stats.loc[stats.index.isin(self.unknown)]
+
+        sheet = Sheet(gdstats_sheet)
+        sheet.push_df(range, known.reset_index().fillna(value=0))
+        sheet.push_df("Failed Players!A2:Z", unknown.reset_index().fillna(value=0))
 
     def main(self):
         print("Checks")
@@ -495,15 +505,15 @@ class RLPCAnalysis:
         self.log_data(stats, f'{dates[get_latest_gameday()]}!A2:Z')
 
         print("Uploading Stats")
-        # self.upload_stats(stats)
+        self.upload_stats(stats)
 
-        print("Updating fantasy points")
+        # print("Updating fantasy points")
         # self.update_fantasy(stats)
 
         print("FAILED: "+str(self.failed))
 
 
 if __name__ == "__main__":
-    download = Retreiver.download(update_elo=False)
+    download = Retreiver.download(update_elo=True)
     if download:
         RLPCAnalysis().main() # Only run if there were files to download
