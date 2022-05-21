@@ -182,6 +182,7 @@ class BallchasingReplay(Replay):
         """
         stats = self.stats
         player_stats = pd.DataFrame(columns=valid_stats)
+        player_stats['discord_id']
         teams = self.teams
         players = []
         unknown = []
@@ -200,6 +201,7 @@ class BallchasingReplay(Replay):
 
         for player in players:
             name = id_player(player, self.identifier)
+            discord_id = player['id']['id']
                 
             # Handle unknown players
             try:

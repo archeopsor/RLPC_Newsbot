@@ -17,8 +17,7 @@ from settings import sheet_p4, current_season
 from errors.player_errors import *
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level = logging.DEBUG)
-
+logger.setLevel(logging.DEBUG)
 
 class PlayersHandler:
     def __init__(self, session: Session = None, p4sheet: Sheet = None, identifier: Identifier = None):
@@ -34,143 +33,6 @@ class PlayersHandler:
             self.identifier = Identifier()
         else:
             self.identifier = identifier
-
-    def add_player(self, username: str, region: str, platform: str, mmr: int, team: str, league: str, discord_id: int, ids: list = []):
-        """
-        Adds a row to  the players database
-
-        Parameters
-        ----------
-        username : str
-            Player's username.
-        region : str
-            Region where the player plays from.
-        platform : str
-            Player's main platform.
-        mmr : int
-            Player's mmr as listed on the sheet.
-        team : str
-            Team the player is on.
-        league : str
-            League the player plays in.
-        discord_id: int
-            Player's discord id
-        ids : list, optional
-            List of IDs of rocket league accounts from the sheet. The default is [].
-
-        Returns
-        -------
-        None.
-
-        """
-        players = self.p4sheet.to_df('Players!A1:W')
-        players['Sheet MMR'] = players['Sheet MMR'].apply(
-            lambda x: int(x) if x != '' else x)
-        players['Tracker MMR'] = players['Tracker MMR'].apply(
-            lambda x: int(x) if x != '' else x)
-        data: pd.DataFrame = players.loc[(players['League'] == league) & ~(players['Team'].isin(
-            ['Not Playing', 'Waitlist', 'Future Star']))].reset_index(drop=True)  # Get valid players from correct league
-        mmr = int(mmr)
-        num_greater: int = data[data['Tracker MMR']
-                                > mmr]['Tracker MMR'].count()
-        num_less: int = data[data['Tracker MMR'] < mmr]['Tracker MMR'].count()
-        percentile = num_less/(num_greater+num_less)
-        fantasy_value = round(80 + 100*percentile)
-
-        doc = self.session.structures['players'].copy()
-        doc["username"] = username
-        doc['info']['region'] = region
-        doc['info']['platform'] = platform
-        doc['info']['mmr'] = mmr
-        doc['info']['team'] = teamIds[team.title()]
-        doc['info']['league'] = league
-        doc['info']['id'] = ids
-        doc['info']['discord_id'] = discord_id
-        doc['fantasy']['fantasy_value'] = fantasy_value
-
-        # Add player to players collection
-        self.session.players.insert_one(doc)
-
-        # Add player to team in teams collection
-        self.session.teams.find_one_and_update(
-            {"_id": teamIds[team.title()]},
-            {"$push": {"players": doc['_id']}}            
-        )
-
-    def download_ids(self):
-        """
-        Takes player IDs from the RLPC Sheet and adds them to the database
-
-        Returns
-        -------
-        None.
-
-        """
-        logger.info("Downloading IDs...")
-        print("IDS")
-        sheetdata = self.p4sheet.to_df('Players!A1:AG')
-        sheetdata['Unique IDs'] = sheetdata['Unique IDs'].map(
-            lambda x: x.split(","))
-        sheetdata = sheetdata.drop_duplicates(subset='Username')
-        sheetdata = sheetdata.loc[sheetdata['Username'] != ""]
-        sheetdata = sheetdata.loc[sheetdata['Departed'] == "FALSE"]
-
-        for player in sheetdata['Username']:
-
-            # Make sure to only care about active players
-            if sheetdata.loc[sheetdata['Username'] == player, 'Team'].values[0] in ['Not Playing', 'Ineligible', 'Future Star', 'Departed', 'Banned', 'Waitlist', 'Below MMR']:
-                continue
-
-            # See if the player's username is in the database
-            if self.session.players.count_documents({'username': player}) == 0:
-                fixed = False
-
-                # Look through ids on the sheet, see if it maches any in the database
-                # Any matches indicate a name change
-                for playerid in sheetdata.loc[sheetdata['Username']==player, 'Unique IDs']:
-                    if playerid == '':
-                        continue  # No ids are available, so just ignore
-                    else:
-                        doc = self.session.players.find_one_and_update(
-                            {'info.id': playerid}, {'$set': {'username': player}})
-                        if not doc:
-                            continue  # There were no players in database with this id
-                        old_username = doc['username']
-                        fixed = True
-                        logger.info(
-                            f'{old_username} has changed their name to {player}')
-                        break
-
-                if not fixed:
-                    # Can't find the id anywhere in db, so add a new player
-                    playerinfo = sheetdata.loc[sheetdata['Username'] == player]
-                    try:
-                        self.add_player(player, playerinfo['Region'].values[0], playerinfo['Platform'].values[0], playerinfo['Sheet MMR'].values[0],
-                                        playerinfo['Team'].values[0], playerinfo['League'].values[0], int(playerinfo['Discord ID'].values[0]), ids=playerinfo['Unique IDs'].tolist())
-                        logger.info(f'{player} added')
-                    except:
-                        logger.info(f'{player} failed to add')
-
-            else:  # Player's username is found in db
-                doc = self.session.players.find_one({'username': player})
-                try:
-                    db_ids = set(doc['info']['id'])
-                except TypeError:
-                    db_ids = set(doc['info']['id'][0]) # Some players have weird id structures for some reason TODO: Look into this.
-                sheet_ids = set(
-                    sheetdata.loc[sheetdata['Username'] == player, 'Unique IDs'].values[0])
-
-                # Check if database ids are a superset of sheet ids
-                superset = db_ids.issuperset(sheet_ids)
-                if not superset:
-                    # Sheet has id(s) that aren't in db, so combine both sets to get updated list
-                    ids = sheet_ids.union(db_ids)
-                    doc['info']['ids'] = ids
-                    self.session.players.update_one(
-                        {"username": player}, {"$set": {"info.id": list(ids)}})
-                    logger.info(f"{player} ids updated")
-
-        logger.info("Done downloading ids.")
 
     def move_teams(self, id: str, old: str, new: str, join_method: JoinMethod = JoinMethod.OTHER, leave_method: LeaveMethod = LeaveMethod.OTHER):
         player_doc = self.session.all_players.find_one({"_id": id})
@@ -409,7 +271,7 @@ class Identifier:
         if self.ids.get(id):
             return self.ids.get(id)
 
-        player = self.session.players.find_one({'info.id': id})
+        player = self.session.all_players.find_one({'_id': id})
         if not player:
             return None
         else:
@@ -449,12 +311,12 @@ class Identifier:
         teams = self.p4sheet.to_df("Teams!F1:P129")
 
         for player in names:
-            doc = self.session.players.find_one({'username': player})
-            teamId: ObjectId = doc['info']['team']
-            if teamId in ['Free Agent', 'Not Playing', 'Departed', 'Waitlist']:
+            doc = self.session.all_players.find_one({'username': player})
+            team: str = doc['current_team']
+            if team in ['Free Agent', 'Not Playing', 'Departed', 'Waitlist']:
                 continue
             try:
-                team = self.session.teams.find_one({'_id': teamId})['team']
+                team = self.session.teams.find_one({'_id': team})
             except TypeError:
                 continue
 
@@ -526,7 +388,7 @@ class Identifier:
 
         """
         sheetdata = self.p4sheet.to_df('Players!A1:AE')
-        player = sheetdata.loc[sheetdata['Tracker'].str.contains(name.replace(' ', '%20'), case=False), 'Username']
+        player = sheetdata.loc[sheetdata['Tracker'].str.contains(name.replace(' ', '%20').replace('(', '\('), case=False), 'Username']
         try:
             return player.values[0]
         except:

@@ -8,7 +8,7 @@ from tools.sheet import Sheet
 from tools.mongo import Session, findCategory, teamIds, statsCategories
 from rlpc.players import TeamsHandler, Identifier
 
-from settings import valid_stats, leagues, sheet_p4, sheet_indy, power_rankings_sheet, gdstats_sheet
+from settings import valid_stats, leagues, sheet_p4, sheet_indy, power_rankings_sheet, gdstats_sheet, current_season
 
 from errors.stats_errors import *
 from errors.sheets_errors import GetSheetError, SheetToDfError
@@ -64,6 +64,23 @@ class StatsHandler:
         else:
             self.identifier = identifier
 
+    @staticmethod
+    def snakecase_stat(stat: str) -> str:
+        if stat in [
+            'Series Played', 'Series Won', 'Games Played', 'Games Won', 'Goals', 'Assists', 'Saves', 'Shots', 'Goals Against', 'Shots Against', 'Demos Inflicted', 'Demos Taken', 
+            'Boost Used', 'Wasted Collection', 'Wasted Usage', 'Time Empty', 'Time Slow', 'Time Boost', 'Time Supersonic', 'Time Powerslide', 'Time Ground', 'Time Low Air', 
+            'Time High Air', 'Time Behind Ball', 'Time Infront Ball', 'Time Defensive Half', 'Time Offensive Half', 'Time Most Back', 'Time Most Forward', 'Time Closest',
+            'Time Furthest', 'Conceded When Last'
+        ]:
+            return stat.lower().replace(' ', '_')
+        else:
+            return {
+                "MVPs": "mvps",
+                '# Small Boosts': 'num_small_boosts',
+                '# Large Boosts': 'num_large_boosts',
+                '# Boost Steals': 'num_boost_steals',
+            }[stat]
+
     def capitalize_username(self, username: str) -> List[str]:
         try:
             players = self.p4sheet.to_df('Players!A1:I')
@@ -87,7 +104,7 @@ class StatsHandler:
     def get_player_stats_db(self, player: str, category: str = "all", pergame: bool = False) -> pd.DataFrame:
 
         player, league = self.capitalize_username(player)
-        db_stats = self.session.players.find_one({'username': player})
+        db_stats = self.session.all_players.find_one({'username': player})
         if db_stats == None:
             raise PlayerNotFoundError(player, 0)
         stats = pd.DataFrame()
@@ -98,14 +115,15 @@ class StatsHandler:
 
         games = 1
         if pergame:
-            games = max(db_stats['stats']['general']['Games Played'], 1)
+            games = max(db_stats['seasons'][-1]['season_stats']['games_played'], 1)
 
         if category == "all":
-            for stat in db_stats['stats']['general'].keys():
-                stats.loc[0, stat] = round(db_stats['stats']['general'][stat] / games, 1)
+            for stat in statsCategories['general']:
+                stats.loc[0, stat] = round(db_stats['seasons'][-1]['season_stats'][self.snakecase_stat(stat)] / games, 1)
         else:
-            for stat in db_stats['stats'][category].keys():
-                stats.loc[0, stat] = round(db_stats['stats'][category][stat] / games, 1)
+            keys = statsCategories[category]
+            for key in keys:
+                stats.loc[0, key] = round(db_stats['seasons'][-1]['season_stats'][self.snakecase_stat(key)] / games, 1)
 
         return stats
 

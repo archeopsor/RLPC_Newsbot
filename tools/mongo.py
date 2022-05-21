@@ -20,6 +20,7 @@ class Session:
         self.fantasy = self.db['fantasy']
         self.teams = self.db['teams']
         self.all_players = self.db['all_players']
+        self.players = self.db['players']
         self.games = self.db['games']
         self.admin = self.db['admin']
 
@@ -53,6 +54,19 @@ class Session:
             self.refresh()
 
         return self.db
+
+    def search(self, string: str) -> dict:
+        cur = self.db.aggregate([{
+            '$search': {
+                'index': 'Players',
+                'text': {
+                    'query': string,
+                    'path': {
+                        'wildcard': '*'
+                    }
+                }
+            }
+        }])
 
     def close(self):
         return self.client.close()

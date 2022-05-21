@@ -10,6 +10,7 @@ from tools.mongo import Session, teamIds
 from settings import prefix, leagues
 from errors.fantasy_errors import *
 
+# TODO: set up and reactivate fantasy for new database
 
 class FantasyHandler:
     def __init__(self, session: Session = None):
@@ -62,8 +63,15 @@ class FantasyHandler:
             raise AccountNotFoundError(discord_id)
 
         # Try to get player (case insensitive), and return if player doesn't exist
-        player_info = self.session.players.find_one(
-            {'$text': {'$search': f"\"{player}\""}})
+        player_info = self.session.all_players.aggregate([{
+            '$search': {
+                'index': 'Players',
+                'text': {
+                    'query': player,
+                    'path': {'wildcard': '*'}
+                }
+            }
+        }]).next()
         if not player_info:
             raise PlayerNotFoundError(player)
 
