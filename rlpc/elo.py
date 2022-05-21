@@ -29,7 +29,7 @@ class EloHandler:
         {
             '$set': {
                 'current_elo': elo, 
-                'previous_elo': doc['elo']['elo']
+                'previous_elo': doc['current_elo']
                 },
             '$push': {
                 'seasons.$[season].elo_history': elo
@@ -48,15 +48,15 @@ class EloHandler:
         Rb = self.get_elo(team2) # Team 2 rating
         score = list(score.strip())
         score = f"{score[0]} - {score[-1]}" # Putting it in the right format
+        score1 = int(score[0])
+        score2 = int(score[-1])
         Qa = 10**(Ra/200)
         Qb = 10**(Rb/200)
         Ea = Qa/(Qa+Qb)  # Team 1 expected score (percentage of games)
         Eb = Qb/(Qa+Qb)  # Team 2 expected score (percentage of games)
         Sa = 0  # Team 1 actual score
         Sb = 0  # Team 2 actual score
-        scparts = score.split()
-        score1 = int(scparts[0])
-        score2 = int(scparts[2])
+
         if score.lower() != "ff":
             if winner == team1 and score1 > score2:
                 Sa = score1/(score1+score2)
