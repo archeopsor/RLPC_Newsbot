@@ -30,7 +30,7 @@ from tools.sheet import Sheet
 
 from rlpc.players import PlayersHandler, Identifier
 from rlpc.elo import EloHandler
-from rlpc.stats import StatsHandler, get_latest_gameday, dates
+from rlpc.stats import StatsHandler, get_latest_gameday, dates, snakecase_stat
 
 from settings import sheet_p4, valid_stats, gdstats_sheet, current_season
 
@@ -434,7 +434,7 @@ class RLPCAnalysis:
                 if col in ('Username', 'Fantasy Points', 'League'):
                     continue
 
-                snake_stat = StatsHandler.snakecase_stat(col)
+                snake_stat = snakecase_stat(col)
                 if type(stats.loc[player, col]) == np.int64:
                     datapoint = int(stats.loc[player, col])
                 else:

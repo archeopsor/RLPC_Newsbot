@@ -10,7 +10,6 @@ import requests
 
 from errors.replay_errors import *
 from rlpc.players import Identifier, PlayersHandler
-from rlpc.db_models import Game, Stats
 from tools.mongo import Session, teamIds
 from settings import valid_stats
 
@@ -65,6 +64,7 @@ class BallchasingReplay(Replay):
         super().__init__(file_path, session, playersHandler, identifier)
         self.token = BALLCHASING_TOKEN
         self.uploaded = False
+        self.processed = False
         try:
             self.upload()
         except requests.exceptions.ConnectionError:
@@ -129,6 +129,7 @@ class BallchasingReplay(Replay):
         elif r_json['status'] == 'ok':  
             r.close()         # Success, return stats json
             self.stats = r_json
+            self.processed = True
             return r_json
         elif r_json['status'] == 'pending':      # Replay not processed yet, wait 5 seconds and try again
             sleep(5)
@@ -182,7 +183,7 @@ class BallchasingReplay(Replay):
         """
         stats = self.stats
         player_stats = pd.DataFrame(columns=["Username", *valid_stats])
-        teams = self.teams
+        # teams = self.teams
         players = []
         unknown = []
         winner = "blue" if stats['blue']['stats']['core']['goals'] > stats['blue']['stats']['core']['goals_against'] else 'orange'
@@ -259,10 +260,18 @@ class BallchasingReplay(Replay):
             except:
                 pass
 
-
+        self._player_stats = player_stats
+        self.unknown = unknown
 
         return player_stats, unknown
 
+    @property
+    def player_stats(self) -> pd.DataFrame:
+        try:
+            return self._player_stats
+        except AttributeError:
+            self.process()
+            return self.convert()
 
 class CarballReplay(Replay):
     def __init__(self, file_path: str, session: Session, playersHandler: PlayersHandler, identifier: Identifier):

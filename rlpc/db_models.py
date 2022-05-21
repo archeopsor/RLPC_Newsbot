@@ -13,6 +13,8 @@ import sys
 
 from tools.mongo import Session
 from tools.sheet import Sheet
+from replay_processing.replay_classes import *
+from rlpc.stats import snakecase_stat
 from settings import sheet_p4, valid_stats
 
 ###########
@@ -364,8 +366,8 @@ class Stats:
     @classmethod
     def from_series(cls, series: pd.Series) -> Stats:
         stats = Stats()
-        for val in series.index:
-            setattr(stats, val, series.loc[val])
+        for field in fields(stats):
+            setattr(stats, field.name, series.loc[snakecase_stat(field.name, reverse=True)])
         return stats
     
     def __add__(self, stats: Stats) -> Stats:
@@ -384,7 +386,6 @@ class Stats:
             df[field.name] = ValueError
         
         return df
-
 
 @dataclass
 class PlayerSeason:
@@ -518,7 +519,6 @@ class Player:
         doc = convert_enums(asdict(self))
         return session.all_players.insert_one(doc)
 
-
 @dataclass
 class Team:
     _id: str             # Team Name
@@ -543,7 +543,6 @@ class Team:
             doc['elo']['previous'],
         )
 
-
 @dataclass
 class Game:
     # Use auto-generated _id field
@@ -553,75 +552,32 @@ class Game:
     team1_players: list[str]
     team2_players: list[str]
     is_playoff: bool
-    won: bool
     score: list[int] # [Team1 score, Team2 score]
     stats: dict[str, Stats] # key is a player's discord id
+
+    @classmethod
+    def from_replay(cls, replay: BallchasingReplay, session: Session) -> Game:
+        # Make sure replay is uploaded and processed
+        if not replay.processed:
+            replay.process()
+        data: dict = replay.stats
+        player_stats, unknown = replay.player_stats
+        stats: dict[str, Stats] = {}
+
+        date = datetime.strptime(data['date'], "%Y-%m-%dT%H:%M:%S%z")
+        for player in player_stats.index:
+            stats[player] = Stats.from_series(player_stats.loc[player])
+            # TODO: Handle getting players and teams from the replay (do this by fixing the replay properties)
+        
 
 
 # Just for testing
 if __name__ == '__main__':
     session = Session()
     sheet = Sheet(sheet_p4)
-    # sheetdata = sheet.to_df("Players!A1:Z").drop_duplicates(subset="Username").set_index("Username")
-    players: list[Player] = []
-    # teams: list[Team] = []
-    # from players import TeamsHandler
-    # teamsHandler = TeamsHandler(session = session)
+    from rlpc.players import PlayersHandler, Identifier
+    identifier = Identifier(session, sheet)
+    playersHandler = PlayersHandler(session, sheet, identifier)
 
-    cursor = session.players.find({})
-    while cursor.alive:
-        players.append(Player.from_db_old(cursor.next()['_id'], session, sheet))
-
-    # cursor = session.teams.find({})
-    # while cursor.alive:
-    #     teams.append(Team.from_db_old(cursor.next()['_id'], session))
-
-    cursor.close()
-
-    for player in players:
-        player.insert_new(session)
-
-    # for team in teams:
-    #     players: list[Player] = []
-    #     team.league = team.league.value
-    #     team.current_players = []
-    #     team.previous_players = []
-    #     team.seasons = []
-    #     season_stats = Stats()
-    #     data = teamsHandler.get_data(team._id)
-
-    #     try:
-    #         agm = sheetdata.loc[teamsHandler.get_agm(data), 'Discord ID'],
-    #     except KeyError:
-    #         agm = None
-        
-    #     try:
-    #         captain = sheetdata.loc[teamsHandler.get_captain(data), 'Discord ID'],
-    #     except KeyError:
-    #         captain  = None
-
-    #     for player in teamsHandler.get_roster(team._id):
-    #         players.append(PlayerData(
-    #             sheetdata.loc[player, 'Discord ID'],
-    #             datetime.now(),
-    #             JoinMethod.OTHER,
-    #         ))
-    #         team.current_players.append(sheetdata.loc[player, "Discord ID"])
-    #         season_stats = season_stats + Stats.from_db_old(session.players.find_one({"info.discord_id": sheetdata.loc[player, 'Discord ID']}))
-
-    #     team.seasons.append(TeamSeason(
-    #         17,
-    #         players,
-    #         sheetdata.loc[teamsHandler.get_gm(data), 'Discord ID'],
-    #         agm,
-    #         captain,
-    #         season_stats,
-    #         Stats(),
-    #         [],
-    #         [300, team.previous_elo, team.current_elo],
-    #         False,
-    #         False,
-    #         False
-    #     ))
-
-    #     session.db.new_teams.insert_one(convert_enums(asdict(team)))
+    replay = BallchasingReplay(r"C:\Users\Simcha\Desktop\Projects\RLPC_Newsbot\replay_processing\Replay_Files\Ascension - Whitecaps\match_1\2BE561564317ECAC8E2FB6997E799D7E.replay", session, playersHandler, identifier)
+    Game.from_replay(replay, session)

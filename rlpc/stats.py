@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import List
 import numpy as np
 import pandas as pd
@@ -5,8 +6,8 @@ import datetime
 import pytz
 
 from tools.sheet import Sheet
-from tools.mongo import Session, findCategory, teamIds, statsCategories
-from rlpc.players import TeamsHandler, Identifier
+from tools.mongo import Session, findCategory, statsCategories
+from rlpc.players import *
 
 from settings import valid_stats, leagues, sheet_p4, sheet_indy, power_rankings_sheet, gdstats_sheet, current_season
 
@@ -31,6 +32,14 @@ def get_latest_gameday() -> int:
             return list(dates.keys())[list(dates.values()).index(day_string)]
         elif datetime.datetime.strptime(list(dates.values())[0], "%m/%d/%y Data").astimezone(pytz.timezone("US/Eastern")) > day: # If the day is earlier than all possible days
             raise InvalidDayError(day=0)
+
+def snakecase_stat(stat: str, reverse: bool = False) -> str:
+    if reverse:
+        if stat == 'mvps':
+            return 'MVPs'
+        return stat.replace('_', ' ').replace('num', '#').title()
+    else:
+        return stat.lower().replace(' ', '_').replace("#", "num")
         
 
 class StatsHandler:
@@ -63,23 +72,6 @@ class StatsHandler:
             self.identifier = Identifier(self.session, self.p4sheet)
         else:
             self.identifier = identifier
-
-    @staticmethod
-    def snakecase_stat(stat: str) -> str:
-        if stat in [
-            'Series Played', 'Series Won', 'Games Played', 'Games Won', 'Goals', 'Assists', 'Saves', 'Shots', 'Goals Against', 'Shots Against', 'Demos Inflicted', 'Demos Taken', 
-            'Boost Used', 'Wasted Collection', 'Wasted Usage', 'Time Empty', 'Time Slow', 'Time Boost', 'Time Supersonic', 'Time Powerslide', 'Time Ground', 'Time Low Air', 
-            'Time High Air', 'Time Behind Ball', 'Time Infront Ball', 'Time Defensive Half', 'Time Offensive Half', 'Time Most Back', 'Time Most Forward', 'Time Closest',
-            'Time Furthest', 'Conceded When Last'
-        ]:
-            return stat.lower().replace(' ', '_')
-        else:
-            return {
-                "MVPs": "mvps",
-                '# Small Boosts': 'num_small_boosts',
-                '# Large Boosts': 'num_large_boosts',
-                '# Boost Steals': 'num_boost_steals',
-            }[stat]
 
     def capitalize_username(self, username: str) -> List[str]:
         try:
@@ -119,11 +111,11 @@ class StatsHandler:
 
         if category == "all":
             for stat in statsCategories['general']:
-                stats.loc[0, stat] = round(db_stats['seasons'][-1]['season_stats'][self.snakecase_stat(stat)] / games, 1)
+                stats.loc[0, stat] = round(db_stats['seasons'][-1]['season_stats'][snakecase_stat(stat)] / games, 1)
         else:
             keys = statsCategories[category]
             for key in keys:
-                stats.loc[0, key] = round(db_stats['seasons'][-1]['season_stats'][self.snakecase_stat(key)] / games, 1)
+                stats.loc[0, key] = round(db_stats['seasons'][-1]['season_stats'][snakecase_stat(key)] / games, 1)
 
         return stats
 
