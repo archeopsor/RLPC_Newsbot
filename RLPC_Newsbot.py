@@ -71,9 +71,9 @@ class Newsbot(commands.Bot):
                 fc_sheet=self.fc_sheet,
                 elo=self.elo,
             ),
-            Fantasy(
-                self, session=self.session, fantasy=self.fantasy, p4_sheet=self.p4sheet
-            ),
+            # Fantasy(
+            #     self, session=self.session, fantasy=self.fantasy, p4_sheet=self.p4sheet
+            # ),
             Help(self),
             Links(self),
             Reddit(self),
@@ -139,7 +139,7 @@ class Newsbot(commands.Bot):
                 "**" + str(type(error)) + " in DM with " + channel.recipient.name + "**"
             )
         await error_channel.send(f"*Command: {command.name}*")
-        await error_channel.send(error)
+        await error_channel.send(error.with_traceback())
         await error_channel.send(args)
 
     async def on_ready(self):
@@ -257,7 +257,7 @@ class Newsbot(commands.Bot):
 
     async def close(self):
         await super().close()
-        await self.session.close()
+        self.session.close()
 
     def run(self):
         super().run(self.token, reconnect=True)

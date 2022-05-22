@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 from abc import ABC, abstractmethod
 from time import sleep
@@ -9,7 +11,7 @@ import os
 import requests
 
 from errors.replay_errors import *
-from rlpc.players import Identifier, PlayersHandler
+from rlpc.players import *
 from tools.mongo import Session, teamIds
 from settings import valid_stats
 
