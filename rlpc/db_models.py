@@ -204,6 +204,9 @@ class TeamData:
         if not doc:
             return None
 
+        if 'join_season' not in doc.keys(): # Temporary error
+            doc['join_season'] = 17
+
         return(
             doc['name'],
             League.from_str(doc['league']),
@@ -575,9 +578,14 @@ class Game:
 if __name__ == '__main__':
     session = Session()
     sheet = Sheet(sheet_p4)
-    from rlpc.players import PlayersHandler, Identifier
-    identifier = Identifier(session, sheet)
-    playersHandler = PlayersHandler(session, sheet, identifier)
+    # from rlpc.players import PlayersHandler, Identifier
+    # identifier = Identifier(session, sheet)
+    # playersHandler = PlayersHandler(session, sheet, identifier)
 
-    replay = BallchasingReplay(r"C:\Users\Simcha\Desktop\Projects\RLPC_Newsbot\replay_processing\Replay_Files\Ascension - Whitecaps\match_1\2BE561564317ECAC8E2FB6997E799D7E.replay", session, playersHandler, identifier)
-    Game.from_replay(replay, session)
+    # replay = BallchasingReplay(r"C:\Users\Simcha\Desktop\Projects\RLPC_Newsbot\replay_processing\Replay_Files\Ascension - Whitecaps\match_1\2BE561564317ECAC8E2FB6997E799D7E.replay", session, playersHandler, identifier)
+    # Game.from_replay(replay, session)
+
+    # cursor = session.all_players.find({{"current_team": {"$nin": ["Departed", "Not Playing"]}, "seasons.$[season]": {"$exists": True}}}, array)
+    # while cursor.alive:
+    #     player = cursor.next()
+    #     print(player)

@@ -193,7 +193,7 @@ class PlayersHandler:
                 # MMR
                 if data.mmr.current_official_mmr != sheetdata.loc[discord_id, 'Sheet MMR']:
                     data.mmr.current_official_mmr = sheetdata.loc[discord_id, 'Sheet MMR']
-                    all_players.find_one_and_update({"_id": discord_id}, {"$set": {"mmr.current_official_mmr": sheetdata.loc[discord_id, 'Sheet MMR']}})
+                    all_players.find_one_and_update({"_id": discord_id}, {"$set": {"mmr.current_official_mmr": sheetdata.loc[discord_id, 'Sheet MMR'].item()}})
                     logger.debug(f"Updated {player}'s Sheet MMR to {data.mmr.current_official_mmr}")
 
                 # Team
@@ -255,7 +255,7 @@ class Identifier:
 
     @staticmethod
     def is_discord_id(string: str) -> bool:
-        if len(string) == 18 and string.isnumeric():
+        if len(string) in (17, 18) and string.isnumeric():
             return True
         else:
             return False
@@ -376,7 +376,7 @@ class Identifier:
         if self.leagues.get(team):
             return self.leagues.get(team)
 
-        if team in ['Not Playing', 'Departed', 'Waitlist', 'Free Agent']:
+        if team in ['Not Playing', 'Departed', 'Waitlist', 'Free Agent', 'Undetermined']:
             return None
 
         doc = self.session.teams.find_one({"_id": team})

@@ -213,7 +213,7 @@ class BallchasingReplay(Replay):
                 # Player isn't in database at all
                 print("PLAYER FAILED: " + name)
                 unknown.append(name)
-                discord_id = name
+                discord_id = player['id']['id']
 
             # Add player's stats
             player_stats = player_stats.append(pd.Series(name=discord_id, dtype=object)).fillna(0)

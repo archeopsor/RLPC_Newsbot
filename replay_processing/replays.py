@@ -427,6 +427,7 @@ class RLPCAnalysis:
         return stats
 
     def upload_stats(self, stats: pd.DataFrame):
+        stats = stats.groupby(stats.index).agg(lambda x: x.sum() if x.dtype=='float64' else x[0])
         for player in stats.index:
             update = {'$inc': {}}
 
@@ -483,9 +484,15 @@ class RLPCAnalysis:
             )
 
     def log_data(self, stats: pd.DataFrame, range: str):
+        def get_league(row):
+            try:
+                return self.identifier.find_league(self.identifier.find_team([row.name]))
+            except:
+                return "Unknown"
+
         if 'League' not in stats.columns:
             stats['Fantasy Points'] = stats.apply(lambda row: fantasy_formula(row), axis=1)
-            stats['League'] = stats.apply(lambda row: self.identifier.find_league(self.identifier.find_team([row.name])), axis=1)
+            stats['League'] = stats.apply(lambda row: get_league(row), axis=1)
 
         known = stats.loc[~stats.index.isin(self.unknown)]
         unknown = stats.loc[stats.index.isin(self.unknown)]

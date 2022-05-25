@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import List
 import numpy as np
 import pandas as pd
-import datetime
+from datetime import datetime, timedelta
 import pytz
 
 from tools.sheet import Sheet
@@ -20,17 +20,17 @@ dates = {1: '5/10/22 Data', 2: '5/12/22 Data', 3: '5/17/22 Data', 4: '5/19/22 Da
         10: '6/9/22 Data', 11: '6/14/22 Data', 12: '6/16/22 Data', 13: '6/21/22 Data', 14: '6/23/22 Data', 15: '6/28/22 Data', 16: '6/30/22 Data', 17: '7/5/22 Data', 18: '7/7/22 Data'}
 
 def get_latest_gameday() -> int:
-    day = datetime.datetime.now(tz=pytz.timezone("US/Eastern"))
+    day = datetime.now(tz=pytz.timezone("US/Eastern"))
     found_day = False
     
     # Go backwards day by day until a valid day is found (starting yesterday)
     while not found_day:
-        day -= datetime.timedelta(days=1)
+        day -= timedelta(days=1)
         day_string = f"{day.month}/{day.day}/{day.year - 2000} Data"
         if day_string in dates.values():
             found_day = True
             return list(dates.keys())[list(dates.values()).index(day_string)]
-        elif datetime.datetime.strptime(list(dates.values())[0], "%m/%d/%y Data").astimezone(pytz.timezone("US/Eastern")) > day: # If the day is earlier than all possible days
+        elif datetime.strptime(list(dates.values())[0], "%m/%d/%y Data").astimezone(pytz.timezone("US/Eastern")) > day: # If the day is earlier than all possible days
             raise InvalidDayError(day=0)
 
 def snakecase_stat(stat: str, reverse: bool = False) -> str:
