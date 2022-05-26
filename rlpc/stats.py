@@ -7,7 +7,10 @@ import pytz
 
 from tools.sheet import Sheet
 from tools.mongo import Session, findCategory, statsCategories
-from rlpc.players import *
+try:
+    import rlpc.players
+except:
+    pass
 
 from settings import valid_stats, leagues, sheet_p4, sheet_indy, power_rankings_sheet, gdstats_sheet, current_season
 
@@ -43,7 +46,7 @@ def snakecase_stat(stat: str, reverse: bool = False) -> str:
         
 
 class StatsHandler:
-    def __init__(self, session: Session = None, p4sheet: Sheet = None, indysheet: Sheet = None, powerrankings: Sheet = None, gdsheet: Sheet = None, teams: TeamsHandler = None, identifier: Identifier = None):
+    def __init__(self, session: Session = None, p4sheet: Sheet = None, indysheet: Sheet = None, powerrankings: Sheet = None, gdsheet: Sheet = None, teams: rlpc.players.TeamsHandler = None, identifier: rlpc.players.Identifier = None):
         if not session:
             self.session = Session()
         else:
@@ -65,11 +68,11 @@ class StatsHandler:
         else:
             self.gdsheet = gdsheet
         if not teams:
-            self.teams = TeamsHandler(session=self.session)
+            self.teams = rlpc.players.TeamsHandler(session=self.session)
         else:
             self.teams = teams
         if not identifier:
-            self.identifier = Identifier(self.session, self.p4sheet)
+            self.identifier = rlpc.players.Identifier(self.session, self.p4sheet)
         else:
             self.identifier = identifier
 

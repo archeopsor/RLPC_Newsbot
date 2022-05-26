@@ -13,8 +13,7 @@ import sys
 
 from tools.mongo import Session
 from tools.sheet import Sheet
-from replay_processing.replay_classes import *
-from rlpc.stats import snakecase_stat
+import rlpc.stats
 from settings import sheet_p4, valid_stats
 
 ###########
@@ -370,7 +369,7 @@ class Stats:
     def from_series(cls, series: pd.Series) -> Stats:
         stats = Stats()
         for field in fields(stats):
-            setattr(stats, field.name, series.loc[snakecase_stat(field.name, reverse=True)])
+            setattr(stats, field.name, series.loc[rlpc.stats.snakecase_stat(field.name, reverse=True)])
         return stats
     
     def __add__(self, stats: Stats) -> Stats:
@@ -413,6 +412,9 @@ class PlayerSeason:
             doc['finalists'],
             doc['champions'],
         )
+
+    def to_dict(self) -> dict:
+        return convert_enums(asdict(self))
 
 @dataclass
 class TeamSeason:

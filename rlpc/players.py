@@ -11,7 +11,8 @@ import sys
 
 from tools.mongo import Session, teamIds
 from tools.sheet import Sheet
-from rlpc.db_models import Player, Game, Region, Platform, MMRData, JoinMethod, LeaveMethod
+import rlpc.db_models as models
+# from rlpc.db_models import Player, Game, PlayerSeason, Region, Platform, MMRData, JoinMethod, LeaveMethod, Stats
 
 from settings import sheet_p4, current_season
 from errors.player_errors import *
@@ -34,13 +35,13 @@ class PlayersHandler:
         else:
             self.identifier = identifier
 
-    def move_teams(self, id: str, old: str, new: str, join_method: JoinMethod = JoinMethod.OTHER, leave_method: LeaveMethod = LeaveMethod.OTHER):
+    def move_teams(self, id: str, old: str, new: str, join_method: models.JoinMethod = models.JoinMethod.OTHER, leave_method: models.LeaveMethod = models.LeaveMethod.OTHER):
         player_doc = self.session.all_players.find_one({"_id": id})
         old_doc = self.session.teams.find_one({"_id": old})
         new_doc = self.session.teams.find_one({"_id": new})
         if old_doc and new_doc:
-            leave_method = LeaveMethod.TRADE
-            join_method = JoinMethod.TRADE
+            leave_method = models.LeaveMethod.TRADE
+            join_method = models.JoinMethod.TRADE
 
         new_team = {
                     "name": new,
@@ -136,15 +137,15 @@ class PlayersHandler:
             # If the player is not in the database, add them as a player
             if doc == None:
                 logger.debug(f"Adding {player} to database")
-                data = Player(
+                data = models.Player(
                     _id = discord_id,
                     username = player,
                     date_joined = datetime.now(),
                     rl_id = sheetdata.loc[discord_id, 'Unique IDs'],
                     tracker_links = sheetdata.loc[discord_id, 'Tracker'],
-                    region = Region.from_str(sheetdata.loc[discord_id, 'Region']),
-                    platform = Platform.from_str(sheetdata.loc[discord_id, 'Platform']),
-                    mmr = MMRData(sheetdata.loc[discord_id, 'Sheet MMR'], sheetdata.loc[discord_id, 'Tracker MMR'], {datetime.now().strftime("%m/%d/%y"): sheetdata.loc[discord_id, 'Tracker MMR']}), 
+                    region = models.Region.from_str(sheetdata.loc[discord_id, 'Region']),
+                    platform = models.Platform.from_str(sheetdata.loc[discord_id, 'Platform']),
+                    mmr = models.MMRData(sheetdata.loc[discord_id, 'Sheet MMR'], sheetdata.loc[discord_id, 'Tracker MMR'], {datetime.now().strftime("%m/%d/%y"): sheetdata.loc[discord_id, 'Tracker MMR']}), 
                     current_team = sheetdata.loc[discord_id, 'Team'],
                     team_history = None,
                     seasons = None              # Will be added later in this function if needed
@@ -152,7 +153,40 @@ class PlayersHandler:
             
             # Otherwise, check fields to see if any of them changed
             else:
-                data = Player.from_db(doc)
+                data = models.Player.from_db(doc)
+
+                # Season doesn't exist
+                if not data.seasons:
+                    season = models.PlayerSeason(
+                        season_num = current_season, 
+                        teams = [],
+                        season_stats = models.Stats(),
+                        playoff_stats = models.Stats(),
+                        games = [], 
+                        made_playoffs = False, 
+                        finalists = False, 
+                        champions = False
+                    )
+                    data.seasons = [season]
+                    season_dict = season.to_dict()
+                    all_players.find_one_and_update({"_id": discord_id}, {"$set": {"seasons": [season_dict]}})
+                    logger.debug(f"{player} has joined this season.")
+
+                elif filter(lambda x: x.season_num == current_season, data.seasons) == 0:
+                    season = models.PlayerSeason(
+                        season_num = current_season, 
+                        teams = [],
+                        season_stats = models.Stats(),
+                        playoff_stats = models.Stats(),
+                        games = [], 
+                        made_playoffs = False, 
+                        finalists = False, 
+                        champions = False
+                    )
+                    data.seasons = [*data.seasons, season]
+                    season_dict = season.to_dict()
+                    all_players.find_one_and_update({"_id": discord_id}, {"$push": {"seasons": season_dict}})
+                    logger.debug(f"{player} has joined this season.")
 
                 # Username
                 if data.username != player:
@@ -179,14 +213,14 @@ class PlayersHandler:
                         logger.debug(f"Added tracker {tracker} for {player}")
 
                 # Region
-                if data.region != Region.from_str(sheetdata.loc[discord_id, 'Region']):
-                    data.region = Region.from_str(sheetdata.loc[discord_id, 'Region'])
+                if data.region != models.Region.from_str(sheetdata.loc[discord_id, 'Region']):
+                    data.region = models.Region.from_str(sheetdata.loc[discord_id, 'Region'])
                     all_players.find_one_and_update({"_id": discord_id}, {"$set": {"region": sheetdata.loc[discord_id, 'Region']}})
                     logger.debug(f"Moved {player} to {data.region}")
 
                 # Platform
-                if data.platform != Platform.from_str(sheetdata.loc[discord_id, 'Platform']):
-                    data.platform = Platform.from_str(sheetdata.loc[discord_id, 'Platform'])
+                if data.platform != models.Platform.from_str(sheetdata.loc[discord_id, 'Platform']):
+                    data.platform = models.Platform.from_str(sheetdata.loc[discord_id, 'Platform'])
                     all_players.find_one_and_update({"_id": discord_id}, {"$set": {"platform": sheetdata.loc[discord_id, 'Platform']}})
                     logger.debug(f"Switched {player} to {data.platform}")
 
@@ -227,7 +261,7 @@ class PlayersHandler:
             if doc == None:
                 continue
             if doc['current_team'] != "Not Playing":
-                self.move_teams(discord_id, doc['current_team'], "Not Playing", JoinMethod.OTHER, LeaveMethod.NONPLAYING)
+                self.move_teams(discord_id, doc['current_team'], "Not Playing", models.JoinMethod.OTHER, models.LeaveMethod.NONPLAYING)
         
         logger.info("DEPARTED")
         for player in departed.index:
@@ -236,7 +270,7 @@ class PlayersHandler:
             if doc == None:
                 continue
             if doc['current_team'] != "Departed":
-                self.move_teams(discord_id, doc['current_team'], "Departed", JoinMethod.OTHER, LeaveMethod.NONPLAYING)
+                self.move_teams(discord_id, doc['current_team'], "Departed", models.JoinMethod.OTHER, models.LeaveMethod.NONPLAYING)
 
 
 class Identifier:
