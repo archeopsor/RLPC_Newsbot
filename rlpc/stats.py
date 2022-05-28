@@ -10,7 +10,7 @@ from tools.mongo import Session, findCategory, statsCategories
 try:
     import rlpc.players
 except:
-    pass
+    pass # Avoid circular import error 
 
 from settings import valid_stats, leagues, sheet_p4, sheet_indy, power_rankings_sheet, gdstats_sheet, current_season
 
@@ -240,6 +240,19 @@ class StatsHandler:
         rankings = rankings.sort_values(ascending=False)
         return rankings
 
+    @staticmethod
+    def season_index(doc, season = current_season):
+        if isinstance(doc['seasons'], dict):
+            doc['seasons'] = [doc['seasons']] # Fix strange behavior from pymongo that turns arrays with 1 value into objects
+
+        # Get the index needed for the current season
+        season_index = 0
+        for i, season in enumerate(doc['seasons']):
+            if season['season_num'] == season:
+                season_index = i
+
+        return season_index
+    
     def statlb(self, useSheet: bool = False, league: str = "all", stat: str = "Goals", limit: int = 10, pergame: bool = False, asc: bool = False) -> pd.Series:
         """Gets a series containing a leaderboard for a given stat
 
@@ -360,93 +373,124 @@ class StatsHandler:
 
             players = self.session.players
             data = pd.Series(name=stat, dtype=float)
+            stat_snake = snakecase_stat(stat)
 
             if stat not in compound_stats.keys():
-                category = findCategory(stat)
-                if not category:
-                    raise InvalidStatError(stat)
+                # category = findCategory(stat)
+                # if not category:
+                #     raise InvalidStatError(stat)
 
                 try:
                     if league != "all":
-                        cursor = players.find({"info.league": league, f"stats.{category}.{stat}": {'$gt': 0}, "stats.general.Games Played": {'$gt': 0}})
+                        cursor = self.session.all_players.aggregate([
+                            {"$unwind": "$seasons"},
+                            {"$match": {
+                                "league": league, 
+                                f"seasons.season_stats.{stat_snake}": {'$gt': 0}, 
+                                f"seasons.season_stats.games_played": {'$gt': 0}
+                            }}
+                        ])
                     else:
-                        cursor = players.find({f"stats.{category}.{stat}": {'$gt': 0}, "stats.general.Games Played": {'$gt': 0}})
+                        cursor = self.session.all_players.aggregate([
+                            {"$unwind": "$seasons"},
+                            {"$match": {
+                                f"seasons.season_stats.{stat_snake}": {'$gt': 0}, 
+                                f"seasons.season_stats.games_played": {'$gt': 0}
+                            }}
+                        ])
                 except:
                     raise FindPlayersError(league, stat)
 
                 # Iterate through cursor and get all players' stats
                 while cursor.alive:
-                    info = cursor.next()
+                    doc = cursor.next()
+
+                    if isinstance(doc['seasons'], dict):
+                        doc['seasons'] = [doc['seasons']] # Fix strange behavior from pymongo that turns arrays with 1 value into objects
+                    
+                    # Get the index needed for the current season
+                    season_index = self.season_index(doc)
+
                     if pergame:
-                        data[info['username']] = round((info['stats'][category][stat] / info["stats"]["general"]["Games Played"]), 2)
+                        data[doc['username']] = round((doc['seasons'][season_index]['season_stats'][stat_snake] / doc['seasons'][season_index]['season_stats']["games_played"]), 2)
                     else:
-                        data[info['username']] = round(info['stats'][category][stat], 2)
+                        data[doc['username']] = round(doc['seasons'][season_index]['season_stats'][stat_snake], 2)
                 
                 return data.sort_values(ascending=asc).head(limit)
             else:
-                filter = {}
+                filter = {"seasons.season_num": current_season}
                 if league != "all":
-                    filter['info.league'] = league
+                    filter['league'] = league
                 necessary = compound_stats[stat]
-                for i in necessary:
-                    filter[f'stats.{findCategory(i)}.{i}'] = {'$gt': 0}
+                for stat_name in necessary:
+                    filter[f'seasons.season_stats.{snakecase_stat(stat_name)}'] = {'$gt': 0}
                 
                 try:
-                    cursor = players.find(filter)
+                    cursor = self.session.all_players.aggregate([
+                        {"$unwind": "$seasons"},
+                        {"$match": filter}
+                    ])
                 except:
                     raise FindPlayersError(league, stat)
 
                 # Iterate throuch cursor and get all players' stats
                 while cursor.alive:
                     info = cursor.next()
+
+                    if isinstance(info['seasons'], dict):
+                        info['seasons'] = [info['seasons']] # Fix strange behavior from pymongo that turns arrays with 1 value into objects
+
+                    # Get the index needed for the current season
+                    player_stats = info['seasons'][self.season_index(info)]['season_stats']
+
                     if stat == 'Winning %':
-                        datapoint = round((info['stats']['general']['Games Won'] / info['stats']['general']['Games Played']), 2)
+                        datapoint = round((player_stats['games_won'] / player_stats['games_played']), 2)
                     elif stat == 'Shooting %':
-                        datapoint = round((info['stats']['general']['Goals'] / info['stats']['general']['Shots']), 2)
+                        datapoint = round((player_stats['goals'] / player_stats['shots']), 2)
                     elif stat == 'Shooting % Against':
-                        datapoint = round((info['stats']['general']['Goals Against'] / info['stats']['general']['Shots Against']), 2)
+                        datapoint = round((player_stats['goals_against'] / player_stats['shots_against']), 2)
                     elif stat == 'Points':
-                        datapoint = round((info['stats']['general']['Goals'] + info['stats']['general']['Assists']), 2)
+                        datapoint = round((player_stats['goals'] + player_stats['assists']), 2)
                         if pergame:
-                            datapoint = round((datapoint / info['stats']['general']['Games Played']), 2)
+                            datapoint = round((datapoint / player_stats['games_played']), 2)
                     elif stat == 'MVP Rate':
-                        datapoint = round(info['stats']['general']['MVPs'] / info['stats']['general']['Games Won'], 2)
+                        datapoint = round(player_stats['mvps'] / player_stats['games_won'], 2)
                     elif stat == '% Time Slow':
                         datapoint = round(
-                            info['stats']['movement']['Time Slow'] / (info['stats']['movement']['Time Slow'] + info['stats']['movement']['Time Boost'] + info['stats']['movement']['Time Supersonic'])
+                            player_stats['time_slow'] / (player_stats['time_slow'] + player_stats['time_boost'] + player_stats['time_supersonic'])
                         , 2)
                     elif stat == '% Time Boost':
                         datapoint = round(
-                            info['stats']['movement']['Time Boost'] / (info['stats']['movement']['Time Slow'] + info['stats']['movement']['Time Boost'] + info['stats']['movement']['Time Supersonic'])
+                            player_stats['time_boost'] / (player_stats['time_slow'] + player_stats['time_boost'] + player_stats['time_supersonic'])
                         , 2)
                     elif stat == '% Time Supersonic':
                         datapoint = round(
-                            info['stats']['movement']['Time Boost'] / (info['stats']['movement']['Time Slow'] + info['stats']['movement']['Time Boost'] + info['stats']['movement']['Time Supersonic'])
+                            player_stats['time_supersonic'] / (player_stats['time_slow'] + player_stats['time_boost'] + player_stats['time_supersonic'])
                         , 2)
                     elif stat == '% Time Ground':
                         datapoint = round(
-                            info['stats']['movement']['Time Ground'] / (info['stats']['movement']['Time Ground'] + info['stats']['movement']['Time Low Air'] + info['stats']['movement']['Time High Air'])
+                            player_stats['time_ground'] / (player_stats['time_ground'] + player_stats['time_low_air'] + player_stats['time_high_air'])
                         , 2)
                     elif stat == '% Time Low Air':
                         datapoint = round(
-                            info['stats']['movement']['Time Low Air'] / (info['stats']['movement']['Time Ground'] + info['stats']['movement']['Time Low Air'] + info['stats']['movement']['Time High Air'])
+                            player_stats['time_low_air'] / (player_stats['time_ground'] + player_stats['time_low_air'] + player_stats['time_high_air'])
                         , 2)
                     elif stat == '% Time High Air':
                         datapoint = round(
-                            info['stats']['movement']['Time High Air'] / (info['stats']['movement']['Time Ground'] + info['stats']['movement']['Time Low Air'] + info['stats']['movement']['Time High Air'])
+                            player_stats['time_high_air'] / (player_stats['time_ground'] + player_stats['time_low_air'] + player_stats['time_high_air'])
                         , 2)
                     elif stat == '% Most Back':
                         datapoint = round(
-                            info['stats']['positioning']['Time Most Back'] / (info['stats']['positioning']['Time Defensive Half'] + info['stats']['positioning']['Time Offensive Half'])
+                            player_stats['time_most_back'] / (player_stats['time_defensive_half'] + player_stats['time_offensive_half'])
                         , 2)
                     elif stat == '% Most Forward':
                         datapoint = round(
-                            info['stats']['positioning']['Time Most Forward'] / (info['stats']['positioning']['Time Defensive Half'] + info['stats']['positioning']['Time Offensive Half'])
+                            player_stats['time_most_forward'] / (player_stats['time_defensive_half'] + player_stats['time_offensive_half'])
                         , 2)
                     elif stat == '% Goals Responsible':
-                        datapoint = round(info['stats']['positioning']['Conceded When Last'] / info['stats']['general']['Goals Against'], 2)
+                        datapoint = round(player_stats['conceded_when_last'] / player_stats['goals_against'], 2)
                     elif stat == 'Position Ratio':
-                        datapoint = round(info['stats']['positioning']['Time Infront Ball'] / info['stats']['positioning']['Time Behind Ball'], 2)
+                        datapoint = round(player_stats['time_infront_ball'] / player_stats['time_behind_ball'], 2)
                     
                     data[info['username']] = datapoint
                 
