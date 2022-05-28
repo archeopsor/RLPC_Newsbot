@@ -313,9 +313,16 @@ class ELO(commands.Cog):
 
     @commands.command(aliases=())
     async def poisson(
-        self, ctx: Context, team1: str, team2: str, numGames: int = 5, img: bool = False
+        self, ctx: Context, team1: str, team2: str, numGames: int = 5, img: str = "graph"
     ):
         async with ctx.typing():
+
+            # Convert img to bool
+            if img.lower() in ('graph', 'chart', 'true', 'adv', 'advanced'):
+                img = True
+            else:
+                img = False
+
             team1 = team1.title()
             team2 = team2.title()
 
