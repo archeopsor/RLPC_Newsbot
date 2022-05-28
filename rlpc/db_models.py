@@ -58,6 +58,7 @@ class League(Enum):
     MAVERICK = "Maverick"
     RENEGADE = "Renegade"
     PALADIN = "Paladin"
+    OTHER = "Non-league"
 
     @staticmethod
     def from_str(label: str) -> League:
@@ -81,7 +82,7 @@ class League(Enum):
         elif label == "paladin":
             return League.PALADIN
         else:
-            raise NotImplementedError
+            return League.OTHER
 
 class JoinMethod(Enum):
     DRAFT = "draft"
@@ -440,6 +441,7 @@ class Player:
     _id: str             # String version of player's discord id. 
 
     username: str
+    league: League
     date_joined: datetime = None
     rl_id: list[str] = None
     tracker_links: list[str] = None
@@ -494,6 +496,10 @@ class Player:
 
     @classmethod
     def from_db(cls, doc: dict) -> Player:
+        if doc.get("league"):
+            league = doc['league']
+        else:
+            league = None
         team_history = []
         if doc['team_history']:
             if doc['team_history'][0]:
@@ -505,6 +511,7 @@ class Player:
         return Player(
             doc['_id'],
             doc['username'],
+            league,
             doc['date_joined'],
             doc['rl_id'],
             doc['tracker_links'],

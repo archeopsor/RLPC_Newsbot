@@ -155,6 +155,9 @@ class PlayersHandler:
             else:
                 data = models.Player.from_db(doc)
 
+                if not data.league:
+                    all_players.find_one_and_update({"_id": discord_id}, {"$set": {"league": sheetdata.loc[discord_id, 'League']}})
+
                 # Season doesn't exist
                 if not data.seasons:
                     season = models.PlayerSeason(
@@ -193,6 +196,13 @@ class PlayersHandler:
                     data.username = player
                     all_players.find_one_and_update({"_id": discord_id}, {"$set": {"username": player}})
                     logger.debug(f"{data.username} has changed their name to {player}")
+
+                # League
+                league = sheetdata.loc[discord_id, 'League']
+                if data.league != league and league.lower() not in ("below mmr", "future star"):
+                    data.league = models.League.from_str(league)
+                    all_players.find_one_and_update({"_id": discord_id}, {"$set": {"league": league}})
+                    logger.debug(f"{player} has changed league to {data.league}.")
 
                 # rl ids
                 for playerid in sheetdata.loc[discord_id, 'Unique IDs']:

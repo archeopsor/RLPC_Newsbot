@@ -139,7 +139,7 @@ class Newsbot(commands.Bot):
                 "**" + str(type(error)) + " in DM with " + channel.recipient.name + "**"
             )
         await error_channel.send(f"*Command: {command.name}*")
-        await error_channel.send(error.with_traceback())
+        await error_channel.send(error)
         await error_channel.send(args)
 
     async def on_ready(self):
