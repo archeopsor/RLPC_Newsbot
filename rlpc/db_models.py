@@ -9,11 +9,14 @@ import pandas as pd
 
 # Allow imports when running script from within project dir
 import sys
+from replay_processing.replay_classes import BallchasingReplay
 [sys.path.append(i) for i in ['.', '..']]
 
 from tools.mongo import Session
 from tools.sheet import Sheet
 import rlpc.stats
+
+from errors.stocks_errors import AccountNotFoundError
 from settings import sheet_p4, valid_stats
 
 ###########
@@ -581,7 +584,34 @@ class Game:
             stats[player] = Stats.from_series(player_stats.loc[player])
             # TODO: Handle getting players and teams from the replay (do this by fixing the replay properties)
         
+@dataclass
+class Stock_Account:
+    _id: str        # Discord ID
+    username: str
+    balance: int
+    portfolio_value: int
+    value_history: dict[str, int]
+    portfolio: list[dict]
+    transaction_history: list[dict]
 
+    def insert(self, session: Session):
+        return session.stock_accounts.insert_one(asdict(self))
+
+    @classmethod
+    def get(cls, id: str, session: Session) -> Stock_Account:
+        doc = session.stock_accounts.find_one({"_id": id})
+        if doc:
+            return Stock_Account(
+                _id = doc['_id'],
+                username = doc['username'],
+                balance = doc['balance'],
+                portfolio_value = doc['portfolio_value'],
+                value_history = doc['value_history'],
+                portfolio = doc['portfolio'],
+                transaction_history = doc['transaction_history']
+            )
+        else:
+            raise AccountNotFoundError(id)
 
 # Just for testing
 if __name__ == '__main__':
