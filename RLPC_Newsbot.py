@@ -16,6 +16,7 @@ from cogs.Links import Links
 from cogs.Reddit import Reddit
 from cogs.Stats import Stats
 from cogs.Misc import Misc
+from cogs.Stocks import Stocks
 
 from rlpc.fantasy_infrastructure import FantasyHandler
 from rlpc.elo import EloHandler
@@ -87,6 +88,10 @@ class Newsbot(commands.Bot):
                 players=self.players,
                 stats=self.stats,
                 teams=self.teams,
+            ),
+            Stocks(
+                self,
+                session=self.session,
             ),
             Misc(
                 self,

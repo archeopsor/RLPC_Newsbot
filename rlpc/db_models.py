@@ -9,7 +9,11 @@ import pandas as pd
 
 # Allow imports when running script from within project dir
 import sys
-from replay_processing.replay_classes import BallchasingReplay
+try:
+    from replay_processing.replay_classes import BallchasingReplay
+except ImportError:
+    pass
+
 [sys.path.append(i) for i in ['.', '..']]
 
 from tools.mongo import Session

@@ -1,0 +1,4 @@
+**Command: {prefix}sSell [item] [# of shares] [minimum share price]**
+Aliases: None
+
+Creates a sell order for a player or team. 

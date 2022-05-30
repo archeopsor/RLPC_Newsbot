@@ -1,0 +1,14 @@
+**RLPC Stock market**
+Welcome to the RLPC Stock Market! Here you can buy or sell shares in select players and teams using fake money to make more fake money! There are some important differences between this and the real life stock market, so be sure to keep that in mind when trading. For more information on any specific command, try `$sHelp commands`.
+
+*IPOs*
+Shares for any player or team aren't automatically available. They first need to become available through an Initial Public Offering (IPO). Contact <@160901864072806401> if you want an IPO for yourself or your org. This allows a certain amount of shares to enter the market (owned by those involved in the IPO). 
+
+*Trading*
+Transactions occur through buy and sell orders. Anyone can sell shares they own with `$sSell`, but someone else needs to also create a buy order with `$sBuy` in order for any shares/money to change hands. A sell order simply lists a number of shares as available on the market, with a minimum prices that the seller is willing to take. If a buy order is created for that stock with a maximum price that's higher than a given sell order, then the cheapest available sell order will automatically be used for the person to buy those shares at the maximum price listed in the buy order. Similarly, if a buy order is available and someone creates a sell order, the person will automatically sell their shares to the person with the highest buy order for that stock.
+
+*Dividends*
+Stocks would have no value if there was no benefit to holding them! Each stock will give their owner a dividend based on their final position in the league, with higher leagues giving more money. *Speficific numbers haven't been finalized yet.* In the future, players may also give dividends for stats similar to fantasy points. 
+
+*Taxes*
+Taxes may be used to keep the money supply stable. Use `$sTaxes` for more information.

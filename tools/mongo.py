@@ -23,6 +23,9 @@ class Session:
         self.players = self.db['players']
         self.games = self.db['games']
         self.admin = self.db['admin']
+        self.stock_accounts = self.db['stock_accounts']
+        self.stocks = self.db['stocks']
+        self.stock_orders = self.db['stock_orders']
 
         self.structures = {
             "players": playersStructure,
