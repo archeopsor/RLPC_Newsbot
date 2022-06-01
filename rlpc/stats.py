@@ -521,6 +521,7 @@ class StatsHandler:
 
         try:
             data = self.gdsheet.to_df(datarange).set_index("Username")
+            data.loc[:, 'Series Played':'Fantasy Points'] = data.loc[:, 'Series Played':'Fantasy Points'].astype(float)
         except SheetToDfError:
             raise GDStatsSheetError(day)
 
@@ -532,6 +533,8 @@ class StatsHandler:
             raise PlayerNotFoundError(player, day)
 
         stats_series = data.loc[player]
+        if isinstance(stats_series, pd.DataFrame):
+            stats_series = stats_series.sum()
 
         if pergame:
             stats_series[3:-1] = stats_series[3:-

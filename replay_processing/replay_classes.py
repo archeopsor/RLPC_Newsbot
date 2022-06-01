@@ -11,7 +11,10 @@ import os
 import requests
 
 from errors.replay_errors import *
-from rlpc.players import Identifier, PlayersHandler
+try:
+    from rlpc.players import Identifier, PlayersHandler
+except ImportError:
+    pass
 from tools.mongo import Session, teamIds
 from settings import valid_stats
 

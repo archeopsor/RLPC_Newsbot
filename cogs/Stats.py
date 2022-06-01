@@ -492,6 +492,11 @@ class Stats(commands.Cog):  # pragma: no cover
                     f"Could not find stats for `{player}` on gameday `{day}`."
                 )
 
+            # Try to round data points
+            for i in data.index[1:-1]:
+                if data[i] % 1 == 0:
+                    data[i] = int(data[i])
+
             if stat == None:
                 embed = discord.Embed(
                     title=f"{player}'s Stats on Gameday {day}", color=0x3333FF
