@@ -66,6 +66,17 @@ class PlayersHandler:
             }
         })
         if old_doc:
+            if not player_doc['team_history']:
+                self.session.all_players.update_one({"_id": id}, {
+                    "$push": {"team_history": {
+                        "name": old,
+                        "league": old_doc['league'],
+                        "join_season": current_season,
+                        "join_method": None,
+                        "leave_season": None,
+                        "leave_method": None,
+                    }}
+                })
             self.session.all_players.find_one_and_update({"_id": id}, {
                 "$set": {
                     f"team_history.{len(player_doc['team_history']) - 1}.leave_season": current_season,
@@ -140,6 +151,7 @@ class PlayersHandler:
                 data = models.Player(
                     _id = discord_id,
                     username = player,
+                    league = sheetdata.loc[discord_id, 'League'],
                     date_joined = datetime.now(),
                     rl_id = sheetdata.loc[discord_id, 'Unique IDs'],
                     tracker_links = sheetdata.loc[discord_id, 'Tracker'],
