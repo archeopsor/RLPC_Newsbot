@@ -248,7 +248,7 @@ class Stats(commands.Cog):  # pragma: no cover
                 )
             except (StatsError, KeyError, FindPlayersError, PlayerNotFoundError):
                 return await ctx.send(
-                    f"Couldn't find `{player}`'s stats. Contact arco if you think this is a bug."
+                    f"Couldn't find `{player}`'s stats. If there are spaces in the username, surround the username in quotes. Contact arco if you think this is a bug."
                 )
 
             embed = discord.Embed(
