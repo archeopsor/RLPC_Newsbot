@@ -59,6 +59,11 @@ class PlayersHandler:
                     "leave_method": None
                 }
 
+        if not player_doc['team_history']:
+            self.session.all_players.update_one({"_id": id}, {
+                "$set": {"team_history": []}
+            })
+
         # Update player
         self.session.all_players.find_one_and_update({"_id": id}, {
             "$set": {
