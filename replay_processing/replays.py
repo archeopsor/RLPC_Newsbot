@@ -486,7 +486,9 @@ class RLPCAnalysis:
     def log_data(self, stats: pd.DataFrame, range: str):
         def get_league(row):
             try:
-                return self.identifier.find_league(self.identifier.find_team([row.name]))
+                league = self.identifier.find_league(self.identifier.find_team([row.name]))
+                if not league:
+                    return "Unknown"
             except:
                 return "Unknown"
 
@@ -494,8 +496,8 @@ class RLPCAnalysis:
             stats['Fantasy Points'] = stats.apply(lambda row: fantasy_formula(row), axis=1)
             stats['League'] = stats.apply(lambda row: get_league(row), axis=1)
 
-        known = stats.loc[~stats.index.isin(self.unknown)]
-        unknown = stats.loc[stats.index.isin(self.unknown)]
+        known = stats.loc[~stats['Username'].isin(self.unknown)]
+        unknown = stats.loc[stats['Username'].isin(self.unknown)]
 
         sheet = Sheet(gdstats_sheet)
         sheet.push_df(range, known.reset_index().fillna(value=0))
