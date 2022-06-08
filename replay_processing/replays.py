@@ -489,6 +489,8 @@ class RLPCAnalysis:
                 league = self.identifier.find_league(self.identifier.find_team([row.name]))
                 if not league:
                     return "Unknown"
+                else:
+                    return league
             except:
                 return "Unknown"
 
