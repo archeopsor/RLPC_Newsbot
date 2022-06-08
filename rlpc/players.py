@@ -72,16 +72,18 @@ class PlayersHandler:
         })
         if old_doc:
             if not player_doc['team_history']:
-                self.session.all_players.update_one({"_id": id}, {
-                    "$push": {"team_history": {
+                team_history_basic = {
                         "name": old,
                         "league": old_doc['league'],
                         "join_season": current_season,
                         "join_method": None,
                         "leave_season": None,
                         "leave_method": None,
-                    }}
+                    }
+                self.session.all_players.update_one({"_id": id}, {
+                    "$push": {"team_history": team_history_basic}
                 })
+                player_doc['team_history'] = [team_history_basic]
             self.session.all_players.find_one_and_update({"_id": id}, {
                 "$set": {
                     f"team_history.{len(player_doc['team_history']) - 1}.leave_season": current_season,
