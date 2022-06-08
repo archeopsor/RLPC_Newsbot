@@ -505,6 +505,31 @@ class RLPCAnalysis:
         sheet.push_df(range, known.reset_index().fillna(value=0))
         sheet.push_df("Failed Players!A2:Z", unknown.reset_index().fillna(value=0))
 
+    def fix_failed(self):
+        sheet = Sheet(gdstats_sheet)
+        failed = sheet.to_df('Failed Players!A1:AN')
+        fixed = pd.DataFrame(columns=failed.columns)
+        if failed.empty:
+            return print("No players found!")
+        for row in failed.index:
+            username = failed.loc[row, 'Username']
+            known = input(f"Do you know who {username} is? (y/n) ")
+            if known == "y":
+                _id = input("Please type their discord id: ")
+                # Add rl id to their account
+                found = self.session.all_players.find_one_and_update({"_id": _id}, {"$push": {"rl_id": failed.loc[row, "id"]}})
+                if found:
+                    fixed = fixed.append(failed.loc[row])
+                    fixed.loc[fixed['Username']==username, 'Discord ID'] = _id
+                    fixed.loc[fixed['Username']==username, 'Username'] = found['username']
+                    failed.drop(row)
+
+        self.unknown = failed['Username'].values
+        sheet.clear("Failed Players!A2:AN")
+        self.log_data(fixed.set_index("Discord ID"), f'{dates[get_latest_gameday()]}!A2:Z')
+        self.upload_stats(fixed.set_index("Discord ID"))
+
+
     def main(self):
         print("Checks")
         self.checks()
@@ -525,6 +550,7 @@ class RLPCAnalysis:
 
 
 if __name__ == "__main__":
-    download = Retreiver.download(update_elo=True)
-    if download:
-        RLPCAnalysis().main() # Only run if there were files to download
+    # download = Retreiver.download(update_elo=True)
+    # if download:
+    #     RLPCAnalysis().main() # Only run if there were files to download
+    RLPCAnalysis().fix_failed()
