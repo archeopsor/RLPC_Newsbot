@@ -1,6 +1,7 @@
 from typing_extensions import Literal
 import os
 from random import choice
+import asyncio
 from dotenv import load_dotenv
 load_dotenv('.env')
 
@@ -9,14 +10,17 @@ from discord.ext import commands
 from discord.ext.commands.context import Context
 
 # Cogs
-from cogs.ELO import ELO
-from cogs.Fantasy import Fantasy
-from cogs.Help import Help
-from cogs.Links import Links
-from cogs.Reddit import Reddit
-from cogs.Stats import Stats
-from cogs.Misc import Misc
-from cogs.Stocks import Stocks
+try:
+    from cogs.ELO import ELO
+    from cogs.Fantasy import Fantasy
+    from cogs.Help import Help
+    from cogs.Links import Links
+    from cogs.Reddit import Reddit
+    from cogs.Stats import Stats
+    from cogs.Misc import Misc
+    from cogs.Stocks import Stocks
+except ImportError:
+    pass
 
 from rlpc.fantasy_infrastructure import FantasyHandler
 from rlpc.elo import EloHandler
@@ -40,7 +44,9 @@ BOT_TOKEN = os.environ.get("BOT_TOKEN")
 
 class Newsbot(commands.Bot):
     def __init__(self, token: Literal = BOT_TOKEN):
-        super().__init__(command_prefix=prefix, intents=discord.Intents.default(), help_command=None, case_insensitive=True)
+        intents = discord.Intents.default()
+        intents.message_content = True
+        super().__init__(command_prefix=prefix, intents=intents, help_command=None, case_insensitive=True)
 
         self.session = Session()
         self.p4sheet = Sheet(sheet_p4, refresh_cooldown=60)
@@ -103,11 +109,12 @@ class Newsbot(commands.Bot):
             ),
         ]
 
-        self.load_cogs()
+    async def setup_hook(self):
+        await self.load_cogs()
 
-    def load_cogs(self) -> None:
+    async def load_cogs(self) -> None:
         for cog in self.COGS:
-            self.add_cog(cog)
+            await self.add_cog(cog)
 
     async def on_command_error(
         self, ctx: Context, error: discord.errors.DiscordException
@@ -265,8 +272,13 @@ class Newsbot(commands.Bot):
         self.session.close()
 
     def run(self):
+        # return await super().start(self.token, reconnect=True)
         super().run(self.token, reconnect=True)
 
+# async def main():
+#     bot = Newsbot(BOT_TOKEN)
+#     async with bot:
+#         await bot.run()
 
 if __name__ == "__main__":
     bot = Newsbot(BOT_TOKEN)
