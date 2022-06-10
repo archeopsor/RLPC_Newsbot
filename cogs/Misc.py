@@ -135,8 +135,9 @@ class Misc(commands.Cog, name = "Misc"):
             dfi.export(schedule, "schedule.png", table_conversion="matplotlib")
             path = os.path.abspath("schedule.png")
             file = discord.File(path)
-            return await interaction.response.send_message(file=file)
-        # return os.remove(path)
+            await interaction.response.send_message(file=file)
+            file.close()
+            return os.remove(path)
 
     @app_commands.command(name="roster")
     async def roster(self, interaction: discord.Interaction, *, team: str):
