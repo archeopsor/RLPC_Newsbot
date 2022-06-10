@@ -10,6 +10,7 @@ import pandas as pd
 import dataframe_image as dfi
 from datetime import datetime, timedelta
 import os
+from RLPC_Newsbot import Newsbot
 
 from tools.sheet import Sheet
 from tools.mongo import Session
@@ -22,7 +23,7 @@ from errors.player_errors import TeamNotFoundError
 class Misc(commands.Cog):
     def __init__(
         self,
-        bot,
+        bot: Newsbot,
         session: Session = None,
         identifier: Identifier = None,
         p4sheet: Sheet = None,
