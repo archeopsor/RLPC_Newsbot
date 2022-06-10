@@ -248,6 +248,9 @@ class Elo(commands.Cog):
                 file.close()
                 os.remove(path)
 
+            if not interaction.response.is_done():
+                await interaction.followup.send(f"{team1} vs. {team2}")
+
             team1Poisson, team2Poisson = handler.getOneWayPoisson(league, team1, team2)
             team1Wins = 0
             team2Wins = 0
