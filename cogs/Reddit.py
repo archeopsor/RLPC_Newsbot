@@ -6,7 +6,6 @@ from tools import reddit
 
 from settings import prefix
 
-bot = commands.Bot(command_prefix=prefix)
 
 
 class Reddit(commands.Cog):
@@ -114,7 +113,3 @@ class Reddit(commands.Cog):
         if len(post[4]) > 2000:
             await ctx.send(f'{post[4][0:1000]}... \n\n *This post is too long for discord, see the full post at: https://www.reddit.com{post[5]}*')
         await ctx.send(post[4])
-
-
-def setup(bot):
-    bot.add_cog(Reddit(bot))

@@ -7,7 +7,6 @@ from discord.ext.commands.context import Context
 
 from settings import prefix
 
-bot = commands.Bot(command_prefix = prefix)
 
 class Help(commands.Cog):
     
@@ -44,7 +43,3 @@ class Help(commands.Cog):
             return await ctx.send("A DM has been sent! If you have any further questions, please DM Arco.")
         else:
             return await ctx.send(text)
-        
-        
-def setup(bot):
-    bot.add_cog(Help(bot))

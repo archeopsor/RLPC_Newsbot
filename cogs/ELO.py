@@ -19,9 +19,6 @@ from rlpc.elo import EloHandler
 from tools.sheet import Sheet
 from tools.mongo import Session
 
-bot = commands.Bot(command_prefix=prefix)
-
-
 class ELO(commands.Cog):
     def __init__(
         self,
@@ -399,7 +396,3 @@ class ELO(commands.Cog):
             )
         # else:
         #     await self.bot.log_error(error.original, ctx.channel, ctx.command, ctx.kwargs)
-
-
-def setup(bot):
-    bot.add_cog(ELO(bot))

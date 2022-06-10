@@ -40,7 +40,7 @@ BOT_TOKEN = os.environ.get("BOT_TOKEN")
 
 class Newsbot(commands.Bot):
     def __init__(self, token: Literal = BOT_TOKEN):
-        super().__init__(command_prefix=prefix, help_command=None, case_insensitive=True)
+        super().__init__(command_prefix=prefix, intents=discord.Intents.default(), help_command=None, case_insensitive=True)
 
         self.session = Session()
         self.p4sheet = Sheet(sheet_p4, refresh_cooldown=60)
