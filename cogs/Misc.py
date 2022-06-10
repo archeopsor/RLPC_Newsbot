@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from discord import app_commands
 from discord.ext.commands.context import Context
 from discord.ext.commands import has_permissions
 from discord.ext.commands.errors import (
@@ -20,7 +21,7 @@ from settings import prefix, leagues, divisions, sheet_p4, sheet_indy, stream_sh
 from errors.player_errors import TeamNotFoundError
 
 
-class Misc(commands.Cog):
+class Misc(commands.Cog, name = "Misc"):
     def __init__(
         self,
         bot: Newsbot,
@@ -32,31 +33,26 @@ class Misc(commands.Cog):
     ):
         self.bot = bot
 
-        if not session:
-            self.session = Session()
-        else:
-            self.session = session
-        if not identifier:
-            self.identifier = Identifier()
-        else:
-            self.identifier = identifier
-        if not p4sheet:
-            self.p4sheet = Sheet(sheet_p4)
-        else:
-            self.p4sheet = p4sheet
-        if not indysheet:
-            self.indysheet = Sheet(sheet_indy)
-        else:
-            self.indysheet = indysheet
-        if not teams:
-            self.teams = TeamsHandler(session=self.session, p4sheet=self.p4sheet)
-        else:
-            self.teams = teams
+        self.session = session if session else Session()
+        self.identifier = identifier if identifier else Identifier()
+        self.p4sheet = p4sheet if p4sheet else Sheet(sheet_p4)
+        self.indysheet = indysheet if indysheet else Sheet(sheet_indy)
+        self.teams = teams if teams else TeamsHandler(session = self.session, p4sheet = self.p4sheet)
         self.streamsheet = Sheet(stream_sheet)
 
+        super().__init__()
+
     @commands.command()
-    async def ping(self, ctx: Context):
-        await ctx.send(f"Pong! {round(self.bot.latency * 1000)}ms")
+    @commands.is_owner()
+    async def sync(self, ctx: Context) -> None:
+        await self.bot.tree.sync()
+        await self.bot.tree.sync(guild=self.bot.get_guild(224552524173148171))
+        await ctx.send("Synced!")
+
+    @app_commands.command(name="ping")
+    async def ping(self, interaction: discord.Interaction):
+        """Shows the bot's latency"""
+        await interaction.response.send_message(f"Pong! {round(self.bot.latency * 1000)}ms", ephemeral=True)
 
     @commands.command(
         aliases=(
