@@ -54,14 +54,9 @@ class Misc(commands.Cog, name = "Misc"):
         """Shows the bot's latency"""
         await interaction.response.send_message(f"Pong! {round(self.bot.latency * 1000)}ms", ephemeral=True)
 
-    @commands.command(
-        aliases=(
-            "upset",
-            "upsets",
-        )
-    )
+    @app_commands.command(name="upset_alerts")
     @has_permissions(manage_channels=True)
-    async def upset_alerts(self, ctx: Context) -> str:
+    async def upset_alerts(self, interaction: discord.Interaction) -> str:
         """Subscribes the given channel to upset alerts
 
         Args:
@@ -70,44 +65,42 @@ class Misc(commands.Cog, name = "Misc"):
         Returns:
             str: response sent in discord
         """
-        async with ctx.typing():
+        async with interaction.channel.typing():
             channels = self.bot.session.admin.find_one({"purpose": "channels"})[
                 "channels"
             ]["upset_alerts"]
 
-            if ctx.channel.id in channels:
+            if interaction.channel_id in channels:
                 self.bot.session.admin.find_one_and_update(
                     {"purpose": "channels"},
-                    {"$pull": {"channels.upset_alerts": ctx.channel.id}},
+                    {"$pull": {"channels.upset_alerts": interaction.channel_id}},
                 )
-                return await ctx.send("This channel will no longer receive alerts.")
+                return await interaction.response.send_message("This channel will no longer receive alerts.")
             else:
                 self.bot.session.admin.find_one_and_update(
                     {"purpose": "channels"},
-                    {"$push": {"channels.upset_alerts": ctx.channel.id}},
+                    {"$push": {"channels.upset_alerts": interaction.channel_id}},
                 )
-                return await ctx.send("This channel will now receive alerts!")
+                return await interaction.response.send_message("This channel will now receive alerts!")
         return
 
     @upset_alerts.error
     async def upset_alerts_error(self, ctx: Context, error: commands.CommandError):
         if isinstance(error, commands.CheckFailure):
-            return await ctx.send("You don't have admin perms for this server.")
-        # else:
-        #     await self.bot.log_error(error.original, ctx.channel, ctx.command, ctx.kwargs)
+            return await ctx.send("You don't have manage_channel perms for this server.")
 
-    @commands.command(
-        aliases=(
-            "schedules",
-            "scheduling",
-        )
-    )
-    async def schedule(self, ctx: Context, *, team: str):
-        async with ctx.typing():
+    @app_commands.command(name="schedule")
+    async def schedule(self, interaction: discord.Interaction, *, team: str):
+        """Shows the schedule for any team.
+
+        Args:
+            team (str): Team name
+        """
+        async with interaction.channel.typing():
             team: str = team.title()
 
             if team not in divisions.keys():
-                return await ctx.send(f"Couldn't find team `{team}`")
+                return await interaction.response.send_message(f"Couldn't find team `{team}`", ephemeral = True)
 
             league: str = self.identifier.find_league(team)
 
@@ -119,7 +112,7 @@ class Misc(commands.Cog, name = "Misc"):
 
             all_games: pd.DataFrame = sheet.to_df(f"{league} Schedule!O4:X188")
             if all_games.empty:
-                return await ctx.send(
+                return await interaction.response.send_message(
                     "Schedules couldn't be found, possibly because they aren't on the sheet. Contact arco if you believe this is an error."
                 )
 
@@ -142,25 +135,21 @@ class Misc(commands.Cog, name = "Misc"):
             dfi.export(schedule, "schedule.png", table_conversion="matplotlib")
             path = os.path.abspath("schedule.png")
             file = discord.File(path)
-            await ctx.send(file=file)
-            return os.remove(path)
+            return await interaction.response.send_message(file=file)
+        # return os.remove(path)
 
-    @schedule.error
-    async def schedule_error(self, ctx: Context, error):
-        if isinstance(error, MissingRequiredArgument):
-            return await ctx.send("Please specify a team.")
-        elif isinstance(error, FileNotFoundError):
-            return
-        # else:
-        #     await self.bot.log_error(error.original, ctx.channel, ctx.command, ctx.kwargs)
+    @app_commands.command(name="roster")
+    async def roster(self, interaction: discord.Interaction, *, team: str):
+        """Shows a team's roster as well as other useful information about the team
 
-    @commands.command(aliases=("rosters",))
-    async def roster(self, ctx: Context, *, team: str):
-        async with ctx.typing():
+        Args:
+            team (str): Team name
+        """
+        async with interaction.channel.typing():
             try:
                 data = self.teams.get_data(team)
             except TeamNotFoundError:
-                return await ctx.send("Couldn't find team: " + team)
+                return await interaction.response.send_message(f"Couldn't find team: {team}", ephemeral=True)
 
             embed = discord.Embed(title=team.title(), color=0x00008B)
             embed.set_thumbnail(url=self.teams.get_logo_url(data))
@@ -183,15 +172,16 @@ class Misc(commands.Cog, name = "Misc"):
             if field.value == "":
                 embed.set_field_at(i, name=field.name, value="-")
 
-        return await ctx.send(embed=embed)
+        return await interaction.response.send_message(embed=embed)
 
-    @commands.command()
-    async def stream(self, ctx: Context):
-        async with ctx.typing():
+    @app_commands.command()
+    async def stream(self, interaction: discord.Interaction):
+        """Shows the upcoming stream schedule"""
+        async with interaction.channel.typing():
             try:
                 data = self.streamsheet.to_df("S17 Stream Schedule!D3:K")
             except: 
-                return await ctx.send("Couldn't find the stream schedule :(")
+                return await interaction.response.send_message("Couldn't find the stream schedule :(")
 
             data = data.rename(
                 columns={
@@ -219,5 +209,5 @@ class Misc(commands.Cog, name = "Misc"):
             path = os.path.abspath(filename)
             file = discord.File(path)
 
-            await ctx.send(file=file)
+            await interaction.response.send_message(file=file)
         return os.remove(path)
