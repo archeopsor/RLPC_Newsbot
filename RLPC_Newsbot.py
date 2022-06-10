@@ -11,7 +11,7 @@ from discord.ext.commands.context import Context
 
 # Cogs
 try:
-    from cogs.ELO import ELO
+    from cogs.Elo import Elo
     from cogs.Fantasy import Fantasy
     from cogs.Help import Help
     from cogs.Links import Links
@@ -71,7 +71,7 @@ class Newsbot(commands.Bot):
         self.token = token
 
         self.COGS = [
-            ELO(
+            Elo(
                 self,
                 session=self.session,
                 identifier=self.identifier,
