@@ -126,7 +126,7 @@ class Newsbot(commands.Bot):
         elif isinstance(error, commands.CommandInvokeError):
             if isinstance(error.original, discord.errors.Forbidden):
                 return await ctx.send(
-                    "This bot doesn't have adequate permissions in this channel or server."
+                    "This bot doesn't have adequate permissions in this channel or server. You may need to re-invite the bot to your server: https://discord.com/api/oauth2/authorize?client_id=635188576446840858&permissions=380104723520&scope=applications.commands%20bot"
                 )
             else:
                 await self.log_error(
@@ -162,6 +162,11 @@ class Newsbot(commands.Bot):
         await self.change_presence(activity=discord.Game(f"{prefix}help for commands"))
 
     async def on_message(self, message: discord.Message):
+        if message.content.split()[0] in (
+            '$schedule', '$stats', '$top', '$ts', '$gdstats'
+        ):
+            await message.reply("This bot has converted all commands to slash commands! Type '/' to see all of the slash commands available in this server.")
+
         channels = {
             598237603254239238: "Major",
             598237794762227713: "AAA",
