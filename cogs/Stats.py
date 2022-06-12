@@ -211,13 +211,13 @@ class Stats(commands.Cog):  # pragma: no cover
             return
 
     @app_commands.command(name="top")
-    async def top(self, interaction: discord.Interaction, stat: str, league: str = "all", use_sheet: bool = False, per_game: bool = False, limit: int = 10, ascending: bool = False):
+    async def top(self, interaction: discord.Interaction, stat: str, league: str = "all", advanced_stats: bool = False, per_game: bool = False, limit: int = 10, ascending: bool = False):
         """Shows the leaderboards for any stat
 
         Args:
             stat (str): Name of stat to use (all stats are listed in /valid)
             league (str, optional): League name
-            use_sheet (bool, optional): If you want to pull stats from the rlpc spreadsheet rather than the newsbot database
+            advanced_stats (bool, optional): If you want to pull stats from the newsbot database rather than the rlpc spreadsheets, giving you access to advanced stats
             per_game (bool, optional): If you want per-game stats
             limit (int, optional): How many people should be shown in the leaderboard
             ascending (bool, optional): If you want to show the lowest values on the leaderboard
@@ -236,9 +236,15 @@ class Stats(commands.Cog):  # pragma: no cover
                 "Small Boosts": "# Small Boosts",
                 "Small Boost": "# Small Boosts",
                 "# Small Boost": "# Small Boosts",
+                "Little Boosts": "# Small Boosts",
+                "Little Boost": "# Small Boosts",
+                "# Little Boost": "# Small Boosts",
                 "Large Boosts": "# Large Boosts",
                 "Large Boost": "# Large Boosts",
                 "# Large Boost": "# Large Boosts",
+                "Big Boosts": "# Large Boosts",
+                "Big Boost": "# Large Boosts",
+                "# Big Boost": "# Large Boosts",
                 "Boost Steals": "# Boost Steals",
                 "Boost Steal": "# Boost Steals",
                 "# Boost Steal": "# Boost Steals",
@@ -253,7 +259,7 @@ class Stats(commands.Cog):  # pragma: no cover
 
             try:
                 lb = self.stats.statlb(
-                    useSheet=use_sheet,
+                    useSheet=not advanced_stats,
                     league=league,
                     stat=stat,
                     limit=limit,
@@ -266,7 +272,7 @@ class Stats(commands.Cog):  # pragma: no cover
                 )
             except StatsError as error:
                 return await interaction.followup.send(
-                    f'To use stats from the sheet, you must specify a league.'
+                    f'To use stats from the sheet, you must specify a league. To include all leagues, make sure `advanced_stats` is `True` when invoking the command.'
                 )
             except (FindPlayersError, StatSheetError, GetSheetError) as error:
                 await interaction.followup.send(
@@ -278,7 +284,7 @@ class Stats(commands.Cog):  # pragma: no cover
 
             embed = discord.Embed(
                 title=f'{stat} {"Per Game " if per_game else ""}Leaderboard',
-                description=f"League: {league}, Source: {'Sheet' if use_sheet else 'Newsbot Database'}",
+                description=f"League: {league}, Source: {'Newsbot Database' if advanced_stats else 'Sheet'}",
             )
             for i, player in enumerate(lb.index):
                 val = lb[player]
