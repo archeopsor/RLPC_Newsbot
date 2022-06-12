@@ -162,10 +162,11 @@ class Newsbot(commands.Bot):
         await self.change_presence(activity=discord.Game(f"{prefix}help for commands"))
 
     async def on_message(self, message: discord.Message):
-        if message.content.split()[0] in (
-            '$schedule', '$stats', '$top', '$ts', '$gdstats'
-        ):
-            await message.reply("This bot has converted all commands to slash commands! Type '/' to see all of the slash commands available in this server.")
+        if message.type.value == 0:
+            if message.content.split()[0] in (
+                '$schedule', '$stats', '$top', '$ts', '$gdstats'
+            ):
+                await message.reply("This bot has converted all commands to slash commands! Type '/' to see all of the slash commands available in this server.")
 
         channels = {
             598237603254239238: "Major",
@@ -280,10 +281,6 @@ class Newsbot(commands.Bot):
         # return await super().start(self.token, reconnect=True)
         super().run(self.token, reconnect=True)
 
-# async def main():
-#     bot = Newsbot(BOT_TOKEN)
-#     async with bot:
-#         await bot.run()
 
 if __name__ == "__main__":
     bot = Newsbot(BOT_TOKEN)
