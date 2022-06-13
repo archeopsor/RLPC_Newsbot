@@ -166,7 +166,7 @@ class Newsbot(commands.Bot):
             if message.content.split()[0] in (
                 '$schedule', '$stats', '$top', '$ts', '$gdstats'
             ):
-                await message.reply("This bot has converted all commands to slash commands! Type '/' to see all of the slash commands available in this server.")
+                await message.reply("This bot has converted all commands to slash commands! Type '/' to see all of the slash commands available in this server. If you don't see any slash commands, you may need to reinvite the bot to your server: https://discord.com/api/oauth2/authorize?client_id=635188576446840858&permissions=380104723520&scope=applications.commands%20bot")
 
         channels = {
             598237603254239238: "Major",
