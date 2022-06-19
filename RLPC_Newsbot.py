@@ -1,6 +1,7 @@
 from typing_extensions import Literal
 import os
 from random import choice
+import asyncio
 from dotenv import load_dotenv
 load_dotenv('.env')
 
@@ -9,14 +10,17 @@ from discord.ext import commands
 from discord.ext.commands.context import Context
 
 # Cogs
-from cogs.ELO import ELO
-from cogs.Fantasy import Fantasy
-from cogs.Help import Help
-from cogs.Links import Links
-from cogs.Reddit import Reddit
-from cogs.Stats import Stats
-from cogs.Misc import Misc
-from cogs.Stocks import Stocks
+try:
+    from cogs.Elo import Elo
+    from cogs.Fantasy import Fantasy
+    from cogs.Help import Help
+    from cogs.Links import Links
+    from cogs.Reddit import Reddit
+    from cogs.Stats import Stats
+    from cogs.Misc import Misc
+    from cogs.Stocks import Stocks
+except ImportError:
+    pass
 
 from rlpc.fantasy_infrastructure import FantasyHandler
 from rlpc.elo import EloHandler
@@ -40,7 +44,9 @@ BOT_TOKEN = os.environ.get("BOT_TOKEN")
 
 class Newsbot(commands.Bot):
     def __init__(self, token: Literal = BOT_TOKEN):
-        super().__init__(command_prefix=prefix, help_command=None, case_insensitive=True)
+        intents = discord.Intents.default()
+        intents.message_content = True
+        super().__init__(command_prefix=prefix, intents=intents, help_command=None, case_insensitive=True)
 
         self.session = Session()
         self.p4sheet = Sheet(sheet_p4, refresh_cooldown=60)
@@ -65,7 +71,7 @@ class Newsbot(commands.Bot):
         self.token = token
 
         self.COGS = [
-            ELO(
+            Elo(
                 self,
                 session=self.session,
                 identifier=self.identifier,
@@ -103,11 +109,12 @@ class Newsbot(commands.Bot):
             ),
         ]
 
-        self.load_cogs()
+    async def setup_hook(self):
+        await self.load_cogs()
 
-    def load_cogs(self) -> None:
+    async def load_cogs(self) -> None:
         for cog in self.COGS:
-            self.add_cog(cog)
+            await self.add_cog(cog)
 
     async def on_command_error(
         self, ctx: Context, error: discord.errors.DiscordException
@@ -119,7 +126,7 @@ class Newsbot(commands.Bot):
         elif isinstance(error, commands.CommandInvokeError):
             if isinstance(error.original, discord.errors.Forbidden):
                 return await ctx.send(
-                    "This bot doesn't have adequate permissions in this channel or server."
+                    "This bot doesn't have adequate permissions in this channel or server. You may need to re-invite the bot to your server: https://discord.com/api/oauth2/authorize?client_id=635188576446840858&permissions=380104723520&scope=applications.commands%20bot"
                 )
             else:
                 await self.log_error(
@@ -155,6 +162,12 @@ class Newsbot(commands.Bot):
         await self.change_presence(activity=discord.Game(f"{prefix}help for commands"))
 
     async def on_message(self, message: discord.Message):
+        if message.type.value == 0:
+            if message.content.split()[0] in (
+                '$schedule', '$stats', '$top', '$ts', '$gdstats'
+            ):
+                await message.reply("This bot has converted all commands to slash commands! Type '/' to see all of the slash commands available in this server. If you don't see any slash commands, you may need to reinvite the bot to your server: https://discord.com/api/oauth2/authorize?client_id=635188576446840858&permissions=380104723520&scope=applications.commands%20bot")
+
         channels = {
             598237603254239238: "Major",
             598237794762227713: "AAA",
@@ -265,6 +278,7 @@ class Newsbot(commands.Bot):
         self.session.close()
 
     def run(self):
+        # return await super().start(self.token, reconnect=True)
         super().run(self.token, reconnect=True)
 
 
