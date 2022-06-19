@@ -46,7 +46,7 @@ class Misc(commands.Cog, name = "Misc"):
     @commands.is_owner()
     async def sync(self, ctx: Context) -> None:
         await self.bot.tree.sync()
-        await self.bot.tree.sync(guild=self.bot.get_guild(224552524173148171))
+        # await self.bot.tree.sync(guild=self.bot.get_guild(224552524173148171))
         await ctx.send("Synced!")
 
     @app_commands.command(name="ping")
