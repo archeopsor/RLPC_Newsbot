@@ -159,7 +159,7 @@ class Newsbot(commands.Bot):
         print(f"Username:  {self.user.name}")
         print(f"User ID:  {self.user.id}")
         print("---------------------------------")
-        await self.change_presence(activity=discord.Game(f"{prefix}help for commands"))
+        await self.change_presence(activity=discord.Game(f"Commands are slash commands now!"))
 
     async def on_message(self, message: discord.Message):
         if message.type.value == 0:
