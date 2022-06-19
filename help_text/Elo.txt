@@ -3,7 +3,7 @@
 
 
 
-**{prefix}predict [team 1] [team 2] *[# of games]***: Predicts the score of a hypothetical match between two teams, based on the teams' current ELO. Only works between teams in the same league.
+**{prefix}predict [team 1] [team 2] *[# of games]***: Predicts the score of a hypothetical match between two teams, based on the teams' current elo. Only works between teams in the same league.
 
 **{prefix}rank [league]**: Ranks all the teams in a league based on an internal elo system. These are computer-generated, use {prefix}pr for human-generated rankings.
 
