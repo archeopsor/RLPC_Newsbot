@@ -11,7 +11,7 @@ from discord.ext.commands.context import Context
 
 # Cogs
 try:
-    from cogs.Elo import Elo
+    from cogs.ELO import Elo
     from cogs.Fantasy import Fantasy
     from cogs.Help import Help
     from cogs.Links import Links
