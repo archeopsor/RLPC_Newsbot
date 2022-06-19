@@ -517,7 +517,7 @@ class RLPCAnalysis:
             if known == "y":
                 _id = input("Please type their discord id: ")
                 # Add rl id to their account
-                found = self.session.all_players.find_one_and_update({"_id": _id}, {"$push": {"rl_id": failed.loc[row, "id"]}})
+                found = self.session.all_players.find_one_and_update({"_id": _id}, {"$push": {"rl_id": failed.loc[row, "Discord ID"]}})
                 if found:
                     fixed = fixed.append(failed.loc[row])
                     fixed.loc[fixed['Username']==username, 'Discord ID'] = _id
