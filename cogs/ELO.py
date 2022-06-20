@@ -90,10 +90,10 @@ class Elo(commands.Cog):
         async with interaction.channel.typing():
 
             team = team.title() if team else None
-            if league not in leagues:
+            if league.lower() not in leagues:
                 return await interaction.response.send_message(f"Could not understand league: {league}", ephemeral = True)
             else:
-                league = leagues[league].lower()
+                league = leagues[league.lower()].lower()
             await interaction.response.defer()
 
             datarange = {
