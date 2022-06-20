@@ -92,6 +92,8 @@ class Elo(commands.Cog):
             team = team.title() if team else None
             if league not in leagues:
                 return await interaction.response.send_message(f"Could not understand league: {league}", ephemeral = True)
+            else:
+                league = leagues[league].lower()
             await interaction.response.defer()
 
             datarange = {
