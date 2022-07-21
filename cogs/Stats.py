@@ -271,9 +271,22 @@ class Stats(commands.Cog):  # pragma: no cover
                     f'Could not understand stat `{error.stat.title()}`. Try using "/valid" for a list of available stats.'
                 )
             except StatsError as error:
-                return await interaction.followup.send(
-                    f'To use stats from the sheet, you must specify a league. To include all leagues, make sure `advanced_stats` is `True` when invoking the command.'
-                )
+                # Use advanced stats instead
+                try:
+                    lb = self.stats.statlb(
+                        useSheet=False,
+                        league=league,
+                        stat=stat,
+                        limit=limit,
+                        pergame=per_game,
+                        asc=ascending,
+                    )
+                    await interaction.followup.send("Your request couldn't be fulfilled without using advanced stats. This may be because you didn't specify a league.")
+                    advanced_stats = True
+                except:
+                    return await interaction.followup.send(
+                        f'To use stats from the sheet, you must specify a league. To include all leagues, make sure `advanced_stats` is `True` when invoking the command.'
+                    )
             except (FindPlayersError, StatSheetError, GetSheetError) as error:
                 await interaction.followup.send(
                     f"There was an error getting player data. This has been reported, and will hopefully be fixed soon."
