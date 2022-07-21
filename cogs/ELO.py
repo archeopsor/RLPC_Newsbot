@@ -134,7 +134,7 @@ class Elo(commands.Cog):
                     new_data["No Playoffs"] = (
                         1 - data["Playoffs"].str.rstrip("%").astype(float) / 100
                     )
-                    new_data = new_data.sort_values(by="No Playoffs", ascending=False)
+                    new_data = new_data.sort_values(by=["No Playoffs", "Champions"], ascending=False)
                     plot = new_data.plot(
                         kind="barh",
                         stacked=True,
@@ -144,6 +144,7 @@ class Elo(commands.Cog):
                     plot.set_xlabel("Probability")
                     plot.xaxis.grid(True)
                     plot.figure.savefig("forecast.png")
+                    plot.clear()
 
                     path = os.path.abspath("forecast.png")
 
@@ -162,11 +163,7 @@ class Elo(commands.Cog):
                         },
                         inplace=True,
                     )
-                    data["sort"] = data["Record"].astype(float) + data[
-                        "Champs"
-                    ].str.rstrip("%").astype(float)
-                    data = data.sort_values(by="sort", ascending=False)
-                    data.drop(columns=["sort"], inplace=True)
+                    data = data.sort_values(by=["Playoffs", "Champs"], ascending = False)
                     data["Record"] = data["Record"].apply(
                         lambda x: f"({round(float(x), 1)} - {round(18-float(x), 1)})"
                     )
@@ -243,6 +240,7 @@ class Elo(commands.Cog):
                 plt.ylabel(f"{team2} Goals", fontsize=10)
                 img.figure.savefig("poisson.png", bbox_inches="tight")
                 cb.remove()  # Remove the colorbar so that it doesn't stay for the next function call
+                del img  # Prevent img from affecting future images
 
                 path = os.path.abspath("poisson.png")
                 file = discord.File(path)
@@ -250,8 +248,7 @@ class Elo(commands.Cog):
                 file.close()
                 os.remove(path)
 
-            if not interaction.response.is_done():
-                await interaction.followup.send(f"{team1} vs. {team2}")
+            await interaction.followup.send(f"{team1} vs. {team2}")
 
             team1Poisson, team2Poisson = handler.getOneWayPoisson(league, team1, team2)
             team1Wins = 0
