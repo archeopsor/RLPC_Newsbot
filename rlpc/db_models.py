@@ -21,7 +21,7 @@ from tools.sheet import Sheet
 import rlpc.stats
 
 from errors.stocks_errors import AccountNotFoundError
-from settings import sheet_p4, valid_stats
+from settings import sheet_p4, valid_stats, current_season
 
 ###########
 ## UTILS ##
@@ -566,6 +566,7 @@ class Team:
 class Game:
     # Use auto-generated _id field
     date: datetime
+    season: int
     team1: str
     team2: str
     team1_players: list[str]
@@ -573,6 +574,7 @@ class Game:
     is_playoff: bool
     score: list[int] # [Team1 score, Team2 score]
     stats: dict[str, Stats] # key is a player's discord id
+    result = None
 
     @classmethod
     def from_replay(cls, replay: BallchasingReplay, session: Session) -> Game:
@@ -586,7 +588,35 @@ class Game:
         date = datetime.strptime(data['date'], "%Y-%m-%dT%H:%M:%S%z")
         for player in player_stats.index:
             stats[player] = Stats.from_series(player_stats.loc[player])
-            # TODO: Handle getting players and teams from the replay (do this by fixing the replay properties)
+
+        team1, team2 = replay.teams
+        
+        return Game(
+            date = date,
+            season = current_season,
+            team1 = team1,
+            team2 = team2,
+            team1_players = replay.teams[team1],
+            team2_players = replay.teams[team2],
+            is_playoff = False, # TODO: Find a way to detect playoff games
+            score = [data['blue']['stats']['core']['goals'], data['orange']['stats']['core']['goals']],
+            stats = stats,
+        )
+
+    def insert_new(self, session: Session) -> ObjectId:
+        doc = convert_enums(asdict(self))
+        self.result = session.games.insert_one(doc)
+        return self.result.inserted_id
+
+    def add_players(self, session: Session) -> None:
+        if not self.result:
+            self.insert_new(session)
+        for player in [*self.team1_players, *self.team2_players]:
+            session.all_players.find_one_and_update({"_id": id}, {
+                "$push": {
+                    "seasons.$[season].games": self.result.inserted_id,
+                }
+            }, array_filters = [{'season.season_num': current_season}])
         
 @dataclass
 class Stock_Account:
@@ -619,16 +649,14 @@ class Stock_Account:
 
 # Just for testing
 if __name__ == '__main__':
-    session = Session()
-    sheet = Sheet(sheet_p4)
-    # from rlpc.players import PlayersHandler, Identifier
-    # identifier = Identifier(session, sheet)
-    # playersHandler = PlayersHandler(session, sheet, identifier)
+    from rlpc.players import PlayersHandler, Identifier
+    from replay_processing.replay_classes import BallchasingReplay
 
-    # replay = BallchasingReplay(r"C:\Users\Simcha\Desktop\Projects\RLPC_Newsbot\replay_processing\Replay_Files\Ascension - Whitecaps\match_1\2BE561564317ECAC8E2FB6997E799D7E.replay", session, playersHandler, identifier)
-    # Game.from_replay(replay, session)
+    # session = Session()
+    # identifier = Identifier(session)
+    # players = PlayersHandler(session, identifier)
+    # replay = BallchasingReplay(r"C:\Users\Simcha\Desktop\Replay Files\match_1\59A8F3F4445D329514F84AAE0B151F2C.replay", session, players, identifier)
 
-    # cursor = session.all_players.find({{"current_team": {"$nin": ["Departed", "Not Playing"]}, "seasons.$[season]": {"$exists": True}}}, array)
-    # while cursor.alive:
-    #     player = cursor.next()
-    #     print(player)
+    # game = Game.from_replay(replay, session)
+    # res = game.insert_new(session)
+    # print(res)

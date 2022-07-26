@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 import shutil
 import time
@@ -16,6 +18,8 @@ from urllib3.connectionpool import log as urllibLogger
 from webdriver_manager.firefox import GeckoDriverManager
 
 from dotenv import load_dotenv
+
+from rlpc.db_models import Game
 load_dotenv(f'{os.getcwd()}\.env')
 
 # Allow imports when running script from within project dir
@@ -307,9 +311,9 @@ class Series:
         self.replays = replays
         self.players = []
         try:
-            self.teams = self.replays[1].teams
+            self.teams = self.replays[1].get_teams()
         except:
-            self.teams = self.replays[-1].teams  # Just in case replay 1 fails
+            self.teams = self.replays[-1].get_teams()  # Just in case replay 1 fails
 
     def get_stats(self) -> pd.DataFrame:
         """Gets full-series-stats for a set of 3-7 replays
@@ -336,6 +340,8 @@ class Series:
                 stats, unknown = replay.convert()
                 player_stats = player_stats.append(stats)
                 self.unknown = [*unknown, *self.unknown]
+                game: Game = Game.from_replay(replay)
+                game.add_players()
 
         player_stats = player_stats.groupby(player_stats.index).agg(lambda x: x.sum() if x.dtype=='float64' else x[0])
 
