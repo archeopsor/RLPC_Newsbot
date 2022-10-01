@@ -19,6 +19,7 @@ from rlpc.players import Identifier, TeamsHandler
 
 from settings import prefix, leagues, divisions, sheet_p4, sheet_indy, stream_sheet
 from errors.player_errors import TeamNotFoundError
+from errors.sheets_errors import SheetToDfError
 
 
 class Misc(commands.Cog, name = "Misc"):
@@ -110,7 +111,10 @@ class Misc(commands.Cog, name = "Misc"):
                 else self.indysheet
             )
 
-            all_games: pd.DataFrame = sheet.to_df(f"{league} Schedule!O4:X188")
+            try:
+                all_games: pd.DataFrame = sheet.to_df(f"{league} Schedule!O4:X188")
+            except SheetToDfError:
+                return await interaction.response.send_message("Couldn't find a schedule for this team.")
             if all_games.empty:
                 return await interaction.response.send_message(
                     "Schedules couldn't be found, possibly because they aren't on the sheet. Contact arco if you believe this is an error."
