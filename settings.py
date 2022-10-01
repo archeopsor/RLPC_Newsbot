@@ -1,8 +1,8 @@
 prefix = '$'
 k = 40
 current_season = 17
-sheet_p4 = '1k_2u8zetvYpBqcW2akudLGmUMVajecaoZSHx4Sh0FYQ'
-sheet_indy = '1XZfwWVk_m0Emd8ci52QMmZ4NEMQphA9daWJ_iuAQaPY'
+sheet_p4 = '1Is6nuVcggWi0hPImTRVcORYuGLffcHvM9rd8r6TbWZE'
+sheet_indy = '15ZkTJPedUIRQYujrHgnLRioxPEoFKT-7j4KjSHaqYPM'
 test_sheet = '1gHlqD-xekmpwFDpblAiJfpuCvxRliK6C-AjYoEUU8tc'
 power_rankings_sheet = '1Tlc_TgGMrY5aClFF-Pb5xvtKrJ1Hn2PJOLy2fUDDdFI'
 gdstats_sheet = '1zWzGUUURyNQ1I7ShJinbkS_CsAWmrUQqKuL0pD9H3VA'
